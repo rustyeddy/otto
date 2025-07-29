@@ -35,5 +35,13 @@ func TestRandHTTP(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Printf("%+v\n", cbuf)
+	var f float64
+	i, err := fmt.Sscanf(string(cbuf), "%f", &f)
+	if err != nil || i != 1 {
+		t.Errorf("Expected err (nil) got (%s) also expected i = (1) got (%d)", err, i)
+	}
+
+	if f < 0 || f > 1.0 {
+		t.Errorf("Expected float point (> 0 && < 1) got (%f) ", f)
+	}
 }
