@@ -1,10 +1,10 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package otto
 
 import (
-	"github.com/sensorstation/otto/blasters"
+	"github.com/rustyeddy/otto/blasters"
 
 	"github.com/spf13/cobra"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sensorstation/otto/device/drivers"
+	"github.com/rustyeddy/otto/device/drivers"
 	"periph.io/x/conn/v3/physic"
 )
 

@@ -7,9 +7,9 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/device/drivers"
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/device/drivers"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 type VH400 struct {

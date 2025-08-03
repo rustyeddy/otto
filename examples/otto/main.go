@@ -4,11 +4,11 @@ import (
 	"embed"
 	"flag"
 
-	"github.com/sensorstation/otto/cmd"
-	"github.com/sensorstation/otto/device/drivers"
-	"github.com/sensorstation/otto/messanger"
-	"github.com/sensorstation/otto/server"
-	"github.com/sensorstation/otto/utils"
+	"github.com/rustyeddy/otto/cmd"
+	"github.com/rustyeddy/otto/device/drivers"
+	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/server"
+	"github.com/rustyeddy/otto/utils"
 )
 
 var (

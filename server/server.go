@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 // Server serves up HTTP on Addr (default 0.0.0.0:8011)

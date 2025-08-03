@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 func TestMsgMaker(t *testing.T) {

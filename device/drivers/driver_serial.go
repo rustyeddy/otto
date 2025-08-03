@@ -3,7 +3,7 @@ package drivers
 import (
 	"log/slog"
 
-	"github.com/sensorstation/otto/device"
+	"github.com/rustyeddy/otto/device"
 	"go.bug.st/serial"
 )
 

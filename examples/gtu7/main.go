@@ -1,6 +1,6 @@
 package main
 
-import "github.com/sensorstation/otto/device/gtu7"
+import "github.com/rustyeddy/otto/device/gtu7"
 
 func main() {
 	g := gtu7.NewGTU7("/dev/ttyS0")

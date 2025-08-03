@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sensorstation/otto/device/drivers"
-	"github.com/sensorstation/otto/device/led"
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/device/drivers"
+	"github.com/rustyeddy/otto/device/led"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 var (

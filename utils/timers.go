@@ -50,12 +50,12 @@ func NewTicker(n string, d time.Duration, f func(t time.Time)) *Ticker {
 }
 
 // GetTickers will return the map of all ticker values.
-func GetTickers() map[name]*Ticker {
+func GetTickers() map[string]*Ticker {
 	return tickers
 }
 
 // GetTicker will return the named ticker or nil if it does not exist
-func GetTicker(n name) *Ticker {
-	t, ex := tickers[n]
+func GetTicker(n string) *Ticker {
+	t, _ := tickers[n]
 	return t
 }

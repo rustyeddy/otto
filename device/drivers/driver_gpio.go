@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/messanger"
 	"github.com/warthog618/go-gpiocdev"
 )
 

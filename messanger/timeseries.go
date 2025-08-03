@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sensorstation/otto/utils"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Timeseries represents a single source of data over a time period

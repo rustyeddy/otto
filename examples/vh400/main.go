@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/sensorstation/otto/device/vh400"
+	"github.com/rustyeddy/otto/device/vh400"
 )
 
 func main() {

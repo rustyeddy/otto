@@ -1,4 +1,4 @@
-module github.com/sensorstation/otto
+module github.com/rustyeddy/otto
 
 go 1.23.3
 

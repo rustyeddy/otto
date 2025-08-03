@@ -123,10 +123,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/messanger"
-	"github.com/sensorstation/otto/server"
-	"github.com/sensorstation/otto/station"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/server"
+	"github.com/rustyeddy/otto/station"
 )
 
 // Controller is a message handler that oversees all interactions

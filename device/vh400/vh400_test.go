@@ -3,7 +3,7 @@ package vh400
 import (
 	"testing"
 
-	"github.com/sensorstation/otto/device"
+	"github.com/rustyeddy/otto/device"
 )
 
 func TestVH400(t *testing.T) {

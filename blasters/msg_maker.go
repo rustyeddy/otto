@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 // MsgMaker creates messages to be used by the mqtt blaster

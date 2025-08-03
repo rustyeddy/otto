@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensorstation/otto/utils"
+	"github.com/rustyeddy/otto/utils"
 )
 
 func getMsg() (*Msg, time.Time) {

@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/messanger"
-	"github.com/sensorstation/otto/server"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/server"
 )
 
 // Station is the primary structure that holds an array of

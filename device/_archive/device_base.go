@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 	"github.com/warthog618/go-gpiocdev"
 )
 

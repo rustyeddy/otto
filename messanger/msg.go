@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensorstation/otto/utils"
+	"github.com/rustyeddy/otto/utils"
 )
 
 type Message interface {

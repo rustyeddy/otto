@@ -10,7 +10,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/sensorstation/otto/device/drivers"
+	"github.com/rustyeddy/otto/device/drivers"
 )
 
 var gpioStr = `

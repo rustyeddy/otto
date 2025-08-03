@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/sensorstation/otto/device"
+	"github.com/rustyeddy/otto/device"
 	"periph.io/x/conn/v3/analog"
 	"periph.io/x/conn/v3/i2c"
 	"periph.io/x/conn/v3/i2c/i2creg"

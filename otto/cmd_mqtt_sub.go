@@ -1,12 +1,12 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package otto
 
 import (
 	"fmt"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 	"github.com/spf13/cobra"
 )
 

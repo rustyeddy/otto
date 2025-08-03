@@ -1,11 +1,11 @@
-package cmd
+package otto
 
 import (
 	"bufio"
 	"log/slog"
 	"os"
 
-	"github.com/sensorstation/otto"
+	"github.com/rustyeddy/otto"
 	"github.com/spf13/cobra"
 )
 

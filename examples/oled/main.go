@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/sensorstation/otto/device/oled"
+	"github.com/rustyeddy/otto/device/oled"
 	"periph.io/x/devices/v3/ssd1306"
 )
 

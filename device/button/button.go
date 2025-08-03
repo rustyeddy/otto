@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/device/drivers"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/device/drivers"
 	"github.com/warthog618/go-gpiocdev"
 )
 

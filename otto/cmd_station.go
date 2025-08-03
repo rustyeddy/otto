@@ -1,10 +1,10 @@
-package cmd
+package otto
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/sensorstation/otto/station"
+	"github.com/rustyeddy/otto/station"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 // Opener interface defines the Open() function for

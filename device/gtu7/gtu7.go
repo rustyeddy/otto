@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/device/drivers"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/device/drivers"
 )
 
 type GTU7 struct {

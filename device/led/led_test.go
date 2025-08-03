@@ -3,8 +3,8 @@ package led
 import (
 	"testing"
 
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 func TestLED(t *testing.T) {

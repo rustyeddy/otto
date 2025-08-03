@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sensorstation/otto/messanger"
-	"github.com/sensorstation/otto/server"
+	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/server"
 )
 
 // StationManager keeps track of all the stations we have seen

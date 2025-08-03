@@ -1,9 +1,9 @@
-package cmd
+package otto
 
 import (
 	"fmt"
 
-	"github.com/sensorstation/otto/utils"
+	"github.com/rustyeddy/otto/utils"
 	"github.com/spf13/cobra"
 )
 

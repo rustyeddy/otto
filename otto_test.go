@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensorstation/otto/messanger"
-	"github.com/sensorstation/otto/server"
-	"github.com/sensorstation/otto/station"
+	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/server"
+	"github.com/rustyeddy/otto/station"
 	"github.com/stretchr/testify/assert"
 )
 

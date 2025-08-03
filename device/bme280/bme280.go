@@ -7,8 +7,8 @@ import (
 	"math/rand"
 
 	"github.com/maciej/bme280"
-	"github.com/sensorstation/otto/device"
-	"github.com/sensorstation/otto/device/drivers"
+	"github.com/rustyeddy/otto/device"
+	"github.com/rustyeddy/otto/device/drivers"
 )
 
 // BME280 is an I2C temperature, humidity and pressure sensor. It

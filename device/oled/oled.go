@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/nfnt/resize"
-	"github.com/sensorstation/otto/device"
+	"github.com/rustyeddy/otto/device"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/devices/v3/ssd1306"
 	"periph.io/x/devices/v3/ssd1306/image1bit"

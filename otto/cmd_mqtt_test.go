@@ -1,9 +1,9 @@
-package cmd
+package otto
 
 import (
 	"testing"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 	"github.com/spf13/cobra"
 )
 

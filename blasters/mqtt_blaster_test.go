@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensorstation/otto/messanger"
+	"github.com/rustyeddy/otto/messanger"
 )
 
 var (
