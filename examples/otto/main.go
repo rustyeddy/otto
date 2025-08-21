@@ -4,11 +4,11 @@ import (
 	"embed"
 	"flag"
 
-	"github.com/rustyeddy/otto/cmd"
 	"github.com/rustyeddy/otto/device/drivers"
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/rustyeddy/otto/server"
 	"github.com/rustyeddy/otto/utils"
+	"github.com/spf13/cobra-cli/cmd"
 )
 
 var (

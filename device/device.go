@@ -1,6 +1,7 @@
 package device
 
 import (
+	"encoding/json"
 	"log/slog"
 	"time"
 
@@ -94,6 +95,19 @@ func (d *Device) String() string {
 	return d.Name() + ": todo finish String()"
 }
 
-func (d *Device) JSON() []byte {
-	panic("todo finish Device.JSON()")
+func (d *Device) JSON() ([]byte, error) {
+	j := struct {
+		Name string
+		*messanger.Messanger
+		Period time.Duration
+		Err    error
+	}{
+		Name:      d.name,
+		Messanger: d.Messanger,
+		Period:    d.period,
+		Err:       d.Error,
+	}
+
+	jbytes, err := json.Marshal(j)
+	return jbytes, err
 }

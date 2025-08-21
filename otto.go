@@ -1,45 +1,53 @@
 /*
-OttO is used to build IoT applications.
+OttO is a set of Go packages (framework) that help build IoT
+applications. The goal is to decouple the IoT sensors, actuators,
+etc. from the framework hardware interfaces such as GPIO, I2C, serial
+ports, etc.
 
-# The package provides
+# Features include
 
-  - Drivers for a few different breakout boards meant to run on the
-    Raspberry Pi.
+Device level abstraction. Each device has a name that translates into
+a path that can be used by MQTT and HTTP REST interface for
+communication with other systems.
 
-  - A higher level device interface that is agnostic to the underlying
-    libraries.  Use your favorite gpiocdev, periph.io, tinygo, gobot,
-    etc.
+Device manager that keeps track of all application devices,
+configuration and status. This interface attempts to be agnostic to
+the underlying drivers, including gpiocdev, I2C, periph.io, etc.
 
-  - For exaple GPIO handled by gpiocdev library, new handler for Linux GPIOs.
+Message based architecture abstracting all communications into a
+standard message format. With functionality that can save messages for
+later replay or diagnostics.
 
-  - I2C handled by periph.io drivers
+MQTT messaging built into all devices and components according to
+functionality and need
 
-  - Serial devices handled by the serial library
+HTTP Rest interface and corresponding API for all components of the
+framework.
 
-  - MQTT messaging amoung IoT stations and control software
+Drivers for a few different breakout boards meant to run on the
+Raspberry Pi.
 
-  - Messanger (not to be confused with messages) implements a Pub/Sub
-    (MQTT or other) interface between components of your application
+Station module to represent a single application on a given device or
+a series of stations for a networked controller.
 
-  - HTTP REST Server for data gathering and configuration
+Messanger (not to be confused with messages) implements a Pub/Sub
+(MQTT or other) interface between components of your application
 
-  - Websockets for realtime bidirectional communication with a UI
+# HTTP REST Server for data gathering and configuration
 
-  - High performance Web server built in to serve interactive UI's
-    and modern API's
+# Websockets for realtime bidirectional communication with a UI
 
-  - Station manager to manage the stations that make up an entire
-    sensor network
+High performance Web server built in to serve interactive UI's
+and modern API's
 
-  - Data Manager for temporary data caching and interfaces to update
-    your favorite cloud based timeseries database
+Station manager to manage the stations that make up an entire sensor
+network
 
-  - Message library for standardized messages built to be communicate
-    events and information between pacakges.
+Data Manager for temporary data caching and interfaces to update
+your favorite cloud based timeseries database
 
-  - Security Todo
-
-# Message Based System
+Message library for standardized messages built to be communicate
+events and information between pacakges.
 
 The primary communication model for OttO is a messaging system based
 on the Pub/Sub model defaulting to MQTT. oTTo is also heavily invested
@@ -101,13 +109,12 @@ Where the source is the Station ID publishing the respective data.
 The sensor is the type of data being produced (temp, humidity,
 lidar, GPS).
 
-The index is optional in situations where they may be more than
-one similar device or sensor, for example a couple of rotation
-counters on wheels.
+The index is useful in application where there is more than one
+device, such as sensors, motors, etc.
 
-The value published by the sensors is typically going to be
-floating point, however these values may also be integer or
-string values, including nema-0183.
+The value published by the sensors is typically going to be floating
+point, however these values may also be integers, strings or byte
+arrays.
 
 ### Control Data
 

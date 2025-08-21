@@ -9,6 +9,9 @@ type Ticker struct {
 	Name string
 	*time.Ticker
 	Func func(t time.Time)
+
+	lastTick time.Time
+	ticks    int
 }
 
 var (
@@ -43,6 +46,8 @@ func NewTicker(n string, d time.Duration, f func(t time.Time)) *Ticker {
 	tickers[n] = t
 	go func() {
 		for tick := range t.Ticker.C {
+			t.lastTick = time.Now()
+			t.ticks++
 			f(tick)
 		}
 	}()

@@ -8,13 +8,9 @@ init:
 
 test:
 	go test -cover ./...
-
-test-v:
-	go test -cover -v ./...
-
-html:
-	go test -coverprofile=/home/rusty/cover.out ./...
-	go tool cover -html=/home/rusty/cover.out
+	go test -coverprofile=./cover.out ./...
+	go tool cover -func=cover.out
+	go tool cover -html=cover.out
 
 $(SUBDIRS):
 	$(MAKE) -C $@

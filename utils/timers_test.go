@@ -41,8 +41,22 @@ func TestTimer(t *testing.T) {
 		t.Errorf("Expected count (10) got (%d)", count)
 	}
 
-	elapsed := time.Now().Sub(start)
+	now := time.Now()
+	elapsed := now.Sub(start)
 	if elapsed.Milliseconds() >= 11 {
 		t.Errorf("Expected duration (<11ms) got (%d)", elapsed.Milliseconds())
 	}
+
+	if ticker.ticks != 10 {
+		t.Errorf("Expected ticks (10) got (%d)", ticker.ticks)
+	}
+
+	elapsed = now.Sub(ticker.lastTick)
+	if elapsed > time.Microsecond*2 {
+		t.Errorf("Expected elapsed lastTick (%v) got (%v)", time.Microsecond*2, elapsed)
+	}
+}
+
+func TestMultipleTickers(t *testing.T) {
+
 }
