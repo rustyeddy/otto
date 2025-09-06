@@ -77,8 +77,6 @@ func (dm *DataManager) Callback(msg *Msg) {
 	}
 
 	dm.Add(msg.Station(), msg.Last(), msg.Data)
-
-	return
 }
 
 // ServeHTTP provides a REST interface to the config structure

@@ -20,6 +20,7 @@ type MQTT struct {
 	Broker string `json:"broker"`
 	Debug  bool   `json:"debug"`
 
+	error         `json:"error"`
 	gomqtt.Client `json:"-"`
 }
 
@@ -60,6 +61,10 @@ func (m *MQTT) IsConnected() bool {
 		return false
 	}
 	return m.Client.IsConnected()
+}
+
+func (m *MQTT) Error() error {
+	return m.error
 }
 
 // Connect to the MQTT broker after setting some MQTT options

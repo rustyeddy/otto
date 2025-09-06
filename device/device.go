@@ -92,7 +92,7 @@ func (d *Device) TimerLoop(period time.Duration, done chan any, readpub func() e
 }
 
 func (d *Device) String() string {
-	return d.Name() + ": todo finish String()"
+	return d.Name()
 }
 
 func (d *Device) JSON() ([]byte, error) {

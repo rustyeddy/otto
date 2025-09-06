@@ -28,6 +28,8 @@ type Publisher interface {
 type PubSub interface {
 	Publisher
 	Subscriber
+
+	Error() error
 	Close()
 }
 
@@ -54,6 +56,10 @@ func NewMessanger(ID string, topic ...string) *Messanger {
 		m.Topic = topic[0]
 	}
 	return m
+}
+
+func (m *Messanger) Name() string {
+	return m.ID
 }
 
 // Subscribe will literally subscribe to the provide MQTT topic with
