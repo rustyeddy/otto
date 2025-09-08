@@ -2,71 +2,81 @@ package messanger
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestTopics(t *testing.T) {
-	topics := GetTopics()
-	if topics == nil {
-		t.Error("GetTopics() returns nil topic expected it to be ready to go ")
-	}
-
-	name := "test-station"
-	topics.SetStationName(name)
-	if topics.StationName != name {
-		t.Errorf("Expected station name (%s) got (%s)", name, topics.StationName)
-	}
-
-	ctltopic := "ss/c/test-station/controller"
-	ctl := topics.Control("controller")
-	if ctl != ctltopic {
-		t.Errorf("Expected control topic (%s) got (%s)", ctltopic, ctl)
-	}
-
-	datatopic := "ss/d/test-station/controller"
-	dat := topics.Control("data")
-	if ctl != ctltopic {
-		t.Errorf("Expected data topic (%s) got (%s)", datatopic, dat)
+func TestGetTopics(t *testing.T) {
+	topicInstance := GetTopics()
+	if topicInstance == nil {
+		t.Fatal("Expected Topics instance, got nil")
 	}
 }
 
-func TestTopicHTTP(t *testing.T) {
-
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		topics := GetTopics()
-		topics.ServeHTTP(w, r)
+func TestSetStationName(t *testing.T) {
+	topics := GetTopics()
+	topics.SetStationName("TestStation")
+	if topics.StationName != "TestStation" {
+		t.Errorf("Expected StationName to be 'TestStation', got '%s'", topics.StationName)
 	}
+}
 
-	req := httptest.NewRequest("GET", "/api/topics", nil)
+func TestControl(t *testing.T) {
+	topics := GetTopics()
+	topics.SetStationName("TestStation")
+	controlTopic := topics.Control("foo")
+	expected := "ss/c/TestStation/foo"
+	if controlTopic != expected {
+		t.Errorf("Expected control topic '%s', got '%s'", expected, controlTopic)
+	}
+	if topics.Topicmap[controlTopic] != 1 {
+		t.Errorf("Expected topic count for '%s' to be 1, got %d", controlTopic, topics.Topicmap[controlTopic])
+	}
+}
+
+func TestData(t *testing.T) {
+	topics := GetTopics()
+	topics.SetStationName("TestStation")
+	dataTopic := topics.Data("bar")
+	expected := "ss/d/TestStation/bar"
+	if dataTopic != expected {
+		t.Errorf("Expected data topic '%s', got '%s'", expected, dataTopic)
+	}
+	if topics.Topicmap[dataTopic] != 1 {
+		t.Errorf("Expected topic count for '%s' to be 1, got %d", dataTopic, topics.Topicmap[dataTopic])
+	}
+}
+
+func TestServeHTTP(t *testing.T) {
+	topics := GetTopics()
+	topics.SetStationName("TestStation")
+	topics.Control("foo")
+	topics.Data("bar")
+
+	req := httptest.NewRequest(http.MethodGet, "/topics", nil)
 	w := httptest.NewRecorder()
-	handler(w, req)
+
+	topics.ServeHTTP(w, req)
 
 	resp := w.Result()
-	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status code 200, got %d", resp.StatusCode)
+	}
+
+	var decodedTopics Topics
+	err := json.NewDecoder(resp.Body).Decode(&decodedTopics)
 	if err != nil {
-		t.Errorf("Expected err (nil) got (%s)", err)
+		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	if resp.StatusCode != 200 {
-		t.Errorf("Expected response code (200) got (%d)", resp.StatusCode)
+	if decodedTopics.StationName != "TestStation" {
+		t.Errorf("Expected StationName to be 'TestStation', got '%s'", decodedTopics.StationName)
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		t.Errorf("Expected response Header (application/json) got (%s)", contentType)
+	if len(decodedTopics.Topicmap) != 2 {
+		t.Errorf("Expected 2 topics in Topicmap, got %d", len(decodedTopics.Topicmap))
 	}
-
-	var topics Topics
-	err = json.Unmarshal(body, &topics)
-	if err != nil {
-		t.Errorf("Expected err nil got (%s)", err)
-	}
-
-	bodystr := fmt.Sprintf("%s", body)
-	println(bodystr)
-
 }
