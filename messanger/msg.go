@@ -10,9 +10,6 @@ import (
 	"github.com/rustyeddy/otto/utils"
 )
 
-type Message interface {
-}
-
 // Msg holds a value and some type of meta data to be pass around in
 // the system. The Msg struct contains all the info need to communicate
 // internally or over the PubSub protocol.  Every Msg has a unique ID
@@ -44,7 +41,7 @@ func getMsgID() int64 {
 
 // New creates a new Msg from the given topic, data and a source
 // string.
-func New(topic string, data []byte, source string) *Msg {
+func NewMsg(topic string, data []byte, source string) *Msg {
 	msg := &Msg{
 		ID:        getMsgID(),
 		Topic:     topic,
@@ -72,6 +69,9 @@ func (msg *Msg) Station() string {
 // Last returns the Last element in the Msg.Topic path
 func (msg *Msg) Last() string {
 	l := len(msg.Path)
+	if l == 0 {
+		return ""
+	}
 	return msg.Path[l-1]
 }
 

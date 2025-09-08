@@ -25,7 +25,7 @@ type Station struct {
 	Local      bool          `json:"local"`
 	Ifaces     []*Iface      `json:"iface"`
 
-	*messanger.Messanger `json:"messanger"`
+	messanger.Messanger  `json:"messanger"`
 	device.DeviceManager `json:"devices"`
 
 	errq   chan error
@@ -51,7 +51,7 @@ func NewStation(id string) (st *Station) {
 	st = &Station{
 		ID:         id,
 		Expiration: 3 * time.Minute,
-		Messanger:  messanger.NewMessanger(id),
+		Messanger:  messanger.NewMessangerMQTT(id),
 		Duration:   1 * time.Minute,
 	}
 
@@ -78,7 +78,7 @@ func (st *Station) Init() {
 
 	topics := messanger.GetTopics()
 	topics.SetStationName(st.Hostname)
-	st.Topic = topics.Data("hello")
+	st.SetTopic(topics.Data("hello"))
 
 	// start either an announcement timer or a timer to timeout
 	// stale stations

@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/rustyeddy/otto/data"
 	"github.com/rustyeddy/otto/device/bme280"
 	"github.com/rustyeddy/otto/messanger"
 )
@@ -23,7 +24,7 @@ func main() {
 
 	// Before we start reading temp, etc. let's subscribe to
 	// the messages we are going to publish.
-	dm := messanger.GetDataManager()
+	dm := data.GetDataManager()
 	dm.Subscribe(topic, dm.Callback)
 
 	// start reading in a loop and publish the results via MQTT

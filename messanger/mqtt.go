@@ -112,7 +112,7 @@ func (m *MQTT) Subscribe(topic string, f MsgHandler) error {
 	var err error
 	token := m.Client.Subscribe(topic, byte(0), func(c gomqtt.Client, m gomqtt.Message) {
 		slog.Debug("MQTT incoming: ", "topic", m.Topic(), "payload", string(m.Payload()))
-		msg := New(m.Topic(), m.Payload(), "mqtt-sub")
+		msg := NewMsg(m.Topic(), m.Payload(), "mqtt-sub")
 		f(msg)
 	})
 

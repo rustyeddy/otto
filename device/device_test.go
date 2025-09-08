@@ -136,8 +136,8 @@ func TestDeviceMessangerInitialization(t *testing.T) {
 		t.Error("Expected Messanger to be initialized, but it was nil")
 	}
 
-	if dev.Messanger.ID != name {
-		t.Errorf("Expected Messanger name to be '%s', but got '%s'", name, dev.Messanger.Name())
+	if dev.Messanger.ID() != name {
+		t.Errorf("Expected Messanger name to be '%s', but got '%s'", name, dev.Messanger.ID())
 	}
 }
 
@@ -148,7 +148,8 @@ func TestDeviceMessangerPublish(t *testing.T) {
 	topic := "test/topic"
 	message := "test message"
 
-	dev.Messanger.Publish(topic, message)
+	dev.Messanger.SetTopic(topic)
+	dev.Messanger.Publish(message)
 	err := dev.Messanger.Error()
 	if err != nil {
 		t.Errorf("Expected Publish to succeed, but got error: %v", err)

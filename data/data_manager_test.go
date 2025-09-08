@@ -1,4 +1,4 @@
-package messanger
+package data
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/rustyeddy/otto/messanger"
 )
 
 type InvValues struct {
@@ -32,7 +34,7 @@ func TestCallbackInts(t *testing.T) {
 	path := "ss/d/station1/test"
 
 	dm := GetDataManager()
-	msg := New(path, data, "data-manager-test")
+	msg := messanger.New(path, data, "data-manager-test")
 	dm.Callback(msg)
 
 }

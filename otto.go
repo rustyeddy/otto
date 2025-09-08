@@ -130,6 +130,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/rustyeddy/otto/data"
 	"github.com/rustyeddy/otto/device"
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/rustyeddy/otto/server"
@@ -153,7 +154,7 @@ type OttO struct {
 	*station.Station
 	*station.StationManager
 	*server.Server
-	*messanger.DataManager
+	*data.DataManager
 	*messanger.Messanger
 
 	Mock bool
@@ -212,7 +213,7 @@ func (o *OttO) Init() {
 	}
 
 	if o.DataManager == nil {
-		o.DataManager = messanger.NewDataManager()
+		o.DataManager = data.NewDataManager()
 	}
 
 	if o.Server == nil {

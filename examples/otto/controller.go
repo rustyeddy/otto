@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/rustyeddy/otto/data"
 	"github.com/rustyeddy/otto/device/bme280"
 	"github.com/rustyeddy/otto/device/button"
 	"github.com/rustyeddy/otto/device/drivers"
@@ -27,7 +28,7 @@ type controller struct {
 	onButton  *button.Button
 	offButton *button.Button
 
-	*messanger.DataManager
+	*data.DataManager
 	*station.StationManager
 	*server.Server
 }
@@ -42,7 +43,7 @@ func (c *controller) initSignals() {
 }
 
 func (c *controller) initDataManager() {
-	dm := messanger.GetDataManager()
+	dm := data.GetDataManager()
 	dm.Subscribe("ss/d/#", dm.Callback)
 
 	c.Server.Register("/api/data", dm)

@@ -59,30 +59,30 @@ func (m *MockClient) Publish(topic string, qos byte, retained bool, payload inte
 		return t
 	}
 
-	mm := MockMessage{
-		topic: topic,
+	mm := &Msg{
+		Topic: topic,
 	}
 	switch typ := payload.(type) {
 	case []byte:
-		mm.payload = payload.([]byte)
+		mm.Data = payload.([]byte)
 
 	case string:
-		mm.payload = []byte(payload.(string))
+		mm.Data = []byte(payload.(string))
 
 	case int:
 		val := strconv.Itoa(payload.(int))
-		mm.payload = []byte(val)
+		mm.Data = []byte(val)
 
 	default:
 		t.Err = fmt.Errorf("unhandled payload type %s", typ)
 	}
 
-	n.pub(m, mm)
+	n.pub(mm)
 	return t
 }
 
 func (m *MockClient) Subscribe(topic string, qos byte, mh gomqtt.MessageHandler) gomqtt.Token {
-	root.insert(topic, mh)
+	// root.insert(topic, mh.func())
 
 	var t MockToken
 	return t

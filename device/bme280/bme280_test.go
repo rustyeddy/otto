@@ -8,12 +8,6 @@ import (
 	"github.com/rustyeddy/otto/messanger"
 )
 
-func init() {
-	// Setup the mock mqtt client
-	c := messanger.GetMockClient()
-	messanger.SetMQTTClient(c)
-}
-
 func TestBME280(t *testing.T) {
 	name := "bme-test"
 	bus := "/dev/i2c-fake"
@@ -62,7 +56,7 @@ func TestBME280(t *testing.T) {
 	// stop the loop
 	count := 0
 	topic := messanger.GetTopics().Data(name)
-	bme.Topic = topic
+	bme.SetTopic(topic)
 	bme.Subscribe(topic, func(msg *messanger.Msg) {
 		if msg.Topic != topic {
 			t.Errorf("expected topic (%s) got (%s)", topic, msg.Topic)

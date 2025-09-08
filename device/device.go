@@ -37,7 +37,7 @@ type Device struct {
 	name string
 
 	// Suffix to be appended to the base topic for mqtt publications
-	*messanger.Messanger
+	messanger.Messanger
 
 	// Period for repititive timed tasks like collecting and
 	// publishing data
@@ -59,7 +59,7 @@ type Device struct {
 func NewDevice(name string) *Device {
 	d := &Device{
 		name:      name,
-		Messanger: messanger.NewMessanger(name),
+		Messanger: messanger.NewMessangerMQTT(name),
 	}
 	return d
 }
@@ -98,7 +98,7 @@ func (d *Device) String() string {
 func (d *Device) JSON() ([]byte, error) {
 	j := struct {
 		Name string
-		*messanger.Messanger
+		messanger.Messanger
 		Period time.Duration
 		Err    error
 	}{

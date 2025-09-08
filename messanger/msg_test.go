@@ -15,7 +15,7 @@ func getMsg() (*Msg, time.Time) {
 	path := "ss/d/%s/test"
 
 	b := fmt.Sprintf("%d", 4)
-	m := New(path, []byte(b), "test")
+	m := NewMsg(path, []byte(b), "test")
 	m.Source = "be:ef:ca:fe:01"
 	m.Timestamp = utils.Timestamp()
 
@@ -36,7 +36,7 @@ func TestStationMsg(t *testing.T) {
 		return
 	}
 
-	msg := New(topic, j, "test")
+	msg := NewMsg(topic, j, "test")
 	if msg == nil {
 		t.Error("msg topic expected but is nil")
 	}
@@ -140,5 +140,164 @@ func TestJSON(t *testing.T) {
 	m.Data = []byte("this is not json")
 	if m.IsJSON() {
 		t.Errorf("JSON expected (false) got (true) ")
+	}
+}
+func TestNewMsg(t *testing.T) {
+	topic := "test/topic"
+	data := []byte("test data")
+	source := "test source"
+
+	msg := NewMsg(topic, data, source)
+
+	if msg.Topic != topic {
+		t.Errorf("expected topic '%s', got '%s'", topic, msg.Topic)
+	}
+	if string(msg.Data) != string(data) {
+		t.Errorf("expected data '%s', got '%s'", string(data), string(msg.Data))
+	}
+	if msg.Source != source {
+		t.Errorf("expected source '%s', got '%s'", source, msg.Source)
+	}
+	if len(msg.Path) != 2 || msg.Path[0] != "test" || msg.Path[1] != "topic" {
+		t.Errorf("expected path ['test', 'topic'], got '%v'", msg.Path)
+	}
+}
+
+func TestMsg_Station(t *testing.T) {
+	msg := &Msg{Path: []string{"ss", "d", "be:ef:ca:fe:01", "station"}}
+	if msg.Station() != "station" {
+		t.Errorf("expected station 'station', got '%s'", msg.Station())
+	}
+
+	msg = &Msg{Path: []string{"ss", "d"}}
+	if msg.Station() != "" {
+		t.Errorf("expected station '', got '%s'", msg.Station())
+	}
+}
+
+func TestMsg_Last(t *testing.T) {
+	msg := &Msg{Path: []string{"ss", "d", "test"}}
+	if msg.Last() != "test" {
+		t.Errorf("expected last 'test', got '%s'", msg.Last())
+	}
+
+	msg = &Msg{Path: []string{}}
+	if msg.Last() != "" {
+		t.Errorf("expected last '', got '%s'", msg.Last())
+	}
+}
+
+func TestMsg_Byte(t *testing.T) {
+	data := []byte("test data")
+	msg := &Msg{Data: data}
+	if string(msg.Byte()) != string(data) {
+		t.Errorf("expected byte data '%s', got '%s'", string(data), string(msg.Byte()))
+	}
+}
+
+func TestMsg_String(t *testing.T) {
+	data := []byte("test data")
+	msg := &Msg{Data: data}
+	if msg.String() != string(data) {
+		t.Errorf("expected string data '%s', got '%s'", string(data), msg.String())
+	}
+}
+
+func TestMsg_Float64(t *testing.T) {
+	data := []byte("123.45")
+	msg := &Msg{Data: data}
+	if msg.Float64() != 123.45 {
+		t.Errorf("expected float64 data '123.45', got '%f'", msg.Float64())
+	}
+}
+
+func TestMsg_IsJSON(t *testing.T) {
+	msg := &Msg{Data: []byte(`{"key": "value"}`)}
+	if !msg.IsJSON() {
+		t.Errorf("expected IsJSON to return true, got false")
+	}
+
+	msg = &Msg{Data: []byte("not json")}
+	if msg.IsJSON() {
+		t.Errorf("expected IsJSON to return false, got true")
+	}
+}
+
+func TestMsg_JSON(t *testing.T) {
+	msg := &Msg{ID: 1, Topic: "test", Data: []byte("test data")}
+	jsonData, err := msg.JSON()
+	if err != nil {
+		t.Errorf("expected no error, got '%v'", err)
+	}
+
+	var unmarshalledMsg Msg
+	err = json.Unmarshal(jsonData, &unmarshalledMsg)
+	if err != nil {
+		t.Errorf("expected no error during unmarshal, got '%v'", err)
+	}
+
+	if unmarshalledMsg.ID != msg.ID || unmarshalledMsg.Topic != msg.Topic {
+		t.Errorf("expected unmarshalled message to match original, got '%v'", unmarshalledMsg)
+	}
+}
+
+func TestMsg_Map(t *testing.T) {
+	msg := &Msg{Data: []byte(`{"key": "value"}`)}
+	m, err := msg.Map()
+	if err != nil {
+		t.Errorf("expected no error, got '%v'", err)
+	}
+
+	if m["key"] != "value" {
+		t.Errorf("expected map value 'value', got '%v'", m["key"])
+	}
+
+	msg = &Msg{Data: []byte("not json")}
+	_, err = msg.Map()
+	if err == nil {
+		t.Errorf("expected error for invalid JSON, got nil")
+	}
+}
+
+func TestMsg_Dump(t *testing.T) {
+	msg := &Msg{
+		ID:        1,
+		Topic:     "test/topic",
+		Path:      []string{"test", "topic"},
+		Args:      []string{"arg1", "arg2"},
+		Data:      []byte("test data"),
+		Source:    "test source",
+		Timestamp: 12345,
+	}
+
+	dump := msg.Dump()
+	if !strings.Contains(dump, "ID: 1") ||
+		!strings.Contains(dump, "Path: [\"test\" \"topic\"]") ||
+		!strings.Contains(dump, "Args: [\"arg1\" \"arg2\"]") ||
+		!strings.Contains(dump, "Data: test data") {
+		t.Errorf("Dump output does not match expected format: %s", dump)
+	}
+}
+
+func TestMsgSaver(t *testing.T) {
+	saver := GetMsgSaver()
+	if saver == nil {
+		t.Error("expected MsgSaver instance, got nil")
+	}
+
+	saver.StartSaving()
+	if !saver.Saving {
+		t.Error("expected Saving to be true, got false")
+	}
+
+	saver.StopSaving()
+	if saver.Saving {
+		t.Error("expected Saving to be false, got true")
+	}
+
+	msg := &Msg{ID: 1, Topic: "test"}
+	saver.Messages = append(saver.Messages, msg)
+	if len(saver.Messages) != 1 {
+		t.Errorf("expected 1 message, got %d", len(saver.Messages))
 	}
 }

@@ -1,4 +1,4 @@
-package messanger
+package data
 
 import (
 	"encoding/json"
@@ -6,14 +6,16 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
+	"github.com/rustyeddy/otto/messanger"
 )
 
 // DataManager is a map of Timeseries data that belongs to
 // a specific station. The timeseries for each station are
 // differentiated by the timeseries labels.
 type DataManager struct {
-	DataMap    map[string]map[string]*Timeseries `json:"datamap"`
-	*Messanger `json:"-"`
+	DataMap             map[string]map[string]*Timeseries `json:"datamap"`
+	messanger.Messanger `json:"-"`
 }
 
 var (
@@ -32,7 +34,7 @@ func GetDataManager() *DataManager {
 func NewDataManager() (dm *DataManager) {
 	dm = &DataManager{
 		DataMap:   make(map[string]map[string]*Timeseries),
-		Messanger: NewMessanger("DataManager"),
+		Messanger: messanger.NewMessangerMQTT("DataManager"),
 	}
 	return dm
 }
@@ -64,7 +66,7 @@ func (dm *DataManager) Dump(w io.Writer) {
 // MQTT messangers. TODO: move this call back to the stations because
 // the stations will have a better understanding of the data they
 // are subscribing to.
-func (dm *DataManager) Callback(msg *Msg) {
+func (dm *DataManager) Callback(msg *messanger.Msg) {
 	if msg.IsJSON() {
 		m, err := msg.Map()
 		if err != nil {
