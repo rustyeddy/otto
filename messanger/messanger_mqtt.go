@@ -10,42 +10,25 @@ import (
 
 // Messanger represents a type that can publish and subscribe to messages
 type MessangerMQTT struct {
-	id    string `json:"id"`
-	Topic string `json:"topic"`
-
-	Published int64                   `json:"published"`
-	Subs      map[string][]MsgHandler `json:"-"`
-
+	MessangerBase
 	*MQTT
 	sync.Mutex `json:"-"`
 }
 
 // NewMessanger with the given ID and a variable number of topics that
 // it will subscribe to.
-func NewMessangerMQTT(id string, topic ...string) *MessangerMQTT {
+func NewMessangerMQTT(id string, topics ...string) *MessangerMQTT {
 	m := &MessangerMQTT{
-		id: id,
-	}
-	m.MQTT = GetMQTT()
-	m.Subs = make(map[string][]MsgHandler)
-	if len(topic) > 0 {
-		m.Topic = topic[0]
+		MessangerBase: NewMessangerBase(id, topics...),
+		MQTT:          GetMQTT(),
 	}
 	return m
-}
-
-func (m *MessangerMQTT) ID() string {
-	return m.id
-}
-
-func (m *MessangerMQTT) SetTopic(topic string) {
-	m.Topic = topic
 }
 
 // Subscribe will literally subscribe to the provide MQTT topic with
 // the specified message handler.
 func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error {
-	m.Subs[topic] = append(m.Subs[topic], handler)
+	m.subs[topic] = append(m.subs[topic], handler)
 	return m.MQTT.Subscribe(topic, handler)
 }
 
@@ -62,8 +45,8 @@ func (m *MessangerMQTT) PubMsg(msg *Msg) {
 
 // Publish given data to this messangers topic
 func (m *MessangerMQTT) PubData(data any) {
-	if m.Topic == "" {
-		slog.Error("Device.Publish failed has no Topic", "name", m.ID)
+	if m.topic[0] == "" {
+		slog.Error("Device.Publish failed has no Topic", "name", m.id)
 		return
 	}
 	var buf []byte
@@ -87,7 +70,7 @@ func (m *MessangerMQTT) PubData(data any) {
 		slog.Error("Unknown Type: ", "topic", m.Topic, "type", fmt.Sprintf("%T", data))
 	}
 
-	msg := NewMsg(m.Topic, buf, m.id)
+	msg := NewMsg(m.topic[0], buf, m.id)
 	m.PubMsg(msg)
 }
 

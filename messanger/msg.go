@@ -2,6 +2,7 @@ package messanger
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -37,6 +38,31 @@ var (
 func getMsgID() int64 {
 	msgid++
 	return msgid
+}
+
+func Bytes(data any) ([]byte, error) {
+	var buf []byte
+
+	switch data.(type) {
+	case []byte:
+		buf = data.([]byte)
+
+	case string:
+		buf = []byte(data.(string))
+
+	case int:
+		str := fmt.Sprintf("%d", data.(int))
+		buf = []byte(str)
+
+	case float64:
+		str := fmt.Sprintf("%5.2f", data.(float64))
+		buf = []byte(str)
+
+	default:
+		err := errors.New("Can not convert data type " + fmt.Sprintf("%T", data))
+		return nil, err
+	}
+	return buf, nil
 }
 
 // New creates a new Msg from the given topic, data and a source

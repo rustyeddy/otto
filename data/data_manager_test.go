@@ -34,7 +34,7 @@ func TestCallbackInts(t *testing.T) {
 	path := "ss/d/station1/test"
 
 	dm := GetDataManager()
-	msg := messanger.New(path, data, "data-manager-test")
+	msg := messanger.NewMsg(path, data, "data-manager-test")
 	dm.Callback(msg)
 
 }

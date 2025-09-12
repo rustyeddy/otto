@@ -27,7 +27,7 @@ func TestButton(t *testing.T) {
 	}
 
 	b := New("button", 23)
-	b.Topic = messanger.GetTopics().Control("button")
+	b.SetTopic(messanger.GetTopics().Control("button"))
 	b.Subscribe(messanger.GetTopics().Control("button"), b.MsgHandler)
 	go b.EventLoop(done, b.ReadPub)
 

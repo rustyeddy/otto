@@ -60,7 +60,7 @@ func (v *VH400) ReadPub() error {
 }
 
 func (v *VH400) ReadContinousPub() error {
-	v.Topic = messanger.GetTopics().Data("vh100/" + v.Name())
+	v.SetTopic(messanger.GetTopics().Data("vh100/" + v.Name()))
 	q := v.AnalogPin.ReadContinuous()
 	go func() {
 		for {
