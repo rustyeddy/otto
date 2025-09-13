@@ -1,16 +1,14 @@
 package messanger
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"sync"
 )
 
 // Messanger represents a type that can publish and subscribe to messages
 type MessangerMQTT struct {
-	MessangerBase
+	*MessangerBase
 	*MQTT
 	sync.Mutex `json:"-"`
 }
@@ -20,9 +18,13 @@ type MessangerMQTT struct {
 func NewMessangerMQTT(id string, topics ...string) *MessangerMQTT {
 	m := &MessangerMQTT{
 		MessangerBase: NewMessangerBase(id, topics...),
-		MQTT:          GetMQTT(),
+		MQTT:          NewMQTT(id, topics...),
 	}
 	return m
+}
+
+func (m *MessangerMQTT) ID() string {
+	return m.MessangerBase.ID()
 }
 
 // Subscribe will literally subscribe to the provide MQTT topic with
@@ -45,8 +47,8 @@ func (m *MessangerMQTT) PubMsg(msg *Msg) {
 
 // Publish given data to this messangers topic
 func (m *MessangerMQTT) PubData(data any) {
-	if m.topic[0] == "" {
-		slog.Error("Device.Publish failed has no Topic", "name", m.id)
+	if len(m.topic) < 1 || m.topic[0] == "" {
+		slog.Error("Device.Publish failed has no Topic", "name", m.MessangerBase.id)
 		return
 	}
 	var buf []byte
@@ -70,17 +72,12 @@ func (m *MessangerMQTT) PubData(data any) {
 		slog.Error("Unknown Type: ", "topic", m.Topic, "type", fmt.Sprintf("%T", data))
 	}
 
-	msg := NewMsg(m.topic[0], buf, m.id)
+	msg := NewMsg(m.topic[0], buf, m.MessangerBase.id)
 	m.PubMsg(msg)
 }
 
-// ServeHTTP is the REST API entry point for the messanger package
-func (m *MessangerMQTT) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(m)
-	if err != nil {
-		slog.Error("MQTT.ServeHTTP failed to encode", "error", err)
-	}
+func (m *MessangerMQTT) Error() error {
+	return m.MQTT.Error()
 }
 
 // MsgPrinter will simply print a Msg that has been supplied. TODO,

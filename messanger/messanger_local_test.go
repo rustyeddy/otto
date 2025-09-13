@@ -1,10 +1,130 @@
+// package messanger
+
+// import (
+// 	"testing"
+// )
+
+// func TestNewMessangerLocal(t *testing.T) {
+// 	m := NewMessangerLocal("test-id", "test/topic")
+// 	if m.ID() != "test-id" {
+// 		t.Errorf("Expected ID 'test-id', got '%s'", m.ID())
+// 	}
+// 	if m.topic[0] != "test/topic" {
+// 		t.Errorf("Expected Topic 'test/topic', got '%s'", m.Topic())
+// 	}
+// }
+
+// func TestSetTopic(t *testing.T) {
+// 	m := NewMessangerLocal("test-id")
+// 	m.SetTopic("new/topic")
+// 	if len(m.topic) == 0 || m.topic[0] != "new/topic" {
+// 		t.Errorf("Expected Topic 'new/topic', got '%v'", m.topic)
+// 	}
+// }
+
+// func TestSubscribeWithNilRoot(t *testing.T) {
+// 	resetNodes() // Ensure root is nil before the test
+// 	m := NewMessangerLocal("test-id")
+// 	handlerCalled := false
+// 	handler := func(msg *Msg) {
+// 		handlerCalled = true
+// 	}
+
+// 	err := m.Subscribe("test/topic", handler)
+// 	if err != nil {
+// 		t.Fatalf("Subscribe returned an error: %v", err)
+// 	}
+
+// 	if root == nil {
+// 		t.Fatal("Expected root to be initialized, but it is nil")
+// 	}
+
+// 	if len(m.subs["test/topic"]) != 1 {
+// 		t.Errorf("Expected 1 handler for 'test/topic', got %d", len(m.subs["test/topic"]))
+// 	}
+
+// 	// Simulate publishing a message to trigger the handler
+// 	msg := NewMsg("test/topic", []byte("test data"), "test-id")
+// 	m.PubMsg(msg)
+
+// 	if !handlerCalled {
+// 		t.Error("Expected handler to be called, but it was not")
+// 	}
+// }
+
+// func TestPub(t *testing.T) {
+// 	resetNodes()
+// 	m := NewMessangerLocal("test-id")
+// 	handlerCalled := false
+// 	handler := func(msg *Msg) {
+// 		handlerCalled = true
+// 		if string(msg.Data) != "test data" {
+// 			t.Errorf("Expected payload 'test data', got '%s'", string(msg.Data))
+// 		}
+// 	}
+
+// 	err := m.Subscribe("test/topic", handler)
+// 	if err != nil {
+// 		t.Fatalf("Subscribe returned an error: %v", err)
+// 	}
+
+// 	m.Pub("test/topic", "test data")
+
+// 	if !handlerCalled {
+// 		t.Error("Expected handler to be called, but it was not")
+// 	}
+// }
+
+// func TestPubMsg(t *testing.T) {
+// 	resetNodes()
+// 	m := NewMessangerLocal("test-id")
+// 	handlerCalled := false
+// 	handler := func(msg *Msg) {
+// 		handlerCalled = true
+// 		if string(msg.Data) != "test data" {
+// 			t.Errorf("Expected payload 'test data', got '%s'", string(msg.Data))
+// 		}
+// 	}
+
+// 	err := m.Subscribe("test/topic", handler)
+// 	if err != nil {
+// 		t.Fatalf("Subscribe returned an error: %v", err)
+// 	}
+
+// 	msg := NewMsg("test/topic", []byte("test data"), "test-id")
+// 	m.PubMsg(msg)
+
+// 	if !handlerCalled {
+// 		t.Error("Expected handler to be called, but it was not")
+// 	}
+// }
+
+// func TestPubData(t *testing.T) {
+// 	resetNodes()
+// 	m := NewMessangerLocal("test-id", "test/topic")
+// 	handlerCalled := false
+// 	handler := func(msg *Msg) {
+// 		handlerCalled = true
+// 		if string(msg.Data) != "test data" {
+// 			t.Errorf("Expected payload 'test data', got '%s'", string(msg.Data))
+// 		}
+// 	}
+
+// 	err := m.Subscribe("test/topic", handler)
+// 	if err != nil {
+// 		t.Fatalf("Subscribe returned an error: %v", err)
+// 	}
+
+// 	m.PubData("test data")
+
+// 	if !handlerCalled {
+// 		t.Error("Expected handler to be called, but it was not")
+// 	}
+// }
+
 package messanger
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -13,116 +133,170 @@ func TestNewMessangerLocal(t *testing.T) {
 	if m.ID() != "test-id" {
 		t.Errorf("Expected ID 'test-id', got '%s'", m.ID())
 	}
-	if m.topic[0] != "test/topic" {
+	if m.Topic() != "test/topic" {
 		t.Errorf("Expected Topic 'test/topic', got '%s'", m.Topic())
 	}
 }
 
-func TestSetTopic(t *testing.T) {
+func TestMessangerLocalSetTopic(t *testing.T) {
 	m := NewMessangerLocal("test-id")
 	m.SetTopic("new/topic")
-	if len(m.topic) == 0 || m.topic[0] != "new/topic" {
-		t.Errorf("Expected Topic 'new/topic', got '%v'", m.topic)
+	if m.Topic() != "new/topic" {
+		t.Errorf("Expected Topic 'new/topic', got '%s'", m.Topic())
 	}
 }
 
-func TestSubscribe(t *testing.T) {
+func TestMessangerLocalSubscribe(t *testing.T) {
+	resetNodes() // Reset the node tree
 	m := NewMessangerLocal("test-id")
-	handlerCalled := false
-	handler := func(msg *Msg) {
-		handlerCalled = true
+
+	tests := []struct {
+		name    string
+		topic   string
+		wantErr bool
+	}{
+		{"valid topic", "test/topic", false},
+		{"root topic", "/", false},
+		{"multi-level topic", "a/b/c/d", false},
+		{"wildcard topic", "test/+/topic", false},
 	}
 
-	err := m.Subscribe("test/topic", handler)
-	if err != nil {
-		t.Fatalf("Subscribe returned an error: %v", err)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handlerCalled := false
+			handler := func(msg *Msg) {
+				handlerCalled = true
+			}
 
-	if len(m.subs["test/topic"]) != 1 {
-		t.Errorf("Expected 1 handler for 'test/topic', got %d", len(m.subs["test/topic"]))
-	}
+			err := m.Subscribe(tt.topic, handler)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Subscribe() error = %v, wantErr %v", err, tt.wantErr)
+			}
 
-	// Simulate publishing a message to trigger the handler
-	msg := NewMsg("test/topic", []byte("test data"), "test-id")
-	m.PubMsg(msg)
+			if !tt.wantErr {
+				// Test publishing to the topic
+				msg := NewMsg(tt.topic, []byte("test data"), "test-id")
+				m.PubMsg(msg)
 
-	if !handlerCalled {
-		t.Error("Expected handler to be called, but it was not")
+				if !handlerCalled {
+					t.Error("Handler was not called after publishing to topic")
+				}
+			}
+		})
 	}
 }
 
-func TestPubMsg(t *testing.T) {
+func TestMessangerLocalPub(t *testing.T) {
+	resetNodes()
+	m := NewMessangerLocal("test-id")
+
+	tests := []struct {
+		name     string
+		topic    string
+		data     interface{}
+		wantData string
+	}{
+		{"string data", "test/topic", "hello", "hello"},
+		{"int data", "test/topic", 42, "42"},
+		{"bool data", "test/topic", true, "true"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			receivedData := ""
+			handler := func(msg *Msg) {
+				receivedData = string(msg.Data)
+			}
+
+			m.Subscribe(tt.topic, handler)
+			m.Pub(tt.topic, tt.data)
+
+			if receivedData != tt.wantData {
+				t.Errorf("Pub() got = %v, want %v", receivedData, tt.wantData)
+			}
+		})
+	}
+}
+
+func TestMessangerLocalPubMsg(t *testing.T) {
 	resetNodes()
 	m := NewMessangerLocal("test-id")
 	handlerCalled := false
+	expectedData := "test data"
+
 	handler := func(msg *Msg) {
 		handlerCalled = true
-		if string(msg.Data) != "test data" {
-			fmt.Printf("FOO %+v\n", msg)
-			t.Errorf("failed")
-			//t.Errorf("Expected message data 'test data', got '%+v'", msg.Data)
-			println("BAR")
+		if string(msg.Data) != expectedData {
+			t.Errorf("Expected message data '%s', got '%s'", expectedData, string(msg.Data))
 		}
 	}
 
 	m.Subscribe("test/topic", handler)
-	msg := NewMsg("test/topic", []byte("test data"), "test-id")
+	msg := NewMsg("test/topic", []byte(expectedData), "test-id")
 	m.PubMsg(msg)
 
 	if !handlerCalled {
-		t.Error("Expected handler to be called, but it was not")
+		t.Error("Handler was not called after publishing message")
 	}
 }
 
-func TestPubData(t *testing.T) {
+func TestMessangerLocalPubData(t *testing.T) {
 	resetNodes()
 	m := NewMessangerLocal("test-id", "test/topic")
+
+	tests := []struct {
+		name     string
+		data     interface{}
+		wantData string
+	}{
+		{"string data", "hello", "hello"},
+		{"int data", 42, "42"},
+		{"bool data", true, "true"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			receivedData := ""
+			handler := func(msg *Msg) {
+				receivedData = string(msg.Data)
+			}
+
+			m.Subscribe(m.Topic(), handler)
+			m.PubData(tt.data)
+
+			if receivedData != tt.wantData {
+				t.Errorf("PubData() got = %v, want %v", receivedData, tt.wantData)
+			}
+		})
+	}
+}
+
+func TestMessangerLocalClose(t *testing.T) {
+	// Setup
+	m := NewMessangerLocal("test-id", "test/topic")
+
+	// Create some subscriptions and publish some messages
 	handlerCalled := false
 	handler := func(msg *Msg) {
 		handlerCalled = true
-		if string(msg.Data) != "42" {
-			t.Errorf("Expected message data '42', got '%s'", string(msg.Data))
-		}
 	}
 
+	// Subscribe and publish before close
 	m.Subscribe("test/topic", handler)
-	m.PubData(42)
+	m.PubData("test message")
 
 	if !handlerCalled {
-		t.Error("Expected handler to be called, but it was not")
-	}
-}
-
-func TestServeHTTPLocal(t *testing.T) {
-	resetNodes()
-	m := NewMessangerLocal("test-id", "test/topic")
-	m.PubData("test data")
-
-	req := httptest.NewRequest(http.MethodGet, "/messanger", nil)
-	w := httptest.NewRecorder()
-
-	m.ServeHTTP(w, req)
-
-	resp := w.Result()
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Expected status code 200, got %d", resp.StatusCode)
+		t.Error("Handler should have been called before Close()")
 	}
 
-	var decodedMessanger MessangerLocal
-	err := json.NewDecoder(resp.Body).Decode(&decodedMessanger)
-	if err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
+	// Call Close
+	m.Close()
 
-	fmt.Printf("decode manager: %+v\n", decodedMessanger)
+	// Verify that after Close(), new publications don't trigger handlers
+	handlerCalled = false
+	m.PubData("test message after close")
 
-	if decodedMessanger.ID() != "test-id" {
-		t.Errorf("Expected ID 'test-id', got '%s'", decodedMessanger.ID())
-	}
-	if len(decodedMessanger.topic) == 0 ||
-		decodedMessanger.topic[0] != "test/topic" {
-		t.Errorf("Expected Topic 'test/topic', got '%v'", decodedMessanger.topic)
+	if handlerCalled {
+		t.Error("Handler should not have been called after Close()")
 	}
 }

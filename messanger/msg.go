@@ -54,6 +54,13 @@ func Bytes(data any) ([]byte, error) {
 		str := fmt.Sprintf("%d", data.(int))
 		buf = []byte(str)
 
+	case bool:
+		str := "false"
+		if data.(bool) {
+			str = "true"
+		}
+		buf = []byte(str)
+
 	case float64:
 		str := fmt.Sprintf("%5.2f", data.(float64))
 		buf = []byte(str)

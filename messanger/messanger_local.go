@@ -1,22 +1,20 @@
 package messanger
 
 import (
-	"encoding/json"
 	"log/slog"
-	"net/http"
 	"sync"
 )
 
 type MessangerLocal struct {
-	MessangerBase
+	*MessangerBase
 	sync.Mutex `json:"-"`
 }
 
 // NewMessanger with the given ID and a variable number of topics that
 // it will subscribe to.
-func NewMessangerLocal(id string, topic ...string) *MessangerLocal {
+func NewMessangerLocal(id string, topics ...string) *MessangerLocal {
 	m := &MessangerLocal{
-		MessangerBase: NewMessangerBase(id, topic...),
+		MessangerBase: NewMessangerBase(id, topics...),
 	}
 	return m
 }
@@ -32,12 +30,20 @@ func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error {
 	return nil
 }
 
+// Close is implemented to satisfy the messanger interface
+func (m *MessangerLocal) Close() {
+	// TODO - need to unsubscribe handlers for this messanger
+	resetNodes()
+	m.MessangerBase.subs = nil
+}
+
 // Pub a message via MQTT with the given topic and value
 func (m *MessangerLocal) Pub(topic string, value any) {
 	m.Published++
 	buf, err := Bytes(value)
 	if err != nil {
-		panic(err)
+		m.error = err
+		return
 	}
 
 	msg := NewMsg(topic, buf, m.id)
@@ -66,13 +72,4 @@ func (m *MessangerLocal) PubData(data any) {
 	}
 	msg := NewMsg(m.topic[0], buf, m.id)
 	m.PubMsg(msg)
-}
-
-// ServeHTTP is the REST API entry point for the messanger package
-func (m *MessangerLocal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(m)
-	if err != nil {
-		slog.Error("MQTT.ServeHTTP failed to encode", "error", err)
-	}
 }

@@ -16,7 +16,7 @@ var (
 // MQTT is a wrapper around the Paho MQTT Go package
 // Wraps the Broker, ID and Debug variables.
 type MQTT struct {
-	ID     string `json:"id"`
+	id     string `json:"id"`
 	Broker string `json:"broker"`
 	Debug  bool   `json:"debug"`
 
@@ -25,9 +25,9 @@ type MQTT struct {
 }
 
 // NewMQTT creates a new instance of the MQTT client type.
-func NewMQTT() *MQTT {
+func NewMQTT(id string, topics ...string) *MQTT {
 	mqtt := &MQTT{
-		ID:     "otto",
+		id:     id,
 		Broker: "localhost",
 	}
 	return mqtt
@@ -45,13 +45,11 @@ func SetMQTTClient(c gomqtt.Client) *MQTT {
 // GetMQTT returns the singleton instance of the MQTT client, the
 // first time it is called it will open and connect the client.
 func GetMQTT() *MQTT {
-	if mqtt == nil {
-		mqtt = NewMQTT()
-	}
-	if !mqtt.IsConnected() {
-		mqtt.Connect()
-	}
 	return mqtt
+}
+
+func (m *MQTT) ID() string {
+	return m.id
 }
 
 // IsConnected will tell you if the MQTT client is connected to
@@ -85,7 +83,7 @@ func (m *MQTT) Connect() error {
 	url := "tcp://" + mqtt.Broker + ":1883"
 	opts := gomqtt.NewClientOptions()
 	opts.AddBroker(url)
-	opts.SetClientID(m.ID)
+	opts.SetClientID(m.id)
 	opts.SetCleanSession(true)
 
 	// If we are testing m.Client will point to the mock client otherwise
@@ -96,6 +94,7 @@ func (m *MQTT) Connect() error {
 
 	if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
 		slog.Error("MQTT Connect: ", "error", token.Error())
+		m.error = token.Error()
 		return fmt.Errorf("Failed to connect to MQTT broker %s", token.Error())
 	}
 	return nil
@@ -119,6 +118,7 @@ func (m *MQTT) Subscribe(topic string, f MsgHandler) error {
 	if token.Wait() && token.Error() != nil {
 		// TODO: add routing that automatically subscribes subscribers when a
 		// connection has been made
+		m.error = token.Error()
 		return token.Error()
 	}
 	return err
@@ -146,6 +146,7 @@ func (m *MQTT) Publish(topic string, value any) {
 
 	t.Wait()
 	if t.Error() != nil {
+		m.error = t.Error()
 		slog.Error("MQTT Publish token: ", "error", t.Error())
 	}
 }
