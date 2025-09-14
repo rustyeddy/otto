@@ -1,7 +1,11 @@
 package messanger
 
 import (
+	"fmt"
+	"log/slog"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestNewMessangerLocal(t *testing.T) {
@@ -174,5 +178,180 @@ func TestMessangerLocalClose(t *testing.T) {
 
 	if handlerCalled {
 		t.Error("Handler should not have been called after Close()")
+	}
+}
+
+// TestMessengerLocalPubDataWithNoTopic tests PubData when no topic is set
+func TestMessengerLocalPubDataWithNoTopic(t *testing.T) {
+	defer resetNodes()
+
+	// Create local messenger without setting topic
+	messenger := NewMessangerLocal("test-device")
+
+	// Capture log output to verify error is logged
+	var logOutput strings.Builder
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logOutput, &slog.HandlerOptions{
+		Level: slog.LevelError,
+	})))
+
+	// Try to publish data - should log error and return early
+	testData := "test string"
+	messenger.PubData(testData)
+
+	// Verify error was logged
+	if !strings.Contains(logOutput.String(), "Device.Publish failed has no Topic") {
+		t.Errorf("Expected error log about no topic, got: %s", logOutput.String())
+	}
+	// The name field logs the device ID string
+	if !strings.Contains(logOutput.String(), "test-device") {
+		t.Errorf("Expected device name in log, got: %s", logOutput.String())
+	}
+}
+
+// TestMessengerLocalPubDataWithInvalidData tests PubData with data that can't be serialized
+func TestMessengerLocalPubDataWithInvalidData(t *testing.T) {
+	defer resetNodes()
+	defer func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(fmt.Sprintf("%v", r), "Can not convert data type") {
+				t.Errorf("Expected conversion error, got: %v", r)
+			}
+		} else {
+			t.Error("Expected panic due to unsupported data type")
+		}
+	}()
+
+	// Create local messenger with topic
+	messenger := NewMessangerLocal("test-device")
+	messenger.SetTopic("test/topic")
+
+	// Try to publish data that can't be serialized (unsupported type)
+	type customStruct struct {
+		Value string
+	}
+	data := customStruct{Value: "test"}
+
+	// This should panic due to unsupported type
+	messenger.PubData(data)
+}
+
+// TestMessengerLocalPubWithSerializationError tests Pub method with data that can't be serialized
+func TestMessengerLocalPubWithSerializationError(t *testing.T) {
+	defer resetNodes()
+
+	// Create local messenger
+	messenger := NewMessangerLocal("test-device")
+
+	// Create data that can't be serialized (unsupported type)
+	type customStruct struct {
+		Value string
+	}
+	data := customStruct{Value: "test"}
+
+	// Try to publish - should set error and return early
+	messenger.Pub("test/topic", data)
+
+	// Verify error was set
+	if messenger.error == nil {
+		t.Error("Expected error to be set")
+	}
+	if !strings.Contains(messenger.error.Error(), "Can not convert data type") {
+		t.Errorf("Expected conversion error, got: %v", messenger.error)
+	}
+}
+
+// TestMessengerLocalPubMsgWithNoSubscribers tests PubMsg when no subscribers exist
+func TestMessengerLocalPubMsgWithNoSubscribers(t *testing.T) {
+	defer resetNodes()
+
+	// Capture log output to verify info message
+	var logOutput strings.Builder
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logOutput, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})))
+
+	// Create local messenger
+	messenger := NewMessangerLocal("test-device")
+
+	// Create message for topic with no subscribers
+	msg := NewMsg("nonexistent/topic", []byte("test"), "test-id")
+
+	// Publish message - should log info about no subscribers
+	messenger.PubMsg(msg)
+
+	// Verify info message was logged
+	if !strings.Contains(logOutput.String(), "No subscribers") {
+		t.Errorf("Expected 'No subscribers' log, got: %s", logOutput.String())
+	}
+	if !strings.Contains(logOutput.String(), "nonexistent/topic") {
+		t.Errorf("Expected topic in log, got: %s", logOutput.String())
+	}
+}
+
+// TestMessengerLocalPubCountsPublications tests that Published counter is incremented
+func TestMessengerLocalPubCountsPublications(t *testing.T) {
+	defer resetNodes()
+
+	// Create local messenger
+	messenger := NewMessangerLocal("test-device")
+
+	// Verify initial count
+	if messenger.Published != 0 {
+		t.Errorf("Expected initial Published count of 0, got %d", messenger.Published)
+	}
+
+	// Publish a message
+	messenger.Pub("test/topic", "test message")
+
+	// Verify counter was incremented
+	if messenger.Published != 1 {
+		t.Errorf("Expected Published count of 1, got %d", messenger.Published)
+	}
+
+	// Publish another message
+	messenger.Pub("test/topic2", "test message 2")
+
+	// Verify counter was incremented again
+	if messenger.Published != 2 {
+		t.Errorf("Expected Published count of 2, got %d", messenger.Published)
+	}
+}
+
+// TestMessengerLocalPubDataWithValidTopic tests PubData with valid topic set
+func TestMessengerLocalPubDataWithValidTopic(t *testing.T) {
+	defer resetNodes()
+
+	messageReceived := false
+
+	// Create subscriber to receive messages
+	subscriber := NewMessangerLocal("subscriber")
+	subscriber.Subscribe("test/data", func(msg *Msg) {
+		messageReceived = true
+		// Verify message content
+		if msg.Topic != "test/data" {
+			t.Errorf("Expected topic 'test/data', got '%s'", msg.Topic)
+		}
+		expectedData := "test data"
+		if string(msg.Data) != expectedData {
+			t.Errorf("Expected data '%s', got '%s'", expectedData, string(msg.Data))
+		}
+		if msg.Source != "publisher" {
+			t.Errorf("Expected source 'publisher', got '%s'", msg.Source)
+		}
+	})
+
+	// Create publisher with topic
+	publisher := NewMessangerLocal("publisher")
+	publisher.SetTopic("test/data")
+
+	// Publish data using a supported type
+	testData := "test data"
+	publisher.PubData(testData)
+
+	// Give time for message processing
+	time.Sleep(10 * time.Millisecond)
+
+	if !messageReceived {
+		t.Error("Expected message to be received by subscriber")
 	}
 }

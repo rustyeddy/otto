@@ -70,6 +70,7 @@ func (m *MessangerMQTT) PubData(data any) {
 
 	default:
 		slog.Error("Unknown Type: ", "topic", m.Topic, "type", fmt.Sprintf("%T", data))
+		return
 	}
 
 	msg := NewMsg(m.topic[0], buf, m.MessangerBase.id)

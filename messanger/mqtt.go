@@ -37,14 +37,25 @@ func NewMQTT(id string, topics ...string) *MQTT {
 // actual MQTT client to allow for Mocking MQTT connections if
 // desired
 func SetMQTTClient(c gomqtt.Client) *MQTT {
-	mqtt = GetMQTT()
+	if mqtt == nil {
+		mqtt = &MQTT{
+			id:     "default",
+			Broker: "localhost",
+		}
+	}
 	mqtt.Client = c
 	return mqtt
 }
 
 // GetMQTT returns the singleton instance of the MQTT client, the
-// first time it is called it will open and connect the client.
+// first time it is called it will initialize the client if needed.
 func GetMQTT() *MQTT {
+	if mqtt == nil {
+		mqtt = &MQTT{
+			id:     "default",
+			Broker: "localhost",
+		}
+	}
 	return mqtt
 }
 
@@ -76,11 +87,11 @@ func (m *MQTT) Connect() error {
 
 	broker := os.Getenv("MQTT_BROKER")
 	if broker != "" {
-		mqtt.Broker = broker
+		m.Broker = broker
 	} else {
-		mqtt.Broker = "localhost"
+		m.Broker = "localhost"
 	}
-	url := "tcp://" + mqtt.Broker + ":1883"
+	url := "tcp://" + m.Broker + ":1883"
 	opts := gomqtt.NewClientOptions()
 	opts.AddBroker(url)
 	opts.SetClientID(m.id)
@@ -92,7 +103,9 @@ func (m *MQTT) Connect() error {
 		m.Client = gomqtt.NewClient(opts)
 	}
 
-	if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
+	token := m.Client.Connect()
+	token.Wait()
+	if token.Error() != nil {
 		slog.Error("MQTT Connect: ", "error", token.Error())
 		m.error = token.Error()
 		return fmt.Errorf("Failed to connect to MQTT broker %s", token.Error())
@@ -115,7 +128,8 @@ func (m *MQTT) Subscribe(topic string, f MsgHandler) error {
 		f(msg)
 	})
 
-	if token.Wait() && token.Error() != nil {
+	token.Wait()
+	if token.Error() != nil {
 		// TODO: add routing that automatically subscribes subscribers when a
 		// connection has been made
 		m.error = token.Error()

@@ -62,8 +62,8 @@ func (m *MessangerLocal) PubMsg(msg *Msg) {
 
 // Publish given data to this messangers topic
 func (m *MessangerLocal) PubData(data any) {
-	if m.topic[0] == "" {
-		slog.Error("Device.Publish failed has no Topic", "name", m.ID)
+	if len(m.topic) == 0 || m.topic[0] == "" {
+		slog.Error("Device.Publish failed has no Topic", "name", m.ID())
 		return
 	}
 	buf, err := Bytes(data)
