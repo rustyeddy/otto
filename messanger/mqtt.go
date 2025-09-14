@@ -16,7 +16,7 @@ var (
 // MQTT is a wrapper around the Paho MQTT Go package
 // Wraps the Broker, ID and Debug variables.
 type MQTT struct {
-	id     string `json:"id"`
+	id     string
 	Broker string `json:"broker"`
 	Debug  bool   `json:"debug"`
 
@@ -108,7 +108,7 @@ func (m *MQTT) Connect() error {
 	if token.Error() != nil {
 		slog.Error("MQTT Connect: ", "error", token.Error())
 		m.error = token.Error()
-		return fmt.Errorf("Failed to connect to MQTT broker %s", token.Error())
+		return fmt.Errorf("failed to connect to MQTT broker %s", token.Error())
 	}
 	return nil
 }

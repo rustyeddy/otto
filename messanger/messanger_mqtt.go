@@ -53,19 +53,19 @@ func (m *MessangerMQTT) PubData(data any) {
 	}
 	var buf []byte
 
-	switch data.(type) {
+	switch d := data.(type) {
 	case []byte:
-		buf = data.([]byte)
+		buf = d
 
 	case string:
-		buf = []byte(data.(string))
+		buf = []byte(d)
 
 	case int:
-		str := fmt.Sprintf("%d", data.(int))
+		str := fmt.Sprintf("%d", d)
 		buf = []byte(str)
 
 	case float64:
-		str := fmt.Sprintf("%5.2f", data.(float64))
+		str := fmt.Sprintf("%5.2f", d)
 		buf = []byte(str)
 
 	default:

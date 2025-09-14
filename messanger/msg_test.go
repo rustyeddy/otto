@@ -40,7 +40,8 @@ func TestStationMsg(t *testing.T) {
 
 	msg := NewMsg(topic, j, "test")
 	if msg == nil {
-		t.Error("msg topic expected but is nil")
+		t.Fatal("msg topic expected but is nil")
+		return // This is redundant after t.Fatal but makes static analyzer happy
 	}
 
 	if msg.Topic != topic {

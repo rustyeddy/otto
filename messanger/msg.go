@@ -43,26 +43,26 @@ func getMsgID() int64 {
 func Bytes(data any) ([]byte, error) {
 	var buf []byte
 
-	switch data.(type) {
+	switch d := data.(type) {
 	case []byte:
-		buf = data.([]byte)
+		buf = d
 
 	case string:
-		buf = []byte(data.(string))
+		buf = []byte(d)
 
 	case int:
-		str := fmt.Sprintf("%d", data.(int))
+		str := fmt.Sprintf("%d", d)
 		buf = []byte(str)
 
 	case bool:
 		str := "false"
-		if data.(bool) {
+		if d {
 			str = "true"
 		}
 		buf = []byte(str)
 
 	case float64:
-		str := fmt.Sprintf("%5.2f", data.(float64))
+		str := fmt.Sprintf("%5.2f", d)
 		buf = []byte(str)
 
 	default:
@@ -143,7 +143,7 @@ func (msg *Msg) Map() (map[string]interface{}, error) {
 	var m map[string]interface{}
 	err := json.Unmarshal(msg.Data, &m)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal data: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal data: %s", err)
 	}
 	return m, nil
 }
