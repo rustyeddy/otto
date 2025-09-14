@@ -44,7 +44,7 @@ func main() {
 
 func initLED(name string, pin int) (*led.LED, chan any) {
 	led := led.New(name, pin)
-	led.Topic = messanger.GetTopics().Data(led.Device.Name())
+	led.SetTopic(messanger.GetTopics().Data(led.Device.Name()))
 	done := make(chan any)
 	return led, done
 }
@@ -65,13 +65,14 @@ func dotimer(led *led.LED, period time.Duration, done chan any) {
 func domock() {
 	switch mock {
 	case "mqtt":
-		messanger.SetMQTTClient(messanger.GetMockClient())
+		messanger.NewMessanger("local", "")
 
 	case "gpio":
 		drivers.GetGPIO().Mock = true
 
 	case "both":
-		messanger.SetMQTTClient(messanger.GetMockClient())
+		// messanger.SetMQTTClient(messanger.GetMockClient())
+		messanger.NewMessanger("local", "")
 		drivers.GetGPIO().Mock = true
 
 	default:

@@ -96,7 +96,7 @@ func (msg *Msg) Station() string {
 	if len(msg.Path) < 3 {
 		return ""
 	}
-	return msg.Path[3]
+	return msg.Path[2]
 }
 
 // Last returns the Last element in the Msg.Topic path

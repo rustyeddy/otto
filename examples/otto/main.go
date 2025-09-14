@@ -65,7 +65,7 @@ func initMock() {
 		mockGPIO = true
 	}
 	if mockMQTT {
-		messanger.SetMQTTClient(messanger.GetMockClient())
+		messanger.NewMessanger("local", "")
 	}
 	if mockGPIO {
 		drivers.GetGPIO().Mock = true

@@ -15,7 +15,7 @@ func TestLED(t *testing.T) {
 		t.Errorf("led name got (%s) want (%s)", led.Name(), "led")
 	}
 
-	msg := messanger.New(led.Topic, []byte("on"), "test")
+	msg := messanger.NewMsg(led.Topic(), []byte("on"), "test")
 	led.Callback(msg)
 
 	v, err := led.Value()
@@ -26,7 +26,7 @@ func TestLED(t *testing.T) {
 		t.Errorf("led expected (1) got (%d)", v)
 	}
 
-	msg = messanger.New(led.Topic, []byte("off"), "test")
+	msg = messanger.NewMsg(led.Topic(), []byte("off"), "test")
 	led.Callback(msg)
 
 	v, err = led.Value()

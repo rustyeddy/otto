@@ -71,21 +71,21 @@ func (c *controller) initDevices(done chan any) error {
 
 func (c *controller) initRelay(idx int) {
 	relay := relay.New("relay", idx)
-	relay.Topic = messanger.GetTopics().Data("relay")
+	relay.SetTopic(messanger.GetTopics().Data("relay"))
 	relay.Subscribe(messanger.GetTopics().Control("relay"), relay.Callback)
 	c.Relay = relay
 }
 
 func (c *controller) initLED(idx int) {
 	led := led.New("led", idx)
-	led.Topic = messanger.GetTopics().Data("led")
+	led.SetTopic(messanger.GetTopics().Data("led"))
 	led.Subscribe(messanger.GetTopics().Control("led"), led.Callback)
 	c.LED = led
 }
 
 func (c *controller) initButton(name string, idx int, opts ...gpiocdev.LineReqOption) {
 	but := button.New(name, idx, opts...)
-	but.Topic = messanger.GetTopics().Control("button")
+	but.SetTopic(messanger.GetTopics().Control("button"))
 	go but.EventLoop(done, but.ReadPub)
 	if name == "on" {
 		c.onButton = but
@@ -106,7 +106,7 @@ func (c *controller) initBME280(bus string, addr int, done chan any) (bme *bme28
 	if err != nil {
 		return nil, err
 	}
-	bme.Topic = messanger.GetTopics().Data("bme280")
+	bme.SetTopic(messanger.GetTopics().Data("bme280"))
 	go bme.TimerLoop(10*time.Second, done, bme.ReadPub)
 	c.BME280 = bme
 
