@@ -43,26 +43,26 @@ func getMsgID() int64 {
 func Bytes(data any) ([]byte, error) {
 	var buf []byte
 
-	switch d := data.(type) {
+	switch data.(type) {
 	case []byte:
-		buf = d
+		buf = data.([]byte)
 
 	case string:
-		buf = []byte(d)
+		buf = []byte(data.(string))
 
 	case int:
-		str := fmt.Sprintf("%d", d)
+		str := fmt.Sprintf("%d", data.(int))
 		buf = []byte(str)
 
 	case bool:
 		str := "false"
-		if d {
+		if data.(bool) {
 			str = "true"
 		}
 		buf = []byte(str)
 
 	case float64:
-		str := fmt.Sprintf("%5.2f", d)
+		str := fmt.Sprintf("%5.2f", data.(float64))
 		buf = []byte(str)
 
 	default:

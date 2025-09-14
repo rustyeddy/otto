@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"sync"
 )
 
 var (
 	messanger Messanger
+	once      sync.Once
 )
 
 // Subscriber is an interface that defines a struct needs to have the
@@ -90,7 +92,7 @@ func (mb *MessangerBase) Error() error {
 func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var subs []string
-	for s := range m.subs {
+	for s, _ := range m.subs {
 		subs = append(subs, s)
 	}
 
