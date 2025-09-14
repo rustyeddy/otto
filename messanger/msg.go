@@ -143,7 +143,7 @@ func (msg *Msg) Map() (map[string]interface{}, error) {
 	var m map[string]interface{}
 	err := json.Unmarshal(msg.Data, &m)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal data: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal data: %s", err)
 	}
 	return m, nil
 }
