@@ -5,6 +5,10 @@ import (
 	"sync"
 )
 
+// MessangerLocal implements a local in-memory messanger that
+// can be used for testing or for simple in-process communication.
+// MessangerLocal does not require any external dependencies like
+// an MQTT broker.
 type MessangerLocal struct {
 	*MessangerBase
 	sync.Mutex `json:"-"`
