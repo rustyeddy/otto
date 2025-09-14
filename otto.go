@@ -155,7 +155,7 @@ type OttO struct {
 	*station.StationManager
 	*server.Server
 	*data.DataManager
-	*messanger.Messanger
+	messanger.Messanger
 
 	Mock bool
 	hub  bool // maybe hub should be a different struct?
@@ -192,7 +192,7 @@ func (o *OttO) Init() {
 
 	if o.Messanger == nil {
 		topic := messanger.GetTopics().Data("station")
-		o.Messanger = messanger.NewMessanger("otto", topic)
+		o.Messanger = messanger.NewMessangerMQTT("otto", topic)
 		ms := messanger.GetMsgSaver()
 		ms.Saving = true
 	}

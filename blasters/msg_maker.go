@@ -31,6 +31,6 @@ func (w *WeatherData) NewMsg(topic string) *messanger.Msg {
 		return nil
 	}
 
-	msg := messanger.New(topic, j, "weather-data")
+	msg := messanger.NewMsg(topic, j, "weather-data")
 	return msg
 }

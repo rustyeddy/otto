@@ -53,7 +53,7 @@ func NewMQTTBlasters(count int) *MQTTBlasters {
 // Msg stream
 func (mb *MQTTBlasters) Blast() error {
 
-	m := messanger.NewMessanger("blaster")
+	m := messanger.NewMessangerMQTT("blaster")
 	wd := &WeatherData{}
 
 	// now start blasting

@@ -16,7 +16,7 @@ func main() {
 	// Set the BME i2c device and address Initialize the bme to use
 	// the i2c bus
 	bme := bme280.New("bme280", "/dev/i2c-1", 0x76)
-	bme.Topic = topic
+	bme.SetTopic(topic)
 	err := bme.Init()
 	if err != nil {
 		panic(err)

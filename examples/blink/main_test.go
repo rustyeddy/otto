@@ -10,7 +10,7 @@ import (
 
 func TestBlink(t *testing.T) {
 	drivers.GetGPIO().Mock = true
-	messanger.SetMQTTClient(messanger.GetMockClient())
+	messanger.NewMessanger("local", "blink")
 
 	led, done := initLED("test-led", 13)
 	if led.Device.Name() != "test-led" {

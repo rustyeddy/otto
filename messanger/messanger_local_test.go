@@ -1,0 +1,357 @@
+package messanger
+
+import (
+	"fmt"
+	"log/slog"
+	"strings"
+	"testing"
+	"time"
+)
+
+func TestNewMessangerLocal(t *testing.T) {
+	m := NewMessangerLocal("test-id", "test/topic")
+	if m.ID() != "test-id" {
+		t.Errorf("Expected ID 'test-id', got '%s'", m.ID())
+	}
+	if m.Topic() != "test/topic" {
+		t.Errorf("Expected Topic 'test/topic', got '%s'", m.Topic())
+	}
+}
+
+func TestMessangerLocalSetTopic(t *testing.T) {
+	m := NewMessangerLocal("test-id")
+	m.SetTopic("new/topic")
+	if m.Topic() != "new/topic" {
+		t.Errorf("Expected Topic 'new/topic', got '%s'", m.Topic())
+	}
+}
+
+func TestMessangerLocalSubscribe(t *testing.T) {
+	resetNodes() // Reset the node tree
+	m := NewMessangerLocal("test-id")
+
+	tests := []struct {
+		name    string
+		topic   string
+		wantErr bool
+	}{
+		{"valid topic", "test/topic", false},
+		{"root topic", "/", false},
+		{"multi-level topic", "a/b/c/d", false},
+		{"wildcard topic", "test/+/topic", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handlerCalled := false
+			handler := func(msg *Msg) {
+				handlerCalled = true
+			}
+
+			err := m.Subscribe(tt.topic, handler)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Subscribe() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr {
+				// Test publishing to the topic
+				msg := NewMsg(tt.topic, []byte("test data"), "test-id")
+				m.PubMsg(msg)
+
+				if !handlerCalled {
+					t.Error("Handler was not called after publishing to topic")
+				}
+			}
+		})
+	}
+}
+
+func TestMessangerLocalPub(t *testing.T) {
+	resetNodes()
+	m := NewMessangerLocal("test-id")
+
+	tests := []struct {
+		name     string
+		topic    string
+		data     interface{}
+		wantData string
+	}{
+		{"string data", "test/topic", "hello", "hello"},
+		{"int data", "test/topic", 42, "42"},
+		{"bool data", "test/topic", true, "true"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			receivedData := ""
+			handler := func(msg *Msg) {
+				receivedData = string(msg.Data)
+			}
+
+			m.Subscribe(tt.topic, handler)
+			m.Pub(tt.topic, tt.data)
+
+			if receivedData != tt.wantData {
+				t.Errorf("Pub() got = %v, want %v", receivedData, tt.wantData)
+			}
+		})
+	}
+}
+
+func TestMessangerLocalPubMsg(t *testing.T) {
+	resetNodes()
+	m := NewMessangerLocal("test-id")
+	handlerCalled := false
+	expectedData := "test data"
+
+	handler := func(msg *Msg) {
+		handlerCalled = true
+		if string(msg.Data) != expectedData {
+			t.Errorf("Expected message data '%s', got '%s'", expectedData, string(msg.Data))
+		}
+	}
+
+	m.Subscribe("test/topic", handler)
+	msg := NewMsg("test/topic", []byte(expectedData), "test-id")
+	m.PubMsg(msg)
+
+	if !handlerCalled {
+		t.Error("Handler was not called after publishing message")
+	}
+}
+
+func TestMessangerLocalPubData(t *testing.T) {
+	resetNodes()
+	m := NewMessangerLocal("test-id", "test/topic")
+
+	tests := []struct {
+		name     string
+		data     interface{}
+		wantData string
+	}{
+		{"string data", "hello", "hello"},
+		{"int data", 42, "42"},
+		{"bool data", true, "true"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			receivedData := ""
+			handler := func(msg *Msg) {
+				receivedData = string(msg.Data)
+			}
+
+			m.Subscribe(m.Topic(), handler)
+			m.PubData(tt.data)
+
+			if receivedData != tt.wantData {
+				t.Errorf("PubData() got = %v, want %v", receivedData, tt.wantData)
+			}
+		})
+	}
+}
+
+func TestMessangerLocalClose(t *testing.T) {
+	// Setup
+	m := NewMessangerLocal("test-id", "test/topic")
+
+	// Create some subscriptions and publish some messages
+	handlerCalled := false
+	handler := func(msg *Msg) {
+		handlerCalled = true
+	}
+
+	// Subscribe and publish before close
+	m.Subscribe("test/topic", handler)
+	m.PubData("test message")
+
+	if !handlerCalled {
+		t.Error("Handler should have been called before Close()")
+	}
+
+	// Call Close
+	m.Close()
+
+	// Verify that after Close(), new publications don't trigger handlers
+	handlerCalled = false
+	m.PubData("test message after close")
+
+	if handlerCalled {
+		t.Error("Handler should not have been called after Close()")
+	}
+}
+
+// TestMessengerLocalPubDataWithNoTopic tests PubData when no topic is set
+func TestMessengerLocalPubDataWithNoTopic(t *testing.T) {
+	defer resetNodes()
+
+	// Create local messenger without setting topic
+	messenger := NewMessangerLocal("test-device")
+
+	// Capture log output to verify error is logged
+	var logOutput strings.Builder
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logOutput, &slog.HandlerOptions{
+		Level: slog.LevelError,
+	})))
+
+	// Try to publish data - should log error and return early
+	testData := "test string"
+	messenger.PubData(testData)
+
+	// Verify error was logged
+	if !strings.Contains(logOutput.String(), "Device.Publish failed has no Topic") {
+		t.Errorf("Expected error log about no topic, got: %s", logOutput.String())
+	}
+	// The name field logs the device ID string
+	if !strings.Contains(logOutput.String(), "test-device") {
+		t.Errorf("Expected device name in log, got: %s", logOutput.String())
+	}
+}
+
+// TestMessengerLocalPubDataWithInvalidData tests PubData with data that can't be serialized
+func TestMessengerLocalPubDataWithInvalidData(t *testing.T) {
+	defer resetNodes()
+	defer func() {
+		if r := recover(); r != nil {
+			if !strings.Contains(fmt.Sprintf("%v", r), "Can not convert data type") {
+				t.Errorf("Expected conversion error, got: %v", r)
+			}
+		} else {
+			t.Error("Expected panic due to unsupported data type")
+		}
+	}()
+
+	// Create local messenger with topic
+	messenger := NewMessangerLocal("test-device")
+	messenger.SetTopic("test/topic")
+
+	// Try to publish data that can't be serialized (unsupported type)
+	type customStruct struct {
+		Value string
+	}
+	data := customStruct{Value: "test"}
+
+	// This should panic due to unsupported type
+	messenger.PubData(data)
+}
+
+// TestMessengerLocalPubWithSerializationError tests Pub method with data that can't be serialized
+func TestMessengerLocalPubWithSerializationError(t *testing.T) {
+	defer resetNodes()
+
+	// Create local messenger
+	messenger := NewMessangerLocal("test-device")
+
+	// Create data that can't be serialized (unsupported type)
+	type customStruct struct {
+		Value string
+	}
+	data := customStruct{Value: "test"}
+
+	// Try to publish - should set error and return early
+	messenger.Pub("test/topic", data)
+
+	// Verify error was set
+	if messenger.error == nil {
+		t.Error("Expected error to be set")
+	}
+	if !strings.Contains(messenger.error.Error(), "Can not convert data type") {
+		t.Errorf("Expected conversion error, got: %v", messenger.error)
+	}
+}
+
+// TestMessengerLocalPubMsgWithNoSubscribers tests PubMsg when no subscribers exist
+func TestMessengerLocalPubMsgWithNoSubscribers(t *testing.T) {
+	defer resetNodes()
+
+	// Capture log output to verify info message
+	var logOutput strings.Builder
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logOutput, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})))
+
+	// Create local messenger
+	messenger := NewMessangerLocal("test-device")
+
+	// Create message for topic with no subscribers
+	msg := NewMsg("nonexistent/topic", []byte("test"), "test-id")
+
+	// Publish message - should log info about no subscribers
+	messenger.PubMsg(msg)
+
+	// Verify info message was logged
+	if !strings.Contains(logOutput.String(), "No subscribers") {
+		t.Errorf("Expected 'No subscribers' log, got: %s", logOutput.String())
+	}
+	if !strings.Contains(logOutput.String(), "nonexistent/topic") {
+		t.Errorf("Expected topic in log, got: %s", logOutput.String())
+	}
+}
+
+// TestMessengerLocalPubCountsPublications tests that Published counter is incremented
+func TestMessengerLocalPubCountsPublications(t *testing.T) {
+	defer resetNodes()
+
+	// Create local messenger
+	messenger := NewMessangerLocal("test-device")
+
+	// Verify initial count
+	if messenger.Published != 0 {
+		t.Errorf("Expected initial Published count of 0, got %d", messenger.Published)
+	}
+
+	// Publish a message
+	messenger.Pub("test/topic", "test message")
+
+	// Verify counter was incremented
+	if messenger.Published != 1 {
+		t.Errorf("Expected Published count of 1, got %d", messenger.Published)
+	}
+
+	// Publish another message
+	messenger.Pub("test/topic2", "test message 2")
+
+	// Verify counter was incremented again
+	if messenger.Published != 2 {
+		t.Errorf("Expected Published count of 2, got %d", messenger.Published)
+	}
+}
+
+// TestMessengerLocalPubDataWithValidTopic tests PubData with valid topic set
+func TestMessengerLocalPubDataWithValidTopic(t *testing.T) {
+	defer resetNodes()
+
+	messageReceived := false
+
+	// Create subscriber to receive messages
+	subscriber := NewMessangerLocal("subscriber")
+	subscriber.Subscribe("test/data", func(msg *Msg) {
+		messageReceived = true
+		// Verify message content
+		if msg.Topic != "test/data" {
+			t.Errorf("Expected topic 'test/data', got '%s'", msg.Topic)
+		}
+		expectedData := "test data"
+		if string(msg.Data) != expectedData {
+			t.Errorf("Expected data '%s', got '%s'", expectedData, string(msg.Data))
+		}
+		if msg.Source != "publisher" {
+			t.Errorf("Expected source 'publisher', got '%s'", msg.Source)
+		}
+	})
+
+	// Create publisher with topic
+	publisher := NewMessangerLocal("publisher")
+	publisher.SetTopic("test/data")
+
+	// Publish data using a supported type
+	testData := "test data"
+	publisher.PubData(testData)
+
+	// Give time for message processing
+	time.Sleep(10 * time.Millisecond)
+
+	if !messageReceived {
+		t.Error("Expected message to be received by subscriber")
+	}
+}

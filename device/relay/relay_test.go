@@ -15,7 +15,7 @@ func TestRelay(t *testing.T) {
 		t.Errorf("relay expected Name (%s) got (%s)", "relay", relay.Name())
 	}
 
-	msg := messanger.New(relay.Topic, []byte("on"), "test")
+	msg := messanger.NewMsg(relay.Topic(), []byte("on"), "test")
 	relay.Callback(msg)
 
 	v, err := relay.Value()
@@ -26,7 +26,7 @@ func TestRelay(t *testing.T) {
 		t.Errorf("relay expected (1) got (%d)", v)
 	}
 
-	msg = messanger.New(relay.Topic, []byte("off"), "test")
+	msg = messanger.NewMsg(relay.Topic(), []byte("off"), "test")
 	relay.Callback(msg)
 
 	v, err = relay.Value()

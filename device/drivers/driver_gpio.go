@@ -283,8 +283,8 @@ func GetMockLine(offset int, opts ...gpiocdev.LineReqOption) *MockLine {
 
 		case gpiocdev.EventHandler:
 			m.EventHandler = opt.(gpiocdev.EventHandler)
-			mqtt := messanger.GetMQTT()
-			mqtt.Subscribe(messanger.GetTopics().Control("mock/"+strconv.Itoa(m.Offset())), m.Callback)
+			msg := messanger.GetMessanger()
+			msg.Subscribe(messanger.GetTopics().Control("mock/"+strconv.Itoa(m.Offset())), m.Callback)
 
 		default:
 			// slog.Debug("MockLine does not record", "optType", v)

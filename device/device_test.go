@@ -149,7 +149,7 @@ func TestDeviceMessangerPublish(t *testing.T) {
 	message := "test message"
 
 	dev.Messanger.SetTopic(topic)
-	dev.Messanger.Publish(message)
+	dev.Messanger.PubData(message)
 	err := dev.Messanger.Error()
 	if err != nil {
 		t.Errorf("Expected Publish to succeed, but got error: %v", err)
@@ -163,7 +163,7 @@ func TestDeviceMessangerSubscribe(t *testing.T) {
 	topic := "dev/" + name
 	msgstr := "test message"
 	messageReceived := false
-	m := messanger.New(topic, []byte(msgstr), "test")
+	m := messanger.NewMsg(topic, []byte(msgstr), "test")
 
 	dev.Messanger.Subscribe(topic, func(msg *messanger.Msg) {
 		if msg.String() == m.String() {

@@ -19,15 +19,16 @@ func TestButton(t *testing.T) {
 	device.Mock(true)
 	done := make(chan any)
 
-	c := messanger.GetMockClient()
-	m := messanger.SetMQTTClient(c)
-	err := m.Connect()
-	if err != nil {
-		t.Error("Failed to connect to MQTT broker: ", err)
-	}
+	// c := messanger.GetMockClient()
+	// m := messanger.SetMQTTClient(c)
+	// err := m.Connect()
+	// if err != nil {
+	// 	t.Error("Failed to connect to MQTT broker: ", err)
+	// }
+	messanger.NewMessanger("local", "button")
 
 	b := New("button", 23)
-	b.Topic = messanger.GetTopics().Control("button")
+	//b.SetTopic(messanger.GetTopics().Control("button"))
 	b.Subscribe(messanger.GetTopics().Control("button"), b.MsgHandler)
 	go b.EventLoop(done, b.ReadPub)
 
