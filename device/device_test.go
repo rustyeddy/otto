@@ -1,191 +1,199 @@
 package device
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
+	"errors"
 	"testing"
 	"time"
-
-	"github.com/rustyeddy/otto/messanger"
 )
 
-func TestMock(t *testing.T) {
-	mocks := []bool{true, false}
+// MockOpener implements the Opener interface for testing
+type MockOpener struct {
+	openErr  error
+	closeErr error
+	opened   bool
+}
 
-	if mock != false {
-		t.Error("Expected mock (false) got (true)")
+func (m *MockOpener) Open() error {
+	if m.openErr != nil {
+		return m.openErr
 	}
+	m.opened = true
+	return nil
+}
 
-	for _, b := range mocks {
-		Mock(b)
-		if IsMock() != b {
-			t.Errorf("Expected mock (%t) got (%t)", b, mock)
-		}
+func (m *MockOpener) Close() error {
+	if m.closeErr != nil {
+		return m.closeErr
 	}
+	m.opened = false
+	return nil
 }
 
 func TestNewDevice(t *testing.T) {
-	name := "test-device"
-	dev := NewDevice(name)
-	if dev.Name() != name {
-		t.Errorf("Expected test device name (%s) got (%s)", name, dev.Name())
+	tests := []struct {
+		name      string
+		devName   string
+		wantName  string
+		wantState DeviceState
+	}{
+		{
+			name:      "basic device",
+			devName:   "test-device",
+			wantName:  "test-device",
+			wantState: StateUnknown,
+		},
+		{
+			name:      "empty name",
+			devName:   "",
+			wantName:  "",
+			wantState: StateUnknown,
+		},
 	}
 
-	str := dev.String()
-	if str == "" {
-		t.Errorf("Expected device string to not be null but it was")
-	}
-
-	jbytes, err := dev.JSON()
-	if err != nil {
-		t.Error("Error creating JSON from device: ", err)
-	}
-
-	if len(jbytes) == 0 {
-		t.Errorf("Expected JSON bytes but got (0)")
-	}
-}
-
-func TestDeviceString(t *testing.T) {
-	println("test-device-string")
-}
-func TestTimerLoop(t *testing.T) {
-	done := make(chan any)
-	readpubCalled := false
-
-	readpub := func() error {
-		readpubCalled = true
-		return nil
-	}
-
-	device := NewDevice("test-device")
-	period := 100 * time.Millisecond
-
-	// Start TimerLoop in a goroutine
-	go device.TimerLoop(period, done, readpub)
-
-	// Wait for the ticker to trigger at least once
-	time.Sleep(2 * period)
-
-	// Verify readpub was called
-	if !readpubCalled {
-		t.Error("Expected readpub to be called, but it was not")
-	}
-
-	// Stop the TimerLoop
-	done <- struct{}{}
-
-	// Allow some time for the goroutine to exit
-	time.Sleep(100 * time.Millisecond)
-}
-
-func TestTimerLoopWithError(t *testing.T) {
-	done := make(chan any)
-	readpubCalled := false
-
-	readpub := func() error {
-		readpubCalled = true
-		return fmt.Errorf("mock error")
-	}
-
-	device := NewDevice("test-device")
-	period := 100 * time.Millisecond
-
-	// Start TimerLoop in a goroutine
-	go device.TimerLoop(period, done, readpub)
-
-	// Wait for the ticker to trigger at least once
-	time.Sleep(2 * period)
-
-	// Verify readpub was called
-	if !readpubCalled {
-		t.Error("Expected readpub to be called, but it was not")
-	}
-
-	// Stop the TimerLoop
-	done <- struct{}{}
-
-	// Allow some time for the goroutine to exit
-	time.Sleep(100 * time.Millisecond)
-}
-
-func TestTimerLoopNoPeriod(t *testing.T) {
-	done := make(chan any)
-	readpub := func() error {
-		t.Error("readpub should not be called when period is 0")
-		return nil
-	}
-
-	device := NewDevice("test-device")
-	period := time.Duration(0)
-
-	// Start TimerLoop
-	device.TimerLoop(period, done, readpub)
-
-	// Verify TimerLoop exits immediately
-	select {
-	case <-done:
-		t.Error("done channel should not be used when period is 0")
-	default:
-	}
-}
-func TestDeviceMessangerInitialization(t *testing.T) {
-	name := "test-device"
-	dev := NewDevice(name)
-
-	if dev.Messanger == nil {
-		t.Error("Expected Messanger to be initialized, but it was nil")
-	}
-
-	if dev.Messanger.ID() != name {
-		t.Errorf("Expected Messanger name to be '%s', but got '%s'", name, dev.Messanger.ID())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := NewDevice(tt.devName)
+			if d.Name() != tt.wantName {
+				t.Errorf("NewDevice().Name() = %v, want %v", d.Name(), tt.wantName)
+			}
+			if d.State() != tt.wantState {
+				t.Errorf("NewDevice().State() = %v, want %v", d.State(), tt.wantState)
+			}
+		})
 	}
 }
 
-func TestDeviceMessangerPublish(t *testing.T) {
-	name := "test-device"
-	dev := NewDevice(name)
+func TestDeviceState(t *testing.T) {
+	d := NewDevice("test-device")
 
-	topic := "test/topic"
-	message := "test message"
-
-	dev.Messanger.SetTopic(topic)
-	dev.Messanger.PubData(message)
-	err := dev.Messanger.Error()
-	if err != nil {
-		t.Errorf("Expected Publish to succeed, but got error: %v", err)
+	states := []DeviceState{
+		StateInitializing,
+		StateRunning,
+		StateError,
+		StateStopped,
 	}
-}
 
-func TestDeviceMessangerSubscribe(t *testing.T) {
-	name := "test-device"
-	dev := NewDevice(name)
-
-	topic := "dev/" + name
-	msgstr := "test message"
-	messageReceived := false
-	m := messanger.NewMsg(topic, []byte(msgstr), "test")
-
-	dev.Messanger.Subscribe(topic, func(msg *messanger.Msg) {
-		if msg.String() == m.String() {
-			messageReceived = true
+	for _, state := range states {
+		d.setState(state)
+		if got := d.State(); got != state {
+			t.Errorf("State() = %v, want %v", got, state)
 		}
-	})
-	err := dev.Messanger.Error()
-	if err != nil {
-		t.Errorf("Expected Subscribe to succeed, but got error: %v", err)
+	}
+}
+
+func TestDeviceError(t *testing.T) {
+	d := NewDevice("test-device")
+	testErr := errors.New("test error")
+
+	if got := d.Error(); got != nil {
+		t.Errorf("Initial Error() = %v, want nil", got)
 	}
 
-	// Simulate publishing a message to the topic
-	dev.Messanger.PubMsg(m)
-	err = dev.Messanger.Error()
-	if err != nil {
-		t.Errorf("Expected Publish to succeed, but got error: %v", err)
+	d.setError(testErr)
+	if got := d.Error(); got != testErr {
+		t.Errorf("Error() = %v, want %v", got, testErr)
 	}
 
-	// Allow some time for the message to be received
-	time.Sleep(100 * time.Millisecond)
+	if got := d.State(); got != StateError {
+		t.Errorf("State() after error = %v, want %v", got, StateError)
+	}
+}
 
-	if !messageReceived {
-		t.Error("Expected to receive the published message, but did not")
+func TestDeviceTimerLoop(t *testing.T) {
+	tests := []struct {
+		name    string
+		period  time.Duration
+		wantErr bool
+	}{
+		{
+			name:    "valid period",
+			period:  10 * time.Millisecond,
+			wantErr: false,
+		},
+		{
+			name:    "zero period",
+			period:  0,
+			wantErr: true,
+		},
+		{
+			name:    "negative period",
+			period:  -1 * time.Second,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := NewDevice("test-device")
+			ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+			defer cancel()
+
+			calls := 0
+			err := d.TimerLoop(ctx, tt.period, func() error {
+				calls++
+				return nil
+			})
+
+			if tt.wantErr && err == nil {
+				t.Error("TimerLoop() error = nil, want error")
+			}
+			if !tt.wantErr && err != context.DeadlineExceeded {
+				t.Errorf("TimerLoop() error = %v, want context.DeadlineExceeded", err)
+			}
+			if !tt.wantErr && calls == 0 {
+				t.Error("TimerLoop() made no calls to readpub")
+			}
+		})
+	}
+}
+
+func TestDeviceJSON(t *testing.T) {
+	d := NewDevice("test-device")
+	d.setState(StateRunning)
+	testErr := errors.New("test error")
+	d.setError(testErr)
+
+	data, err := d.JSON()
+	if err != nil {
+		t.Fatalf("JSON() error = %v", err)
+	}
+
+	var decoded struct {
+		Name   string
+		State  DeviceState
+		Period time.Duration
+		Error  string
+	}
+
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	if decoded.Name != "test-device" {
+		t.Errorf("JSON name = %v, want test-device", decoded.Name)
+	}
+	if decoded.State != StateError {
+		t.Errorf("JSON state = %v, want %v", decoded.State, StateError)
+	}
+	if decoded.Error != testErr.Error() {
+		t.Errorf("JSON error = %v, want %v", decoded.Error, testErr.Error())
+	}
+}
+
+func TestMockConfiguration(t *testing.T) {
+	if IsMock() {
+		t.Error("Mock should be disabled by default")
+	}
+
+	Mock(true)
+	if !IsMock() {
+		t.Error("Mock should be enabled after Mock(true)")
+	}
+
+	Mock(false)
+	if IsMock() {
+		t.Error("Mock should be disabled after Mock(false)")
 	}
 }
