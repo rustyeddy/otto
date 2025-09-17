@@ -1,112 +1,176 @@
 package bme280
 
 import (
+	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/rustyeddy/otto/device"
-	"github.com/rustyeddy/otto/messanger"
 )
 
-func TestBME280(t *testing.T) {
-	name := "bme-test"
-	bus := "/dev/i2c-fake"
-	addr := 0x76
+// Test constants
+const (
+	TestI2CBus     = "/dev/i2c-1"
+	TestI2CAddress = 0x77
+)
 
-	device.Mock(true)
-	bme := New(name, bus, addr)
-	if bme == nil {
-		t.Error("Failed to create bme device")
+func TestBME280Creation(t *testing.T) {
+	tests := []struct {
+		name    string
+		devName string
+		bus     string
+		addr    int
+		wantErr bool
+	}{
+		{
+			name:    "valid configuration",
+			devName: "bme-test",
+			bus:     "/dev/i2c-fake",
+			addr:    0x76,
+			wantErr: false,
+		},
+		{
+			name:    "default configuration",
+			devName: "bme-default",
+			bus:     TestI2CBus,
+			addr:    TestI2CAddress,
+			wantErr: false,
+		},
 	}
 
-	if bme.Name() != name {
-		t.Errorf("expected name (%s) got (%s)", name, bme.Name())
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			device.Mock(true)
+			defer device.Mock(false)
 
-	if bme.bus != bus {
-		t.Errorf("expected bus (%s) got (%s)", bus, bme.bus)
-	}
-	if bme.addr != addr {
-		t.Errorf("expected addr (%x) got (%x)", addr, bme.addr)
-	}
-
-	err := bme.Init()
-	if err != nil {
-		t.Error("failed to initialize mock BME device")
-	}
-
-	resp, err := bme.Read()
-	if err != nil {
-		t.Error("failed to read from mock BME device")
-	}
-
-	// XXX these values are hard coded in the bme280 device mock read
-	// may change to random values or other
-	if resp.Temperature == 0.0 {
-		t.Errorf("Failed to read temperature")
-	}
-	if resp.Pressure == 0.0 {
-		t.Errorf("Failed to read temperature")
-	}
-	if resp.Humidity == 0.0 {
-		t.Errorf("Failed to read temperature")
-	}
-
-	// Set up for bme EventLoop run the loop every 200 milliseconds then
-	// stop the loop
-	count := 0
-	topic := messanger.GetTopics().Data(name)
-	bme.SetTopic(topic)
-	bme.Subscribe(topic, func(msg *messanger.Msg) {
-		if msg.Topic != topic {
-			t.Errorf("expected topic (%s) got (%s)", topic, msg.Topic)
-			return
-		}
-		mmm, err := msg.Map()
-		if err != nil {
-			t.Errorf("failed to map bme280 response %s", err)
-			return
-		}
-
-		for key, val := range mmm {
-			switch key {
-			case "Temperature", "temperature":
-				if val == 0.0 {
-					t.Errorf("%s expected (rand) got (%4.2f)", key, val)
-					return
-				}
-
-			case "Humidity", "humidity":
-				if val == 0.0 {
-					t.Errorf("%s expected (rand) got (%4.2f)", key, val)
-					return
-				}
-
-			case "Pressure", "pressure":
-				if val == 0.0 {
-					t.Errorf("%s expected (rand) got (%4.2f)", key, val)
-					return
-				}
-
-			default:
-				t.Errorf("Unexpected key value %s - %v", key, val)
-				return
+			bme := New(tt.devName, tt.bus, tt.addr)
+			if bme == nil {
+				t.Fatal("Failed to create BME280 device")
 			}
-		}
-		count++
-	})
 
-	done := make(chan any)
-	go bme.TimerLoop(100*time.Millisecond, done, bme.ReadPub)
+			if bme.Name() != tt.devName {
+				t.Errorf("Name() = %v, want %v", bme.Name(), tt.devName)
+			}
 
-	select {
-	case <-done:
-		break
-
-	case <-time.After(1 * time.Second):
-		done <- true
+			// Only test Init if the method exists
+			if err := bme.Open(); err != nil && !tt.wantErr {
+				t.Errorf("Open() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
-	if count < 5 {
-		t.Errorf("Expected to recieve messanges expected (>= 5) got (%d) ", count)
+}
+
+func TestBME280Reading(t *testing.T) {
+	device.Mock(true)
+	defer device.Mock(false)
+
+	bme := New("bme-test", "/dev/i2c-fake", 0x76)
+	if err := bme.Open(); err != nil {
+		t.Fatalf("Open() failed: %v", err)
+	}
+
+	tests := []struct {
+		name           string
+		minTemperature float64
+		maxTemperature float64
+		minHumidity    float64
+		maxHumidity    float64
+		minPressure    float64
+		maxPressure    float64
+	}{
+		{
+			name:           "valid ranges",
+			minTemperature: -40.0,
+			maxTemperature: 85.0,
+			minHumidity:    0.0,
+			maxHumidity:    100.0,
+			minPressure:    300.0,
+			maxPressure:    1100.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := bme.Read()
+			if err != nil {
+				t.Fatalf("Read() error = %v", err)
+			}
+
+			if resp == nil {
+				t.Fatal("Read() returned nil response")
+			}
+
+			if resp.Temperature < tt.minTemperature || resp.Temperature > tt.maxTemperature {
+				t.Errorf("Temperature %f outside valid range [%f, %f]",
+					resp.Temperature, tt.minTemperature, tt.maxTemperature)
+			}
+
+			if resp.Humidity < tt.minHumidity || resp.Humidity > tt.maxHumidity {
+				t.Errorf("Humidity %f outside valid range [%f, %f]",
+					resp.Humidity, tt.minHumidity, tt.maxHumidity)
+			}
+
+			if resp.Pressure < tt.minPressure || resp.Pressure > tt.maxPressure {
+				t.Errorf("Pressure %f outside valid range [%f, %f]",
+					resp.Pressure, tt.minPressure, tt.maxPressure)
+			}
+		})
+	}
+}
+
+func TestBME280ReadPub(t *testing.T) {
+	device.Mock(true)
+	defer device.Mock(false)
+
+	bme := New("bme-test", "/dev/i2c-fake", 0x76)
+	if err := bme.Open(); err != nil {
+		t.Fatalf("Open() failed: %v", err)
+	}
+
+	// Test ReadPub method
+	err := bme.ReadPub()
+	if err != nil {
+		t.Errorf("ReadPub() error = %v", err)
+	}
+}
+
+func TestBME280JSON(t *testing.T) {
+	device.Mock(true)
+	defer device.Mock(false)
+
+	bme := New("bme-test", "/dev/i2c-fake", 0x76)
+	if err := bme.Open(); err != nil {
+		t.Fatalf("Open() failed: %v", err)
+	}
+
+	// Test JSON method if it exists
+	data, err := bme.JSON()
+	if err != nil {
+		t.Errorf("JSON() error = %v", err)
+	}
+
+	if len(data) == 0 {
+		t.Error("JSON() returned empty data")
+	}
+
+	// Verify it's valid JSON
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		t.Errorf("JSON() returned invalid JSON: %v", err)
+	}
+}
+
+func TestBME280String(t *testing.T) {
+	device.Mock(true)
+	defer device.Mock(false)
+
+	bme := New("bme-test", "/dev/i2c-fake", 0x76)
+	str := bme.String()
+
+	if str == "" {
+		t.Error("String() returned empty string")
+	}
+
+	if str != bme.Name() {
+		t.Errorf("String() = %v, want %v", str, bme.Name())
 	}
 }

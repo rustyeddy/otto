@@ -128,6 +128,59 @@ func (mb *MessangerBase) Error() error {
 	return mb.error
 }
 
+// Subscribe stores the subscription locally in the base implementation.
+// Specific messanger implementations should override this method to handle
+// actual subscription logic (e.g., MQTT broker subscription).
+func (mb *MessangerBase) Subscribe(topic string, handler MsgHandler) error {
+	if mb.subs == nil {
+		mb.subs = make(map[string][]MsgHandler)
+	}
+	mb.subs[topic] = append(mb.subs[topic], handler)
+	return nil
+}
+
+// PubMsg publishes a pre-formatted Msg structure.
+// This base implementation only increments the Published counter.
+// Specific messanger implementations should override this method to handle
+// actual message publishing.
+func (mb *MessangerBase) PubMsg(msg *Msg) {
+	mb.Published++
+	// Base implementation just counts - specific messanger types should override
+	// to actually publish the message
+	slog.Debug("MessangerBase.PubMsg", "topic", msg.Topic, "published_count", mb.Published)
+}
+
+// PubData publishes data to the messanger's default topic.
+// It handles various data types by converting them to a byte array before publishing.
+// If no topic is set, it logs an error and returns without publishing.
+func (mb *MessangerBase) PubData(data any) {
+	if len(mb.topic) == 0 {
+		slog.Error("PubData: no topic set")
+		return
+	}
+
+	topic := mb.topic[0] // Use the first topic as default
+
+	// Convert data to bytes
+	bytes, err := Bytes(data)
+	if err != nil {
+		slog.Error("PubData: failed to convert data to bytes", "error", err)
+		return
+	}
+
+	// Create and publish message
+	msg := NewMsg(topic, bytes, mb.id)
+	mb.PubMsg(msg)
+}
+
+// Close is implemented to satisfy the messanger interface.
+// Base implementation does nothing - specific messanger implementations
+// should override this method to handle cleanup (e.g., closing connections).
+func (mb *MessangerBase) Close() {
+	// Base implementation does nothing
+	slog.Debug("MessangerBase.Close", "id", mb.id)
+}
+
 // ServeHTTP is the REST API entry point for the messanger package
 func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 

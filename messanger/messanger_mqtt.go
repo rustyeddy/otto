@@ -69,7 +69,7 @@ func (m *MessangerMQTT) PubData(data any) {
 		buf = []byte(str)
 
 	default:
-		slog.Error("Unknown Type: ", "topic", m.Topic, "type", fmt.Sprintf("%T", data))
+		slog.Error("Unknown Type: ", "topic", m.Topic(), "type", fmt.Sprintf("%T", data))
 		return
 	}
 
@@ -79,6 +79,25 @@ func (m *MessangerMQTT) PubData(data any) {
 
 func (m *MessangerMQTT) Error() error {
 	return m.MQTT.Error()
+}
+
+// Close cleanly shuts down the MQTT messanger by closing the MQTT connection
+// and clearing local subscriptions. It implements the Messanger interface.
+func (m *MessangerMQTT) Close() {
+	m.Lock()
+	defer m.Unlock()
+
+	// Close the MQTT connection
+	if m.MQTT != nil {
+		m.MQTT.Close()
+	}
+
+	// Clear local subscriptions
+	if m.subs != nil {
+		m.subs = make(map[string][]MsgHandler)
+	}
+
+	slog.Debug("MessangerMQTT.Close", "id", m.ID())
 }
 
 // MsgPrinter will simply print a Msg that has been supplied. TODO,

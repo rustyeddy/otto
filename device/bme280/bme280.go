@@ -1,3 +1,5 @@
+// Package bme280 provides a driver for the BME280 temperature, humidity,
+// and pressure sensor using I2C communication.
 package bme280
 
 import (
@@ -11,8 +13,8 @@ import (
 	"github.com/rustyeddy/otto/device/drivers"
 )
 
-// BME280 is an I2C temperature, humidity and pressure sensor. It
-// defaults to address 0x77
+// BME280 represents an I2C temperature, humidity and pressure sensor.
+// It defaults to address 0x77 and implements the device.Device interface.
 type BME280 struct {
 	*device.Device
 
@@ -27,9 +29,50 @@ type Env struct {
 	Pressure    string `json:"pressure"`
 }
 
+// BME280Config holds the configuration for the BME280 sensor
+type BME280Config struct {
+	Mode       bme280.Mode
+	Filter     bme280.Filter
+	Standby    bme280.StandByTime
+	Oversample struct {
+		Pressure    bme280.Oversampling
+		Temperature bme280.Oversampling
+		Humidity    bme280.Oversampling
+	}
+}
+
+// DefaultConfig returns the default configuration
+func DefaultConfig() BME280Config {
+	return BME280Config{
+		Mode:    bme280.ModeForced,
+		Filter:  bme280.FilterOff,
+		Standby: bme280.StandByTime1000ms,
+		Oversample: struct {
+			Pressure    bme280.Oversampling
+			Temperature bme280.Oversampling
+			Humidity    bme280.Oversampling
+		}{
+			Pressure:    bme280.Oversampling16x,
+			Temperature: bme280.Oversampling16x,
+			Humidity:    bme280.Oversampling16x,
+		},
+	}
+}
+
 // Response returns values read from the sensor containing all three
 // values for temperature, humidity and pressure
 type Response bme280.Response
+
+var (
+	ErrInitFailed    = errors.New("failed to initialize BME280")
+	ErrReadFailed    = errors.New("failed to read from BME280")
+	ErrMarshalFailed = errors.New("failed to marshal BME280 data")
+)
+
+const (
+	DefaultI2CBus     = "/dev/i2c-1"
+	DefaultI2CAddress = 0x77
+)
 
 // Create a new BME280 at the give bus and address. Defaults are
 // typically /dev/i2c-1 address 0x99
@@ -92,7 +135,7 @@ func (b *BME280) Read() (*bme280.Response, error) {
 func (b *BME280) ReadPub() error {
 	vals, err := b.Read()
 	if err != nil {
-		return errors.New("Failed to read bme280: " + err.Error())
+		return fmt.Errorf("reading BME280: %w", err)
 	}
 
 	vals.Temperature = (vals.Temperature * (9 / 5)) + 32
@@ -109,4 +152,9 @@ func (b *BME280) ReadPub() error {
 	}
 	b.PubData(jb)
 	return nil
+}
+
+// ConvertCtoF converts Celsius to Fahrenheit
+func ConvertCtoF(celsius float64) float64 {
+	return (celsius * 9.0 / 5.0) + 32.0
 }
