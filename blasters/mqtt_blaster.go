@@ -1,6 +1,7 @@
 package blasters
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"time"
@@ -9,9 +10,11 @@ import (
 	"github.com/rustyeddy/otto/station"
 )
 
-// MQTTBlaster is a virtual station that will spew messages to a given
+// Blaster is a virtual station that will spew messages to a given
 // topic to be used for testing.
-type MQTTBlaster struct {
+type Blaster struct {
+	Ctx    context.Context
+	Cancel context.CancelFunc
 	*station.Station
 	Topic string
 }
@@ -20,7 +23,7 @@ type MQTTBlaster struct {
 // multiple stations
 type MQTTBlasters struct {
 	Count    int
-	Blasters []*MQTTBlaster
+	Blasters []*Blaster
 	Running  bool
 	Wait     int
 }
@@ -34,12 +37,12 @@ func NewMQTTBlasters(count int) *MQTTBlasters {
 		Wait:    2000,
 	}
 
-	mb.Blasters = make([]*MQTTBlaster, mb.Count)
+	mb.Blasters = make([]*Blaster, mb.Count)
 	for i := 0; i < mb.Count; i++ {
 		id := fmt.Sprintf("station-%d", i)
 		topic := fmt.Sprintf("ss/d/%s/temphum", id)
 
-		mb.Blasters[i] = &MQTTBlaster{
+		mb.Blasters[i] = &Blaster{
 			Topic:   topic,
 			Station: station.NewStation(id),
 		}
@@ -53,7 +56,7 @@ func NewMQTTBlasters(count int) *MQTTBlasters {
 // Msg stream
 func (mb *MQTTBlasters) Blast() error {
 
-	m := messanger.NewMessangerMQTT("blaster")
+	msgr := messanger.NewMessangerMQTT("blaster")
 	wd := &WeatherData{}
 
 	// now start blasting
@@ -62,7 +65,7 @@ func (mb *MQTTBlasters) Blast() error {
 		for i := 0; i < mb.Count; i++ {
 			b := mb.Blasters[i]
 			msg := wd.NewMsg(b.Topic)
-			m.PubMsg(msg)
+			msgr.PubMsg(msg)
 		}
 		time.Sleep(time.Duration(mb.Wait) * time.Millisecond)
 	}
@@ -70,7 +73,11 @@ func (mb *MQTTBlasters) Blast() error {
 	return nil
 }
 
+// (No Start method for Blaster, logic is handled by MQTTBlasters)
+
 // Stop will cause the blasters to stop blasting.
 func (mb *MQTTBlasters) Stop() {
 	mb.Running = false
 }
+
+// (Removed NewMQTTBlaster, not needed)
