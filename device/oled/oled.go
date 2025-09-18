@@ -48,7 +48,7 @@ func New(name string, width, height int) (*OLED, error) {
 		bus:    "/dev/i2c-1",
 		addr:   0x3c,
 	}
-	d.Device = device.NewDevice(name)
+	d.Device = device.NewDevice(name, "mqtt")
 	if device.IsMock() {
 		return d, nil
 	}

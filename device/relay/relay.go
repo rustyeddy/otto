@@ -13,9 +13,9 @@ type Relay struct {
 }
 
 func New(name string, offset int) *Relay {
-	relay := &Relay{
-		Device: device.NewDevice(name),
-	}
+       relay := &Relay{
+	       Device: device.NewDevice(name, "mqtt"),
+       }
 	g := drivers.GetGPIO()
 	relay.DigitalPin = g.Pin(name, offset, gpiocdev.AsOutput(0))
 	return relay

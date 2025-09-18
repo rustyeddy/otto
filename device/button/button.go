@@ -35,10 +35,10 @@ func New(name string, offset int, opts ...gpiocdev.LineReqOption) *Button {
 		bopts = append(bopts, o)
 	}
 
-	b := &Button{
-		Device:     device.NewDevice(name),
-		DigitalPin: drivers.NewDigitalPin(name, offset, bopts...),
-	}
+       b := &Button{
+	       Device:     device.NewDevice(name, "mqtt"),
+	       DigitalPin: drivers.NewDigitalPin(name, offset, bopts...),
+       }
 	b.EvtQ = evtQ
 	return b
 }

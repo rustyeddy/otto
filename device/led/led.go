@@ -13,9 +13,9 @@ type LED struct {
 }
 
 func New(name string, offset int) *LED {
-	led := &LED{
-		Device: device.NewDevice(name),
-	}
+       led := &LED{
+	       Device: device.NewDevice(name, "mqtt"),
+       }
 	g := drivers.GetGPIO()
 	led.DigitalPin = g.Pin(name, offset, gpiocdev.AsOutput(0))
 	return led

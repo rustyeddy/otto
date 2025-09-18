@@ -54,19 +54,19 @@ func TestNewDevice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewDevice(tt.devName)
-			if d.Name() != tt.wantName {
-				t.Errorf("NewDevice().Name() = %v, want %v", d.Name(), tt.wantName)
+			   d := NewDevice(tt.devName, "mqtt")
+			if d.Name != tt.wantName {
+				t.Errorf("NewDevice().Name() = %v, want %v", d.Name, tt.wantName)
 			}
-			if d.State() != tt.wantState {
-				t.Errorf("NewDevice().State() = %v, want %v", d.State(), tt.wantState)
+			if d.State != tt.wantState {
+				t.Errorf("NewDevice().State() = %v, want %v", d.State, tt.wantState)
 			}
 		})
 	}
 }
 
 func TestDeviceState(t *testing.T) {
-	d := NewDevice("test-device")
+	d := NewDevice("test-device", "mqtt")
 
 	states := []DeviceState{
 		StateInitializing,
@@ -76,29 +76,29 @@ func TestDeviceState(t *testing.T) {
 	}
 
 	for _, state := range states {
-		d.setState(state)
-		if got := d.State(); got != state {
+		d.State = state
+		if got := d.State; got != state {
 			t.Errorf("State() = %v, want %v", got, state)
 		}
 	}
 }
 
 func TestDeviceError(t *testing.T) {
-	d := NewDevice("test-device")
-	testErr := errors.New("test error")
+       d := NewDevice("test-device", "mqtt")
+       testErr := errors.New("test error")
 
-	if got := d.Error(); got != nil {
-		t.Errorf("Initial Error() = %v, want nil", got)
-	}
+       if got := d.Error(); got != nil {
+	       t.Errorf("Initial Error() = %v, want nil", got)
+       }
 
-	d.setError(testErr)
-	if got := d.Error(); got != testErr {
-		t.Errorf("Error() = %v, want %v", got, testErr)
-	}
+       d.SetError(testErr)
+       if got := d.Error(); got != testErr {
+	       t.Errorf("Error() = %v, want %v", got, testErr)
+       }
 
-	if got := d.State(); got != StateError {
-		t.Errorf("State() after error = %v, want %v", got, StateError)
-	}
+       if got := d.State; got != StateError {
+	       t.Errorf("State() after error = %v, want %v", got, StateError)
+       }
 }
 
 func TestDeviceTimerLoop(t *testing.T) {
@@ -126,7 +126,7 @@ func TestDeviceTimerLoop(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewDevice("test-device")
+			   d := NewDevice("test-device", "mqtt")
 			ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 			defer cancel()
 
@@ -150,10 +150,9 @@ func TestDeviceTimerLoop(t *testing.T) {
 }
 
 func TestDeviceJSON(t *testing.T) {
-	d := NewDevice("test-device")
-	d.setState(StateRunning)
+	d := NewDevice("test-device", "mqtt")
 	testErr := errors.New("test error")
-	d.setError(testErr)
+	d.SetError(testErr)
 
 	data, err := d.JSON()
 	if err != nil {

@@ -18,10 +18,10 @@ type VH400 struct {
 }
 
 func New(name string, pin int) *VH400 {
-	d := device.NewDevice(name)
-	v := &VH400{
-		Device: d,
-	}
+       d := device.NewDevice(name, "mqtt")
+       v := &VH400{
+	       Device: d,
+       }
 	if device.IsMock() {
 		v.AnalogPin = drivers.NewMockAnalogPin(name, pin, nil)
 		return v

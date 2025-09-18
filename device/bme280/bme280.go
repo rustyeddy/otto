@@ -77,11 +77,11 @@ const (
 // Create a new BME280 at the give bus and address. Defaults are
 // typically /dev/i2c-1 address 0x99
 func New(name, bus string, addr int) *BME280 {
-	b := &BME280{
-		Device: device.NewDevice(name),
-		bus:    bus,
-		addr:   addr,
-	}
+       b := &BME280{
+	       Device: device.NewDevice(name, "mqtt"),
+	       bus:    bus,
+	       addr:   addr,
+       }
 	return b
 }
 

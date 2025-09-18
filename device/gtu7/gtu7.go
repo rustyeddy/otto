@@ -25,10 +25,10 @@ func NewGTU7(name string) *GTU7 {
 		slog.Error("GTU7 failed to open", "error", err)
 		return nil
 	}
-	g := &GTU7{
-		Device: device.NewDevice(name),
-		Serial: s,
-	}
+       g := &GTU7{
+	       Device: device.NewDevice(name, "mqtt"),
+	       Serial: s,
+       }
 	return g
 }
 

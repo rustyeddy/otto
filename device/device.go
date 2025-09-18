@@ -67,65 +67,39 @@ func IsMock() bool {
 
 // Device represents a physical or virtual device with messaging capabilities
 type Device struct {
-	name      string              // Human readable device name
-	state     DeviceState         // Current device state
-	messanger messanger.Messanger // Messaging system
-	period    time.Duration       // Period for timed operations
-	val       any                 // Mock value storage
-	err       error               // Last error encountered
+	Name      string              // Human readable device name
+	State     DeviceState         // Current device state
+	Messanger messanger.Messanger // Messaging system
+	Period    time.Duration       // Period for timed operations
+	Val       any                 // Mock value storage
+	err       error               // Last error encountered (use SetError to set)
 	mu        sync.RWMutex        // Protects device state
 	Opener                        // Device opening interface
 }
 
-// NewDevice creates a new device with the given name
-func NewDevice(name string) *Device {
-	return &Device{
-		name:      name,
-		state:     StateUnknown,
-		messanger: messanger.NewMessangerMQTT(name),
-	}
-}
-
-// Name returns the device's name
-func (d *Device) Name() string {
-	return d.name
-}
-
-// State returns the current device state
-func (d *Device) State() DeviceState {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	return d.state
-}
-
-// setState updates the device state and publishes the change
-func (d *Device) setState(state DeviceState) {
+// SetError sets the device error and updates the state to StateError
+func (d *Device) SetError(err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.state = state
-	d.messanger.PubData(map[string]string{
-		"state": string(state),
-	})
+	d.err = err
+       if err != nil {
+	       d.State = StateError
+       }
 }
 
-// Error returns the last error encountered
+// ErrorVal returns the last error encountered by the device
 func (d *Device) Error() error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.err
 }
 
-// setError updates the error state and publishes it
-func (d *Device) setError(err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	d.err = err
-	if err != nil {
-		d.state = StateError
-		d.messanger.PubData(map[string]string{
-			"error": err.Error(),
-			"state": string(StateError),
-		})
+// NewDevice creates a new device with the given name
+func NewDevice(name string, t string) *Device {
+	return &Device{
+		Name:      name,
+		State:     StateUnknown,
+		Messanger: messanger.NewMessanger(t, name),
 	}
 }
 
@@ -135,8 +109,8 @@ func (d *Device) TimerLoop(ctx context.Context, period time.Duration, readpub fu
 		return fmt.Errorf("invalid period: %v", period)
 	}
 
-	d.period = period
-	d.setState(StateRunning)
+	d.Period = period
+	d.State = StateRunning
 
 	ticker := time.NewTicker(period)
 	defer ticker.Stop()
@@ -144,14 +118,14 @@ func (d *Device) TimerLoop(ctx context.Context, period time.Duration, readpub fu
 	for {
 		select {
 		case <-ctx.Done():
-			d.setState(StateStopped)
+			d.State = StateStopped
 			return ctx.Err()
 		case <-ticker.C:
 			if err := readpub(); err != nil {
 				slog.Error("TimerLoop failed",
-					"device", d.Name(),
+					"device", d.Name,
 					"error", err)
-				d.setError(err)
+							   d.err = err 
 			}
 		}
 	}
@@ -159,7 +133,7 @@ func (d *Device) TimerLoop(ctx context.Context, period time.Duration, readpub fu
 
 // String returns the device name
 func (d *Device) String() string {
-	return d.Name()
+	return d.Name + " (" + string(d.State) + ") ";
 }
 
 // JSON returns a JSON representation of the device
@@ -174,10 +148,10 @@ func (d *Device) JSON() ([]byte, error) {
 		Period    time.Duration
 		Error     string
 	}{
-		Name:      d.name,
-		State:     d.state,
-		Messanger: d.messanger,
-		Period:    d.period,
+		Name:      d.Name,
+		State:     d.State,
+		Messanger: d.Messanger,
+		Period:    d.Period,
 		Error:     errString(d.err),
 	}
 
