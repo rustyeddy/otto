@@ -40,6 +40,11 @@ func GetStationManager() *StationManager {
 	return stations
 }
 
+func resetStations() {
+	stations = nil
+	stations = NewStationManager()
+}
+
 func NewStationManager() (sm *StationManager) {
 	sm = &StationManager{}
 	sm.Stations = make(map[string]*Station)
@@ -120,7 +125,10 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 	if sm.Get(st) != nil {
 		return nil, fmt.Errorf("Error adding an existing station")
 	}
-	station = NewStation(st)
+	station, err = NewStation(st)
+	if err != nil {
+		return nil, err
+	}
 	sm.mu.Lock()
 	sm.Stations[st] = station
 	sm.mu.Unlock()

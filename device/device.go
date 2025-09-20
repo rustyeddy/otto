@@ -67,14 +67,16 @@ func IsMock() bool {
 
 // Device represents a physical or virtual device with messaging capabilities
 type Device struct {
-	Name      string              // Human readable device name
-	State     DeviceState         // Current device state
-	Messanger messanger.Messanger // Messaging system
-	Period    time.Duration       // Period for timed operations
-	Val       any                 // Mock value storage
-	err       error               // Last error encountered (use SetError to set)
-	mu        sync.RWMutex        // Protects device state
-	Opener                        // Device opening interface
+	Name   string        // Human readable device name
+	State  DeviceState   // Current device state
+	Period time.Duration // Period for timed operations
+	Val    any           // Mock value storage
+
+	messanger.Messanger // Messaging system
+
+	err    error        // Last error encountered (use SetError to set)
+	mu     sync.RWMutex // Protects device state
+	Opener              // Device opening interface
 }
 
 // SetError sets the device error and updates the state to StateError
@@ -82,9 +84,9 @@ func (d *Device) SetError(err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.err = err
-       if err != nil {
-	       d.State = StateError
-       }
+	if err != nil {
+		d.State = StateError
+	}
 }
 
 // ErrorVal returns the last error encountered by the device
@@ -125,7 +127,7 @@ func (d *Device) TimerLoop(ctx context.Context, period time.Duration, readpub fu
 				slog.Error("TimerLoop failed",
 					"device", d.Name,
 					"error", err)
-							   d.err = err 
+				d.err = err
 			}
 		}
 	}
@@ -133,7 +135,7 @@ func (d *Device) TimerLoop(ctx context.Context, period time.Duration, readpub fu
 
 // String returns the device name
 func (d *Device) String() string {
-	return d.Name + " (" + string(d.State) + ") ";
+	return d.Name + " (" + string(d.State) + ") "
 }
 
 // JSON returns a JSON representation of the device

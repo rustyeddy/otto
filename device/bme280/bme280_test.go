@@ -47,13 +47,15 @@ func TestBME280Creation(t *testing.T) {
 				t.Fatal("Failed to create BME280 device")
 			}
 
-			if bme.Name() != tt.devName {
-				t.Errorf("Name() = %v, want %v", bme.Name(), tt.devName)
+			if bme.Name != tt.devName {
+				t.Errorf("Name() = %v, want %v", bme.Name, tt.devName)
 			}
 
-			// Only test Init if the method exists
-			if err := bme.Open(); err != nil && !tt.wantErr {
-				t.Errorf("Open() error = %v, wantErr %v", err, tt.wantErr)
+			err := bme.Open()
+			if tt.wantErr && err == nil {
+				t.Error("Open() expected error but got none")
+			} else if !tt.wantErr && err != nil {
+				t.Errorf("Open() unexpected error = %v", err)
 			}
 		})
 	}
@@ -170,7 +172,7 @@ func TestBME280String(t *testing.T) {
 		t.Error("String() returned empty string")
 	}
 
-	if str != bme.Name() {
-		t.Errorf("String() = %v, want %v", str, bme.Name())
+	if str != bme.Name {
+		t.Errorf("String() = %v, want %v", str, bme.Name)
 	}
 }

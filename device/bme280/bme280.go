@@ -77,11 +77,11 @@ const (
 // Create a new BME280 at the give bus and address. Defaults are
 // typically /dev/i2c-1 address 0x99
 func New(name, bus string, addr int) *BME280 {
-       b := &BME280{
-	       Device: device.NewDevice(name, "mqtt"),
-	       bus:    bus,
-	       addr:   addr,
-       }
+	b := &BME280{
+		Device: device.NewDevice(name, "mqtt"),
+		bus:    bus,
+		addr:   addr,
+	}
 	return b
 }
 
@@ -91,6 +91,8 @@ func (b *BME280) Init() error {
 	if device.IsMock() == true {
 		return nil
 	}
+
+	b.PubData([]byte(`{"status":"initializing"}`))
 
 	i2c, err := drivers.GetI2CDriver(b.bus, b.addr)
 	if err != nil {
