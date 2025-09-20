@@ -6,17 +6,17 @@ import (
 	"testing"
 )
 
-func TestStationInit(t *testing.T) {
+func TestStationNameInit(t *testing.T) {
 	// Test that the station name is initialized to "station" by default
 	// We need to reset to initial state first
-	SetStation("station")
+	SetStationName("station")
 
-	if Station() != "station" {
-		t.Errorf("Expected default station name 'station', got '%s'", Station())
+	if StationName() != "station" {
+		t.Errorf("Expected default station name 'station', got '%s'", StationName())
 	}
 }
 
-func TestSetStation(t *testing.T) {
+func TestSetStationName(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -33,8 +33,8 @@ func TestSetStation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			SetStation(tt.input)
-			result := Station()
+			SetStationName(tt.input)
+			result := StationName()
 			if result != tt.expected {
 				t.Errorf("SetStation(%q): expected %q, got %q", tt.input, tt.expected, result)
 			}
@@ -47,8 +47,8 @@ func TestStation(t *testing.T) {
 	testNames := []string{"station1", "station2", "final-station"}
 
 	for _, name := range testNames {
-		SetStation(name)
-		result := Station()
+		SetStationName(name)
+		result := StationName()
 		if result != name {
 			t.Errorf("After SetStation(%q), Station() returned %q", name, result)
 		}
@@ -57,23 +57,23 @@ func TestStation(t *testing.T) {
 
 func TestStationSequence(t *testing.T) {
 	// Test multiple sequential operations
-	originalName := Station()
+	originalName := StationName()
 
 	// Set and verify multiple times
 	names := []string{"first", "second", "third", ""}
 
 	for i, name := range names {
-		SetStation(name)
-		if Station() != name {
-			t.Errorf("Step %d: expected station name %q, got %q", i+1, name, Station())
+		SetStationName(name)
+		if StationName() != name {
+			t.Errorf("Step %d: expected station name %q, got %q", i+1, name, StationName())
 		}
 	}
 
 	// Restore original name
-	SetStation(originalName)
+	SetStationName(originalName)
 }
 
-func TestStationConcurrency(t *testing.T) {
+func TestStationNameConcurrency(t *testing.T) {
 	const numGoroutines = 10
 	const numOperations = 100
 
@@ -91,10 +91,10 @@ func TestStationConcurrency(t *testing.T) {
 				if j%2 == 0 {
 					// Write operation
 					name := fmt.Sprintf("station-%d-%d", id, j)
-					SetStation(name)
+					SetStationName(name)
 				} else {
 					// Read operation
-					name := Station()
+					name := StationName()
 					if name == "" {
 						// This is actually valid, but we'll track it
 					}
@@ -114,25 +114,25 @@ func TestStationConcurrency(t *testing.T) {
 	}
 
 	// Ensure the station name is still accessible after concurrent operations
-	finalName := Station()
+	finalName := StationName()
 	if finalName == "" {
 		// This is technically valid but unexpected in normal usage
 		t.Log("Station name is empty after concurrent operations")
 	}
 
 	// Reset to a known state
-	SetStation("station")
+	SetStationName("station")
 }
 
 func TestStationImmutability(t *testing.T) {
 	// Test that returned string cannot affect internal state
-	SetStation("original")
+	SetStationName("original")
 
-	name1 := Station()
-	name2 := Station()
+	name1 := StationName()
+	name2 := StationName()
 
 	if name1 != name2 {
-		t.Errorf("Multiple calls to Station() returned different values: %q vs %q", name1, name2)
+		t.Errorf("Multiple calls to StationName() returned different values: %q vs %q", name1, name2)
 	}
 
 	if name1 != "original" {
@@ -140,20 +140,20 @@ func TestStationImmutability(t *testing.T) {
 	}
 
 	// Verify the value is still correct
-	if Station() != "original" {
-		t.Errorf("Station name changed unexpectedly to %q", Station())
+	if StationName() != "original" {
+		t.Errorf("Station name changed unexpectedly to %q", StationName())
 	}
 }
 
 func TestStationStatePreservation(t *testing.T) {
 	// Test that station name is preserved across multiple function calls
 	testName := "persistent-station"
-	SetStation(testName)
+	SetStationName(testName)
 
 	// Call Station multiple times
 	for i := 0; i < 10; i++ {
-		if Station() != testName {
-			t.Errorf("Call %d: expected station name %q, got %q", i+1, testName, Station())
+		if StationName() != testName {
+			t.Errorf("Call %d: expected station name %q, got %q", i+1, testName, StationName())
 		}
 	}
 }
@@ -171,34 +171,34 @@ func TestStationNilSafety(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		SetStation(testCase)
-		result := Station()
+		SetStationName(testCase)
+		result := StationName()
 		if result != testCase {
-			t.Errorf("SetStation(%q) -> Station() = %q, expected %q", testCase, result, testCase)
+			t.Errorf("SetStationName(%q) -> StationName() = %q, expected %q", testCase, result, testCase)
 		}
 	}
 }
 
-func BenchmarkSetStation(b *testing.B) {
+func BenchmarkSetStationName(b *testing.B) {
 	name := "benchmark-station"
 	for i := 0; i < b.N; i++ {
-		SetStation(name)
+		SetStationName(name)
 	}
 }
 
 func BenchmarkStation(b *testing.B) {
-	SetStation("benchmark-station")
+	SetStationName("benchmark-station")
 	for i := 0; i < b.N; i++ {
-		_ = Station()
+		_ = StationName()
 	}
 }
 
 func BenchmarkStationConcurrent(b *testing.B) {
-	SetStation("concurrent-benchmark")
+	SetStationName("concurrent-benchmark")
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_ = Station()
+			_ = StationName()
 		}
 	})
 }

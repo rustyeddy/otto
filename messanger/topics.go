@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
+
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Topics maintains the list of topics used by otto and the
 // applications. It maintains the topic format and a count for each
 // time the topic is used
 type Topics struct {
-	StationName string
-	TopicFmt    string
-	Topicmap    map[string]int
+	TopicFmt string
+	Topicmap map[string]int
 }
 
 var (
@@ -22,10 +24,33 @@ var (
 
 func init() {
 	topics = &Topics{
-		TopicFmt:    "ss/%s/%s/%s",
-		Topicmap:    make(map[string]int),
-		StationName: "",
+		TopicFmt: "ss/%s/%s/%s",
+		Topicmap: make(map[string]int),
 	}
+}
+
+// validate topic
+func ValidateTopic(topic string) bool {
+	path := strings.Split(topic, "/")
+	if len(path) < 4 {
+		return false
+	}
+
+	if path[0] != "ss" {
+		return false
+	}
+
+	if path[1] != "c" && path[1] != "d" {
+		return false
+	}
+
+	if path[2] == "" || path[3] == "" {
+		return false
+	}
+
+	// here we have to accept the station id and topic it advertises
+	// because we can't know what the station IDs are.
+	return true
 }
 
 // GetTopics will return the Topics structure, one per application.
@@ -33,22 +58,16 @@ func GetTopics() *Topics {
 	return topics
 }
 
-// SetStationName will use the value to set the station that will be
-// used when publishing messages from this station.
-func (t *Topics) SetStationName(name string) {
-	t.StationName = name
-}
-
 // Control will return a control topic e.g. ss/c/station/foo
 func (t *Topics) Control(topic string) string {
-	top := fmt.Sprintf(t.TopicFmt, "c", t.StationName, topic)
+	top := fmt.Sprintf(t.TopicFmt, "c", utils.StationName(), topic)
 	t.Topicmap[top]++
 	return top
 }
 
 // Control will return a data topic e.g. ss/d/station/foo
 func (t *Topics) Data(topic string) string {
-	top := fmt.Sprintf(t.TopicFmt, "d", t.StationName, topic)
+	top := fmt.Sprintf(t.TopicFmt, "d", utils.StationName(), topic)
 	t.Topicmap[top]++
 	return top
 }

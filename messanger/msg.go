@@ -23,6 +23,7 @@ type Msg struct {
 	Args   []string `json:"args"`
 	Data   []byte   `json:"msg"`
 	Source string   `json:"source"`
+	Valid  bool     `json:"valid"`
 
 	Timestamp time.Duration `json:"timestamp"`
 }
@@ -82,6 +83,7 @@ func NewMsg(topic string, data []byte, source string) *Msg {
 		Data:      data,
 		Timestamp: utils.Timestamp(),
 		Source:    source,
+		Valid:     ValidateTopic(topic),
 	}
 
 	if msgSaver != nil && msgSaver.Saving {

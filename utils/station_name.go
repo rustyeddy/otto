@@ -4,14 +4,10 @@ var (
 	stationName string
 )
 
-func init() {
-	stationName = "station"
-}
-
-func SetStation(name string) {
+func SetStationName(name string) {
 	stationName = name
 }
 
-func Station() string {
+func StationName() string {
 	return stationName
 }

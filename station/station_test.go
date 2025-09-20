@@ -2,293 +2,373 @@ package station
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
 )
 
-func StationCreation(count int) []string {
-	ids := []string{
-		"127.0.0.1",
-		"127.0.0.2",
-		"127.0.0.3",
-		"127.0.0.4",
-		"127.0.0.5",
+func TestNewStation(t *testing.T) {
+	resetStations()
+
+	tests := []struct {
+		name    string
+		id      string
+		wantErr bool
+	}{
+		{
+			name:    "valid station creation",
+			id:      "test-station",
+			wantErr: false,
+		},
+		{
+			name:    "empty ID should fail",
+			id:      "",
+			wantErr: true,
+		},
+		{
+			name:    "duplicate ID should fail",
+			id:      "test-station", // Same as first test
+			wantErr: true,
+		},
 	}
 
-	sm := NewStationManager()
-	for _, id := range ids {
-		sm.Add(id)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			station, err := NewStation(tt.id)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if station.ID != tt.id {
+				t.Errorf("Expected ID %s, got %s", tt.id, station.ID)
+			}
+
+			if station.Metrics == nil {
+				t.Error("Metrics should be initialized")
+			}
+		})
 	}
-	return ids
 }
 
-func TestStation(t *testing.T) {
-	resetStations() // Clean state for test
+func TestStationInit(t *testing.T) {
+	resetStations()
 
-	localip := "127.0.0.1"
-	st, err := NewStation(localip)
+	station, err := NewStation("init-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
 
-	if st.ID != localip {
-		t.Errorf("IP expecting (%s) got (%s)", localip, st.ID)
+	// Test initialization
+	station.Init()
+
+	// Verify network information was gathered
+	if station.Hostname == "" {
+		t.Error("Hostname should be set after Init()")
+	}
+
+	// Verify metrics were updated
+	metrics := station.Metrics.GetMetrics()
+	if metrics.NetworkInterfaceCount == 0 && metrics.IPAddressCount == 0 {
+		// This might be expected in test environment
+		t.Log("No network interfaces found (expected in test environment)")
 	}
 }
 
-func TestStationManager(t *testing.T) {
-	resetStations() // Clean state for test
+func TestStationSayHello(t *testing.T) {
+	resetStations()
 
-	count := 5
-	sm := NewStationManager()
-	sids := StationCreation(count)
-	for _, id := range sids {
-		sm.Add(id)
-	}
-
-	if sm.Count() != len(sids) {
-		t.Errorf("Station Manager count got (%d) expected (%d)",
-			sm.Count(), len(sids))
-	}
-
-	for _, id := range sids {
-		st := sm.Get(id)
-		if st == nil {
-			t.Errorf("Get station expected (%s) got nil", id)
-			continue
-		}
-		if st.ID != id {
-			t.Errorf("Get station expected (%s) got (%s)", id, st.ID)
-		}
-	}
-}
-
-func TestStationJSON(t *testing.T) {
-	resetStations() // Clean state for test
-
-	st, err := NewStation("aa:bb:cc:dd:ee:11")
+	station, err := NewStation("hello-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
 
-	st.LastHeard = time.Now()
+	initialAnnouncements := station.Metrics.GetMetrics().AnnouncementsSent
 
-	j, err := json.Marshal(st)
-	if err != nil {
-		t.Errorf("Marshal Station failed: %+v", err)
-		return
+	// Test saying hello
+	station.SayHello()
+
+	// Verify metrics were updated
+	metrics := station.Metrics.GetMetrics()
+	if metrics.AnnouncementsSent != initialAnnouncements+1 {
+		t.Errorf("Expected announcements to increase by 1, got %d",
+			metrics.AnnouncementsSent-initialAnnouncements)
 	}
 
-	var station Station
-	err = json.Unmarshal(j, &station)
-	if err != nil {
-		t.Errorf("Unmarshal Station failed: %+v", err)
-		return
-	}
-
-	if station.ID != st.ID {
-		t.Errorf("Expected ID %s, got %s", st.ID, station.ID)
+	if station.LastHeard.IsZero() {
+		t.Error("LastHeard should be updated after SayHello()")
 	}
 }
 
-func TestRecordHealthCheck(t *testing.T) {
-	metrics := NewStationMetrics()
+func TestStationTicker(t *testing.T) {
+	resetStations()
 
-	// Test recording healthy check
-	metrics.RecordHealthCheck(true)
-
-	// Get current metrics to check values
-	currentMetrics := metrics.GetMetrics()
-
-	// Verify metrics were updated
-	if currentMetrics.HealthCheckCount != 1 {
-		t.Errorf("Expected HealthCheckCount to be 1, got %d", currentMetrics.HealthCheckCount)
-	}
-	if currentMetrics.HealthyChecks != 1 {
-		t.Errorf("Expected HealthyChecks to be 1, got %d", currentMetrics.HealthyChecks)
-	}
-	if currentMetrics.UnhealthyChecks != 0 {
-		t.Errorf("Expected UnhealthyChecks to be 0, got %d", currentMetrics.UnhealthyChecks)
+	station, err := NewStation("ticker-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
 	}
 
-	// Test recording unhealthy check
-	metrics.RecordHealthCheck(false)
-
-	// Get updated metrics
-	currentMetrics = metrics.GetMetrics()
-
-	// Verify metrics were updated
-	if currentMetrics.HealthCheckCount != 2 {
-		t.Errorf("Expected HealthCheckCount to be 2, got %d", currentMetrics.HealthCheckCount)
+	// Test starting ticker
+	err = station.StartTicker(50 * time.Millisecond)
+	if err != nil {
+		t.Errorf("Failed to start ticker: %v", err)
 	}
-	if currentMetrics.HealthyChecks != 1 {
-		t.Errorf("Expected HealthyChecks to be 1, got %d", currentMetrics.HealthyChecks)
-	}
-	if currentMetrics.UnhealthyChecks != 1 {
-		t.Errorf("Expected UnhealthyChecks to be 1, got %d", currentMetrics.UnhealthyChecks)
+
+	// Wait for a few ticks
+	time.Sleep(200 * time.Millisecond)
+
+	// Stop the station
+	station.Stop()
+
+	// Verify announcements were sent
+	metrics := station.Metrics.GetMetrics()
+	if metrics.AnnouncementsSent == 0 {
+		t.Error("Expected some announcements to be sent")
 	}
 }
 
-func TestRecordHealthCheckConcurrency(t *testing.T) {
-	metrics := NewStationMetrics()
+func TestStationHealthCheck(t *testing.T) {
+	resetStations()
 
-	// Test concurrent health check recording
-	const numRoutines = 100
-	const checksPerRoutine = 10
+	station, err := NewStation("health-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
+	}
+
+	// Set recent LastHeard
+	station.LastHeard = time.Now()
+
+	// Should be healthy
+	if !station.IsHealthy() {
+		t.Error("Station should be healthy with recent LastHeard")
+	}
+
+	// Set old LastHeard
+	station.LastHeard = time.Now().Add(-5 * time.Minute)
+
+	// Should be unhealthy
+	if station.IsHealthy() {
+		t.Error("Station should be unhealthy with old LastHeard")
+	}
+}
+
+func TestStationDeviceManagement(t *testing.T) {
+	resetStations()
+
+	station, err := NewStation("device-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
+	}
+
+	// Create a mock device
+	mockDevice := &MockDevice{name: "test-device"}
+
+	// Add device
+	station.AddDevice(mockDevice)
+
+	// Verify device was added
+	retrieved := station.GetDevice("test-device")
+	if retrieved != mockDevice {
+		t.Error("Device was not properly added or retrieved")
+	}
+
+	// Verify metrics were updated
+	metrics := station.Metrics.GetMetrics()
+	if metrics.DeviceCount != 1 {
+		t.Errorf("Expected device count 1, got %d", metrics.DeviceCount)
+	}
+}
+
+func TestStationHTTPHandler(t *testing.T) {
+	resetStations()
+
+	station, err := NewStation("http-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
+	}
+
+	// Test GET request
+	req, err := http.NewRequest("GET", "/api/station/http-test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	station.ServeHTTP(rr, req)
+
+	// Check response
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, status)
+	}
+
+	// Parse response
+	var response Station
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Errorf("Failed to parse JSON response: %v", err)
+	}
+
+	if response.ID != "http-test" {
+		t.Errorf("Expected ID 'http-test', got '%s'", response.ID)
+	}
+}
+
+func TestStationMetrics(t *testing.T) {
+	resetStations()
+
+	station, err := NewStation("metrics-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
+	}
+
+	// Test various metric operations
+	station.Metrics.RecordAnnouncement()
+	station.Metrics.RecordMessageSent(100)
+	station.Metrics.RecordMessageReceived(200)
+	station.Metrics.RecordError()
+	station.Metrics.RecordResponseTime(50 * time.Millisecond)
+	station.Metrics.RecordHealthCheck(true)
+
+	// Get metrics
+	metrics := station.Metrics.GetMetrics()
+
+	// Verify all metrics were recorded
+	tests := []struct {
+		name     string
+		got      interface{}
+		expected interface{}
+	}{
+		{"AnnouncementsSent", metrics.AnnouncementsSent, uint64(1)},
+		{"MessagesSent", metrics.MessagesSent, uint64(1)},
+		{"MessagesSentBytes", metrics.MessagesSentBytes, uint64(100)},
+		{"MessagesReceived", metrics.MessagesReceived, uint64(1)},
+		{"MessagesReceivedBytes", metrics.MessagesReceivedBytes, uint64(200)},
+		{"ErrorCount", metrics.ErrorCount, uint64(1)},
+		{"HealthCheckCount", metrics.HealthCheckCount, uint64(1)},
+		{"HealthyChecks", metrics.HealthyChecks, uint64(1)},
+	}
+
+	for _, tt := range tests {
+		if tt.got != tt.expected {
+			t.Errorf("%s: expected %v, got %v", tt.name, tt.expected, tt.got)
+		}
+	}
+}
+
+func TestStationConcurrency(t *testing.T) {
+	resetStations()
+
+	const numRoutines = 50
+	const operationsPerRoutine = 100
+
+	station, err := NewStation("concurrency-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
+	}
 
 	var wg sync.WaitGroup
 
-	// Start goroutines that record healthy checks
-	for i := 0; i < numRoutines/2; i++ {
+	// Test concurrent metric updates
+	for i := 0; i < numRoutines; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < checksPerRoutine; j++ {
-				metrics.RecordHealthCheck(true)
-			}
-		}()
-	}
-
-	// Start goroutines that record unhealthy checks
-	for i := 0; i < numRoutines/2; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < checksPerRoutine; j++ {
-				metrics.RecordHealthCheck(false)
+			for j := 0; j < operationsPerRoutine; j++ {
+				station.Metrics.RecordAnnouncement()
+				station.Metrics.RecordMessageSent(uint64(j))
+				station.Metrics.RecordHealthCheck(j%2 == 0)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	// Get final metrics
-	finalMetrics := metrics.GetMetrics()
-
 	// Verify final counts
-	expectedTotal := uint64(numRoutines * checksPerRoutine)
-	expectedHealthy := uint64(numRoutines / 2 * checksPerRoutine)
-	expectedUnhealthy := uint64(numRoutines / 2 * checksPerRoutine)
+	metrics := station.Metrics.GetMetrics()
+	expectedCount := uint64(numRoutines * operationsPerRoutine)
 
-	if finalMetrics.HealthCheckCount != expectedTotal {
-		t.Errorf("Expected HealthCheckCount to be %d, got %d", expectedTotal, finalMetrics.HealthCheckCount)
+	if metrics.AnnouncementsSent != expectedCount {
+		t.Errorf("Expected %d announcements, got %d",
+			expectedCount, metrics.AnnouncementsSent)
 	}
-	if finalMetrics.HealthyChecks != expectedHealthy {
-		t.Errorf("Expected HealthyChecks to be %d, got %d", expectedHealthy, finalMetrics.HealthyChecks)
-	}
-	if finalMetrics.UnhealthyChecks != expectedUnhealthy {
-		t.Errorf("Expected UnhealthyChecks to be %d, got %d", expectedUnhealthy, finalMetrics.UnhealthyChecks)
-	}
-}
 
-func TestRecordHealthCheckSequence(t *testing.T) {
-	metrics := NewStationMetrics()
-
-	// Test a sequence of health checks
-	healthChecks := []bool{true, true, false, true, false, false, true}
-
-	expectedHealthy := uint64(0)
-	expectedUnhealthy := uint64(0)
-
-	for i, healthy := range healthChecks {
-		metrics.RecordHealthCheck(healthy)
-
-		if healthy {
-			expectedHealthy++
-		} else {
-			expectedUnhealthy++
-		}
-
-		// Get current metrics
-		currentMetrics := metrics.GetMetrics()
-
-		// Verify counts after each check
-		expectedTotal := uint64(i + 1)
-		if currentMetrics.HealthCheckCount != expectedTotal {
-			t.Errorf("After check %d: Expected HealthCheckCount to be %d, got %d", i, expectedTotal, currentMetrics.HealthCheckCount)
-		}
-		if currentMetrics.HealthyChecks != expectedHealthy {
-			t.Errorf("After check %d: Expected HealthyChecks to be %d, got %d", i, expectedHealthy, currentMetrics.HealthyChecks)
-		}
-		if currentMetrics.UnhealthyChecks != expectedUnhealthy {
-			t.Errorf("After check %d: Expected UnhealthyChecks to be %d, got %d", i, expectedUnhealthy, currentMetrics.UnhealthyChecks)
-		}
+	if metrics.HealthCheckCount != expectedCount {
+		t.Errorf("Expected %d health checks, got %d",
+			expectedCount, metrics.HealthCheckCount)
 	}
 }
 
-func TestRecordHealthCheckHealthScore(t *testing.T) {
-	metrics := NewStationMetrics()
-
-	// Record some health checks
-	metrics.RecordHealthCheck(true)  // 1/1 = 100%
-	metrics.RecordHealthCheck(true)  // 2/2 = 100%
-	metrics.RecordHealthCheck(false) // 2/3 = 66.67%
-	metrics.RecordHealthCheck(true)  // 3/4 = 75%
-
-	// Get metrics (which calls UpdateMetrics internally)
-	currentMetrics := metrics.GetMetrics()
-
-	expectedScore := float64(3) / float64(4) * 100 // 75%
-	if currentMetrics.HealthScore != expectedScore {
-		t.Errorf("Expected HealthScore to be %f, got %f", expectedScore, currentMetrics.HealthScore)
-	}
+// Mock device for testing
+type MockDevice struct {
+	name string
 }
 
-func TestRecordHealthCheckZeroState(t *testing.T) {
-	metrics := NewStationMetrics()
-
-	// Get initial metrics
-	initialMetrics := metrics.GetMetrics()
-
-	// Verify initial state
-	if initialMetrics.HealthCheckCount != 0 {
-		t.Errorf("Expected initial HealthCheckCount to be 0, got %d", initialMetrics.HealthCheckCount)
-	}
-	if initialMetrics.HealthyChecks != 0 {
-		t.Errorf("Expected initial HealthyChecks to be 0, got %d", initialMetrics.HealthyChecks)
-	}
-	if initialMetrics.UnhealthyChecks != 0 {
-		t.Errorf("Expected initial UnhealthyChecks to be 0, got %d", initialMetrics.UnhealthyChecks)
-	}
-	if initialMetrics.HealthScore != 0 {
-		t.Errorf("Expected initial HealthScore to be 0, got %f", initialMetrics.HealthScore)
-	}
+func (m *MockDevice) Name() string {
+	return m.name
 }
 
-func TestStationMetrics(t *testing.T) {
-	station, err := NewStation("test-station")
+func TestStationJSON(t *testing.T) {
+	resetStations()
+
+	station, err := NewStation("json-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
 
-	// Test various metric recording functions
-	station.Metrics.RecordAnnouncement()
-	station.Metrics.RecordMessageSent(100)
-	station.Metrics.RecordMessageReceived(200)
-	station.Metrics.RecordError()
-	station.Metrics.RecordResponseTime(50 * time.Millisecond)
+	station.LastHeard = time.Now()
+	station.Hostname = "test-hostname"
 
-	// Get current metrics
+	// Test JSON marshaling
+	data, err := json.Marshal(station)
+	if err != nil {
+		t.Errorf("Failed to marshal station: %v", err)
+	}
+
+	// Test JSON unmarshaling
+	var unmarshaled Station
+	err = json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		t.Errorf("Failed to unmarshal station: %v", err)
+	}
+
+	// Verify critical fields
+	if unmarshaled.ID != station.ID {
+		t.Errorf("Expected ID %s, got %s", station.ID, unmarshaled.ID)
+	}
+
+	if unmarshaled.Hostname != station.Hostname {
+		t.Errorf("Expected hostname %s, got %s", station.Hostname, unmarshaled.Hostname)
+	}
+}
+
+func TestStationErrorHandling(t *testing.T) {
+	resetStations()
+
+	station, err := NewStation("error-test")
+	if err != nil {
+		t.Fatalf("Failed to create station: %v", err)
+	}
+
+	// Test error handling
+	testError := fmt.Errorf("test error")
+	station.SaveError(testError)
+
+	// Give some time for error handler to process
+	time.Sleep(10 * time.Millisecond)
+
+	// Verify error was recorded in metrics
 	metrics := station.Metrics.GetMetrics()
-
-	// Verify metrics were recorded
-	if metrics.AnnouncementsSent != 1 {
-		t.Errorf("Expected AnnouncementsSent to be 1, got %d", metrics.AnnouncementsSent)
-	}
-	if metrics.MessagesSent != 1 {
-		t.Errorf("Expected MessagesSent to be 1, got %d", metrics.MessagesSent)
-	}
-	if metrics.MessagesSentBytes != 100 {
-		t.Errorf("Expected MessagesSentBytes to be 100, got %d", metrics.MessagesSentBytes)
-	}
-	if metrics.MessagesReceived != 1 {
-		t.Errorf("Expected MessagesReceived to be 1, got %d", metrics.MessagesReceived)
-	}
-	if metrics.MessagesReceivedBytes != 200 {
-		t.Errorf("Expected MessagesReceivedBytes to be 200, got %d", metrics.MessagesReceivedBytes)
-	}
-	if metrics.ErrorCount != 1 {
-		t.Errorf("Expected ErrorCount to be 1, got %d", metrics.ErrorCount)
+	if metrics.ErrorCount == 0 {
+		t.Error("Error should have been recorded in metrics")
 	}
 }

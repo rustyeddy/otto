@@ -27,6 +27,7 @@ type StationEvent struct {
 	Device    string `json:"device"`
 	StationID string `json:"stationid"`
 	Value     string `json:"value"`
+	Timestamp time.Time
 }
 
 var (
@@ -138,6 +139,11 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 func (sm *StationManager) Update(msg *messanger.Msg) (st *Station) {
 
 	var err error
+
+	if !msg.Valid {
+		slog.Error("Update with an invalid topic", "topic", msg.Topic)
+		return nil
+	}
 
 	stid := msg.Station()
 	if stid == "" {

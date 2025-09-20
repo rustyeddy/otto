@@ -65,8 +65,9 @@ func NewStation(id string) (*Station, error) {
 		return nil, errors.New("station ID cannot be empty")
 	}
 
-	// Check for duplicate stations
-	if existingStation := stations.Get(id); existingStation != nil {
+	// Check for duplicate stations using the station manager
+	sm := GetStationManager()
+	if existingStation := sm.Get(id); existingStation != nil {
 		return nil, fmt.Errorf("station with ID %s already exists", id)
 	}
 
@@ -110,7 +111,6 @@ func (st *Station) Init() {
 	st.GetNetwork()
 
 	topics := messanger.GetTopics()
-	topics.SetStationName(st.Hostname)
 	st.SetTopic(topics.Data("hello"))
 
 	// Update network metrics
