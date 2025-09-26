@@ -342,8 +342,9 @@ func TestMockClient_Integration(t *testing.T) {
 
 	// Test subscribe with message handling
 	var receivedMsg *Msg
-	err := mqttInstance.Subscribe("test/incoming", func(msg *Msg) {
+	err := mqttInstance.Subscribe("test/incoming", func(msg *Msg) error {
 		receivedMsg = msg
+		return nil
 	})
 	if err != nil {
 		t.Errorf("expected no error from Subscribe, got %v", err)
@@ -444,7 +445,7 @@ func TestMQTT_SubscribeEdgeCases(t *testing.T) {
 	mqtt := NewMQTT("test-client")
 
 	// Test subscribe with nil client
-	err := mqtt.Subscribe("test/topic", func(msg *Msg) {})
+	err := mqtt.Subscribe("test/topic", func(msg *Msg) error { return nil })
 	if err == nil {
 		t.Error("expected error when subscribing with nil client")
 	}
@@ -454,7 +455,7 @@ func TestMQTT_SubscribeEdgeCases(t *testing.T) {
 	mock.SetSubscribeError(errors.New("subscribe failed"))
 	mqtt.Client = mock
 
-	err = mqtt.Subscribe("test/topic", func(msg *Msg) {})
+	err = mqtt.Subscribe("test/topic", func(msg *Msg) error { return nil })
 	if err == nil {
 		t.Error("expected error from Subscribe when mock has error")
 	}
@@ -518,8 +519,9 @@ func TestMessangerMQTT_Subscribe(t *testing.T) {
 	mqttMessanger.MQTT.Client = mock
 
 	var receivedMsg *Msg
-	handler := func(msg *Msg) {
+	handler := func(msg *Msg) error {
 		receivedMsg = msg
+		return nil
 	}
 
 	err := mqttMessanger.Subscribe("test/topic", handler)

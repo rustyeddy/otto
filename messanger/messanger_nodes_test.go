@@ -20,8 +20,9 @@ func TestNewNode(t *testing.T) {
 func TestInsertAndLookup(t *testing.T) {
 	root := newNode("/")
 	handlerCalled := false
-	handler := func(msg *Msg) {
+	handler := func(msg *Msg) error {
 		handlerCalled = true
+		return nil
 	}
 
 	// Insert a topic with a handler
@@ -50,8 +51,9 @@ func TestInsertAndLookup(t *testing.T) {
 func TestWildcardLookup(t *testing.T) {
 	root := newNode("/")
 	handlerCalled := false
-	handler := func(msg *Msg) {
+	handler := func(msg *Msg) error {
 		handlerCalled = true
+		return nil
 	}
 
 	// Insert a wildcard topic
@@ -80,8 +82,9 @@ func TestWildcardLookup(t *testing.T) {
 func TestMultiLevelWildcardLookup(t *testing.T) {
 	root := newNode("/")
 	handlerCalled := false
-	handler := func(msg *Msg) {
+	handler := func(msg *Msg) error {
 		handlerCalled = true
+		return nil
 	}
 
 	// Insert a multi-level wildcard topic

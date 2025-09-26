@@ -37,7 +37,7 @@ func (m *MessangerLocal) Pub(topic string, value any) error {
 	if handlers, ok := m.subs[topic]; ok {
 		msg := NewMsg(topic, toBytesUnchecked(value), m.id)
 		for _, h := range handlers {
-			h(msg)
+			m.error = h(msg)
 		}
 	}
 	return nil
@@ -67,7 +67,8 @@ func (m *MessangerLocal) PubData(data any) error {
 	topic := m.topic[0]
 	bytes, err := Bytes(data)
 	if err != nil {
-		return fmt.Errorf("failed to convert data to bytes: %w", err)
+		m.error = fmt.Errorf("failed to convert data to bytes: %w", err)
+		return m.error
 	}
 	msg := NewMsg(topic, bytes, m.id)
 	return m.PubMsg(msg)

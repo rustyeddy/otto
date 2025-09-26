@@ -66,7 +66,7 @@ func TestMessanger_ID(t *testing.T) {
 func TestMessanger_Subscribe(t *testing.T) {
 	mock := &MockMessanger{handlers: make(map[string]MsgHandler)}
 
-	err := mock.Subscribe("test-topic", func(msg *Msg) {})
+	err := mock.Subscribe("test-topic", func(msg *Msg) error { return nil })
 	if err != nil {
 		t.Errorf("expected no error, got '%v'", err)
 	}
@@ -89,8 +89,9 @@ func TestMessanger_PubMsg(t *testing.T) {
 	mock := &MockMessanger{handlers: make(map[string]MsgHandler)}
 	mock.SetTopic("test-topic")
 	var receivedMsg *Msg
-	mock.Subscribe("test-topic", func(msg *Msg) {
+	mock.Subscribe("test-topic", func(msg *Msg) error {
 		receivedMsg = msg
+		return nil
 	})
 
 	msg := &Msg{}
@@ -149,7 +150,7 @@ func TestMessangerBase_Topic(t *testing.T) {
 }
 func TestMessangerBase_ServeHTTP(t *testing.T) {
 	mb := NewMessangerBase("test-id", "topic1", "topic2")
-	mb.subs["topic1"] = []MsgHandler{func(msg *Msg) {}}
+	mb.subs["topic1"] = []MsgHandler{func(msg *Msg) error { return nil }}
 	mb.Published = 5
 
 	req, err := http.NewRequest(http.MethodGet, "/messanger", nil)

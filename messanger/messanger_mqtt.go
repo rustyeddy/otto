@@ -44,7 +44,7 @@ func (m *MessangerMQTT) Pub(topic string, value any) error {
 	// attempt to return it (best-effort).
 	if m.MQTT != nil {
 		// If underlying Publish has an error signature, call and return it.
-		_ = m.Publish(topic, value)
+		_ = m.MQTT.Publish(topic, value)
 	} else {
 		// best-effort: do nothing
 	}

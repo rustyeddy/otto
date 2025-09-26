@@ -139,30 +139,30 @@ func (m *MQTT) Subscribe(topic string, f MsgHandler) error {
 }
 
 // Publish will publish a value to the given topic
-func (m *MQTT) Publish(topic string, value any) {
+func (m *MQTT) Publish(topic string, value any) error {
 	var t gomqtt.Token
 
 	if topic == "" {
-		panic("topic is nil")
+		return fmt.Errorf("MQTT Publish topic is nil")
 	}
 
 	if m.Client == nil {
-		slog.Warn("MQTT Client is not connected to a broker")
-		return
+		return fmt.Errorf("MQTT Client is not connected to a broker")
 	}
 
 	if t = m.Client.Publish(topic, byte(0), false, value); t == nil {
 		if false {
-			slog.Info("MQTT Pub NULL token: ", "topic", topic, "value", value)
+			return fmt.Errorf("MQTT Pub NULL token topic %s - value: %+v", topic, value)
 		}
-		return
+		return nil
 	}
 
 	t.Wait()
 	if t.Error() != nil {
 		m.error = t.Error()
-		slog.Error("MQTT Publish token: ", "error", t.Error())
+		return fmt.Errorf("MQTT Publish token error %+v", t.Error())
 	}
+	return nil
 }
 
 // Close will disconnect from the MQTT broker and close the client
