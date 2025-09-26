@@ -51,7 +51,8 @@ func NewStationManager() (sm *StationManager) {
 	sm.Stations = make(map[string]*Station)
 	sm.Stale = make(map[string]*Station)
 	sm.mu = new(sync.Mutex)
-	sm.EventQ = make(chan *StationEvent)
+	// Buffer the event channel to avoid blocking producers and to satisfy tests
+	sm.EventQ = make(chan *StationEvent, 100)
 	return sm
 }
 

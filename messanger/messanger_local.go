@@ -1,79 +1,105 @@
 package messanger
 
 import (
+	"fmt"
 	"log/slog"
 	"sync"
 )
 
-// MessangerLocal implements a local in-memory messanger that
-// can be used for testing or for simple in-process communication.
-// MessangerLocal does not require any external dependencies like
-// an MQTT broker.
+// MessangerLocal is a simple in-process messanger useful for tests and local usage.
+// It implements the Messanger interface and uses MessangerBase for common behavior.
 type MessangerLocal struct {
 	*MessangerBase
 	sync.Mutex `json:"-"`
 }
 
-// NewMessanger with the given ID and a variable number of topics that
-// it will subscribe to.
+// NewMessangerLocal creates a new local messanger instance.
 func NewMessangerLocal(id string, topics ...string) *MessangerLocal {
-	m := &MessangerLocal{
+	return &MessangerLocal{
 		MessangerBase: NewMessangerBase(id, topics...),
 	}
-	return m
 }
 
-// Subscribe will literally subscribe to the provide MQTT topic with
-// the specified message handler.
+func (m *MessangerLocal) ID() string {
+	return m.MessangerBase.ID()
+}
+
+// Subscribe stores subscription handlers locally (base implementation already handles it).
 func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error {
-	m.subs[topic] = append(m.subs[topic], handler)
-	if root == nil {
-		root = newNode("/")
+	return m.MessangerBase.Subscribe(topic, handler)
+}
+
+// Pub publishes a value to an explicit topic using the local messanger.
+// Returns an error if publishing fails (local impl always succeeds).
+func (m *MessangerLocal) Pub(topic string, value any) error {
+	m.Published++
+	// Local publish dispatch: call handlers synchronously if present.
+	if handlers, ok := m.subs[topic]; ok {
+		msg := NewMsg(topic, toBytesUnchecked(value), m.id)
+		for _, h := range handlers {
+			h(msg)
+		}
 	}
-	root.insert(topic, handler)
 	return nil
 }
 
-// Close is implemented to satisfy the messanger interface
-func (m *MessangerLocal) Close() {
-	// TODO - need to unsubscribe handlers for this messanger
-	resetNodes()
-	m.MessangerBase.subs = nil
-}
-
-// Pub a message via MQTT with the given topic and value
-func (m *MessangerLocal) Pub(topic string, value any) {
+// PubMsg publishes a pre-built Msg. Returns error on failure.
+func (m *MessangerLocal) PubMsg(msg *Msg) error {
+	if msg == nil {
+		return fmt.Errorf("nil message")
+	}
 	m.Published++
-	buf, err := Bytes(value)
-	if err != nil {
-		m.error = err
-		return
+	// dispatch to local subscribers for the topic
+	if handlers, ok := m.subs[msg.Topic]; ok {
+		for _, h := range handlers {
+			h(msg)
+		}
 	}
-
-	msg := NewMsg(topic, buf, m.id)
-	m.PubMsg(msg)
+	return nil
 }
 
-// PubMsg sends an MQTT message based on the content of the Msg structure
-func (m *MessangerLocal) PubMsg(msg *Msg) {
-	n := root.lookup(msg.Topic)
-	if n == nil {
-		slog.Info("No subscribers", "topic", msg.Topic)
-		return
+// PubData publishes arbitrary data to the default topic of this messanger.
+// Returns error if no topic is configured or conversion fails.
+func (m *MessangerLocal) PubData(data any) error {
+	if len(m.topic) == 0 {
+		return fmt.Errorf("no topic set")
 	}
-	n.pub(msg)
+	topic := m.topic[0]
+	bytes, err := Bytes(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert data to bytes: %w", err)
+	}
+	msg := NewMsg(topic, bytes, m.id)
+	return m.PubMsg(msg)
 }
 
-// Publish given data to this messangers topic
-func (m *MessangerLocal) PubData(data any) {
-	if len(m.topic) == 0 || m.topic[0] == "" {
-		slog.Error("Device.Publish failed has no Topic", "name", m.ID())
-		return
+func (m *MessangerLocal) Error() error {
+	return m.MessangerBase.Error()
+}
+
+func (m *MessangerLocal) Close() {
+	// clear subscriptions
+	m.Lock()
+	defer m.Unlock()
+	m.subs = make(map[string][]MsgHandler)
+	slog.Debug("MessangerLocal.Close", "id", m.ID())
+}
+
+// helper: convert common types to []byte as used by local pub dispatch.
+// This helper is internal and will call the workspace Bytes() when possible.
+// If Bytes() is not available, keep a minimal fallback implementation.
+func toBytesUnchecked(v any) []byte {
+	// try using Bytes helper if available in this package
+	if b, err := Bytes(v); err == nil {
+		return b
 	}
-	buf, err := Bytes(data)
-	if err != nil {
-		panic(err)
+	// best-effort fallback
+	switch x := v.(type) {
+	case []byte:
+		return x
+	case string:
+		return []byte(x)
+	default:
+		return []byte(fmt.Sprintf("%v", v))
 	}
-	msg := NewMsg(m.topic[0], buf, m.id)
-	m.PubMsg(msg)
 }

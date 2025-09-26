@@ -10,18 +10,24 @@ import (
 	"time"
 
 	"github.com/rustyeddy/otto/device" // Add this import
+	"github.com/rustyeddy/otto/messanger"
 	"github.com/stretchr/testify/assert"
 )
 
 // Mock messanger for testing
 type MockMessanger struct{}
 
-func (m *MockMessanger) PubData(data string) error   { return nil }
-func (m *MockMessanger) PubEvent(event string) error { return nil }
-func (m *MockMessanger) Sub() error                  { return nil }
-func (m *MockMessanger) Error() error                { return nil }
-func (m *MockMessanger) Close()                      { return }
-func (m *MockMessanger) SetTopic(topic string)       {}
+func (m *MockMessanger) ID() string                      { return "mock-id" }
+func (m *MockMessanger) PubData(data any) error          { return nil }
+func (m *MockMessanger) PubMsg(msg *messanger.Msg) error { return nil }
+func (m *MockMessanger) PubEvent(event string) error     { return nil }
+func (m *MockMessanger) Sub() error                      { return nil }
+func (m *MockMessanger) Error() error                    { return nil }
+func (m *MockMessanger) Close()                          {}
+func (m *MockMessanger) SetTopic(topic string)           {}
+func (m *MockMessanger) Subscribe(topic string, handler messanger.MsgHandler) error {
+	return nil
+}
 
 // newStationForTest creates a station with mock dependencies for testing
 func newStationForTest(id string) (*Station, error) {
@@ -40,21 +46,20 @@ func newStationForTest(id string) (*Station, error) {
 		DeviceManager: device.DeviceManager{
 			Devices: make(map[string]device.Device), // Initialize the devices map
 		},
+		devices: make(map[string]any),
 	}
 
 	go st.errorHandler()
 	return st, nil
 }
 
-// Update resetStations to be safer
-func resetStations() {
-	// Reset the singleton station manager
-	stationManagerOnce = sync.Once{}
-	stationManager = nil
+// Replace conflicting helper with one that calls the package-level reset
+func resetStationManager() {
+	resetStations()
 }
 
 func TestNewStation(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	tests := []struct {
 		name    string
@@ -101,7 +106,7 @@ func TestNewStation(t *testing.T) {
 }
 
 func TestStationInit(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStationForTest("init-test") // Use test version
 	if err != nil {
@@ -122,7 +127,7 @@ func TestStationInit(t *testing.T) {
 }
 
 func TestStationSayHello(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStationForTest("hello-test") // Use test version
 	if err != nil {
@@ -147,7 +152,7 @@ func TestStationSayHello(t *testing.T) {
 }
 
 func TestStationTicker(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStationForTest("ticker-test-unique") // Use test version
 	if err != nil {
@@ -174,7 +179,7 @@ func TestStationTicker(t *testing.T) {
 }
 
 func TestStationHealthCheck(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStation("health-test")
 	if err != nil {
@@ -199,7 +204,7 @@ func TestStationHealthCheck(t *testing.T) {
 }
 
 func TestStationDeviceManagement(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStation("device-test")
 	if err != nil {
@@ -226,7 +231,7 @@ func TestStationDeviceManagement(t *testing.T) {
 }
 
 func TestStationHTTPHandler(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStation("http-test")
 	if err != nil {
@@ -259,7 +264,7 @@ func TestStationHTTPHandler(t *testing.T) {
 }
 
 func TestStationMetrics(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStation("metrics-test")
 	if err != nil {
@@ -301,7 +306,7 @@ func TestStationMetrics(t *testing.T) {
 }
 
 func TestStationConcurrency(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	const numRoutines = 50
 	const operationsPerRoutine = 100
@@ -353,7 +358,7 @@ func (m *MockDevice) Name() string {
 }
 
 func TestStationJSON(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStation("json-test")
 	if err != nil {
@@ -387,7 +392,7 @@ func TestStationJSON(t *testing.T) {
 }
 
 func TestStationErrorHandling(t *testing.T) {
-	resetStations()
+	resetStationManager()
 
 	station, err := newStation("error-test")
 	if err != nil {

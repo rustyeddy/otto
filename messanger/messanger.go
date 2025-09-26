@@ -40,6 +40,7 @@ package messanger
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -61,8 +62,11 @@ type Messanger interface {
 	Subscribe(topic string, handler MsgHandler) error
 	SetTopic(topic string)
 	Topic() string
-	PubMsg(msg *Msg)
-	PubData(data any)
+
+	// Publish methods should return an error when something goes wrong.
+	PubMsg(msg *Msg) error
+	PubData(data any) error
+
 	Error() error
 	Close()
 }
@@ -143,20 +147,23 @@ func (mb *MessangerBase) Subscribe(topic string, handler MsgHandler) error {
 // This base implementation only increments the Published counter.
 // Specific messanger implementations should override this method to handle
 // actual message publishing.
-func (mb *MessangerBase) PubMsg(msg *Msg) {
+func (mb *MessangerBase) PubMsg(msg *Msg) error {
+	if msg == nil {
+		return fmt.Errorf("nil message")
+	}
 	mb.Published++
 	// Base implementation just counts - specific messanger types should override
 	// to actually publish the message
 	slog.Debug("MessangerBase.PubMsg", "topic", msg.Topic, "published_count", mb.Published)
+	return nil
 }
 
 // PubData publishes data to the messanger's default topic.
 // It handles various data types by converting them to a byte array before publishing.
-// If no topic is set, it logs an error and returns without publishing.
-func (mb *MessangerBase) PubData(data any) {
+// If no topic is set, it returns an error.
+func (mb *MessangerBase) PubData(data any) error {
 	if len(mb.topic) == 0 {
-		slog.Error("PubData: no topic set")
-		return
+		return fmt.Errorf("no topic set")
 	}
 
 	topic := mb.topic[0] // Use the first topic as default
@@ -164,13 +171,12 @@ func (mb *MessangerBase) PubData(data any) {
 	// Convert data to bytes
 	bytes, err := Bytes(data)
 	if err != nil {
-		slog.Error("PubData: failed to convert data to bytes", "error", err)
-		return
+		return fmt.Errorf("failed to convert data to bytes: %w", err)
 	}
 
 	// Create and publish message
 	msg := NewMsg(topic, bytes, mb.id)
-	mb.PubMsg(msg)
+	return mb.PubMsg(msg)
 }
 
 // Close is implemented to satisfy the messanger interface.
@@ -185,7 +191,7 @@ func (mb *MessangerBase) Close() {
 func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var subs []string
-	for s, _ := range m.subs {
+	for s := range m.subs {
 		subs = append(subs, s)
 	}
 

@@ -73,12 +73,15 @@ func (m *StationMetrics) UpdateMetrics() {
 
 	// Calculate error rate (errors per minute)
 	if m.Uptime > 0 {
-		m.ErrorRate = float64(m.ErrorCount) / m.Uptime.Minutes()
+		minutes := m.Uptime.Minutes()
+		if minutes > 0 {
+			m.ErrorRate = float64(m.ErrorCount) / minutes
+		}
 	}
 
 	// Calculate health score
 	if m.HealthCheckCount > 0 {
-		m.HealthScore = float64(m.HealthyChecks) / float64(m.HealthCheckCount) * 100
+		m.HealthScore = (float64(m.HealthyChecks) / float64(m.HealthCheckCount)) * 100.0
 	}
 }
 
@@ -142,7 +145,7 @@ func (m *StationMetrics) RecordResponseTime(duration time.Duration) {
 		m.MaxResponseTime = duration
 	}
 
-	// Calculate running average (simplified)
+	// Calculate running average (exponential moving average for simplicity)
 	if m.AvgResponseTime == 0 {
 		m.AvgResponseTime = duration
 	} else {
@@ -186,5 +189,41 @@ func (m *StationMetrics) UpdateNetworkMetrics(interfaceCount, ipCount int) {
 func (m *StationMetrics) GetMetrics() StationMetrics {
 	// Update dynamic metrics before returning
 	m.UpdateMetrics()
-	return *m
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// return a copy
+	return StationMetrics{
+		AnnouncementsSent:     m.AnnouncementsSent,
+		AnnouncementsReceived: m.AnnouncementsReceived,
+		LastAnnouncementSent:  m.LastAnnouncementSent,
+		LastAnnouncementRecv:  m.LastAnnouncementRecv,
+		MessagesSent:          m.MessagesSent,
+		MessagesReceived:      m.MessagesReceived,
+		MessagesSentBytes:     m.MessagesSentBytes,
+		MessagesReceivedBytes: m.MessagesReceivedBytes,
+		LastMessageSent:       m.LastMessageSent,
+		LastMessageReceived:   m.LastMessageReceived,
+		ErrorCount:            m.ErrorCount,
+		LastError:             m.LastError,
+		ErrorRate:             m.ErrorRate,
+		DeviceCount:           m.DeviceCount,
+		ActiveDevices:         m.ActiveDevices,
+		DeviceErrorCount:      m.DeviceErrorCount,
+		NetworkInterfaceCount: m.NetworkInterfaceCount,
+		IPAddressCount:        m.IPAddressCount,
+		StartTime:             m.StartTime,
+		Uptime:                m.Uptime,
+		AvgResponseTime:       m.AvgResponseTime,
+		MaxResponseTime:       m.MaxResponseTime,
+		MinResponseTime:       m.MinResponseTime,
+		HealthCheckCount:      m.HealthCheckCount,
+		HealthyChecks:         m.HealthyChecks,
+		UnhealthyChecks:       m.UnhealthyChecks,
+		HealthScore:           m.HealthScore,
+		MemoryUsage:           m.MemoryUsage,
+		CPUUsage:              m.CPUUsage,
+		DiskUsage:             m.DiskUsage,
+	}
 }

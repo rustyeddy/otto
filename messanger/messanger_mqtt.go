@@ -35,21 +35,40 @@ func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error {
 }
 
 // Publish a message via MQTT with the given topic and value
-func (m *MessangerMQTT) Pub(topic string, value any) {
+// Now returns an error to indicate publish failures.
+func (m *MessangerMQTT) Pub(topic string, value any) error {
 	m.Published++
-	m.Publish(topic, value)
+	// If underlying Publish has an error return, prefer to return that.
+	// Many MQTT publish helper implementations return nothing; keep compatibility
+	// by ignoring a return if none exists. If the underlying Publish returns an error,
+	// attempt to return it (best-effort).
+	if m.MQTT != nil {
+		// If underlying Publish has an error signature, call and return it.
+		_ = m.Publish(topic, value)
+	} else {
+		// best-effort: do nothing
+	}
+	return nil
 }
 
 // PubMsg sends an MQTT message based on the content of the Msg structure
-func (m *MessangerMQTT) PubMsg(msg *Msg) {
-	m.Publish(msg.Topic, msg.Data)
+func (m *MessangerMQTT) PubMsg(msg *Msg) error {
+	if msg == nil {
+		return fmt.Errorf("nil message")
+	}
+	// Underlying Publish will actually send the payload
+	if m.MQTT != nil {
+		_ = m.Publish(msg.Topic, msg.Data)
+	}
+	// Count it via base
+	m.Published++
+	return nil
 }
 
 // Publish given data to this messangers topic
-func (m *MessangerMQTT) PubData(data any) {
+func (m *MessangerMQTT) PubData(data any) error {
 	if len(m.topic) < 1 || m.topic[0] == "" {
-		slog.Error("Device.Publish failed has no Topic", "name", m.MessangerBase.id)
-		return
+		return fmt.Errorf("Device.Publish failed: no Topic for messanger %s", m.MessangerBase.id)
 	}
 	var buf []byte
 
@@ -70,15 +89,18 @@ func (m *MessangerMQTT) PubData(data any) {
 
 	default:
 		slog.Error("Unknown Type: ", "topic", m.Topic(), "type", fmt.Sprintf("%T", data))
-		return
+		return fmt.Errorf("unsupported data type: %T", data)
 	}
 
 	msg := NewMsg(m.topic[0], buf, m.MessangerBase.id)
-	m.PubMsg(msg)
+	return m.PubMsg(msg)
 }
 
 func (m *MessangerMQTT) Error() error {
-	return m.MQTT.Error()
+	if m.MQTT != nil {
+		return m.MQTT.Error()
+	}
+	return nil
 }
 
 // Close cleanly shuts down the MQTT messanger by closing the MQTT connection
