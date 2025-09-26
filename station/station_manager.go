@@ -126,7 +126,7 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 	if sm.Get(st) != nil {
 		return nil, fmt.Errorf("Error adding an existing station")
 	}
-	station, err = NewStation(st)
+	station, err = newStation(st)
 	if err != nil {
 		return nil, err
 	}

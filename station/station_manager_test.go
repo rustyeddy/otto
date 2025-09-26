@@ -306,6 +306,22 @@ func TestStationManagerEventHandling(t *testing.T) {
 	sm := NewStationManager()
 
 	t.Run("Event channel capacity", func(t *testing.T) {
+
+		done := make(chan (interface{}))
+		eventCount := 0
+
+		// create a goroutine to snarf up the events
+		go func() {
+			for {
+				select {
+				case <-sm.EventQ:
+					eventCount++
+				case <-done:
+					break
+				}
+			}
+		}()
+
 		// Test that we can queue events without blocking
 		for i := 0; i < 10; i++ {
 			event := &StationEvent{
@@ -323,6 +339,9 @@ func TestStationManagerEventHandling(t *testing.T) {
 				t.Errorf("Event queue blocked at event %d", i)
 			}
 		}
+		done <- true
+
+		assert.Equal(t, 10, eventCount)
 	})
 
 	t.Run("Event processing", func(t *testing.T) {
@@ -344,6 +363,7 @@ func TestStationManagerEventHandling(t *testing.T) {
 		select {
 		case sm.EventQ <- event:
 			// Event queued successfully
+
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("Failed to queue event")
 		}
@@ -351,6 +371,7 @@ func TestStationManagerEventHandling(t *testing.T) {
 		// Verify the event was queued (channel should be non-empty)
 		assert.Equal(t, 1, len(sm.EventQ), "Event should be queued")
 	})
+
 }
 
 func TestStationManagerEdgeCases(t *testing.T) {
