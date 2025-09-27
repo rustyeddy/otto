@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rustyeddy/otto/device" // Add this import
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,7 +43,6 @@ func newStationForTest(id string) (*Station, error) {
 		done:       make(chan bool, 1),
 		Metrics:    NewStationMetrics(),
 		Messanger:  &MockMessanger{},
-		DeviceManager: device.GetDeviceManager(),
 		devices: make(map[string]any),
 	}
 
@@ -198,33 +196,6 @@ func TestStationHealthCheck(t *testing.T) {
 	// Should be unhealthy
 	if station.IsHealthy() {
 		t.Error("Station should be unhealthy with old LastHeard")
-	}
-}
-
-func TestStationDeviceManagement(t *testing.T) {
-	resetStationManager()
-
-	station, err := newStation("device-test")
-	if err != nil {
-		t.Fatalf("Failed to create station: %v", err)
-	}
-
-	// Create a mock device
-	mockDevice := &MockDevice{name: "test-device"}
-
-	// Add device
-	station.AddDevice(mockDevice)
-
-	// Verify device was added
-	retrieved := station.GetDevice("test-device")
-	if retrieved != mockDevice {
-		t.Error("Device was not properly added or retrieved")
-	}
-
-	// Verify metrics were updated
-	metrics := station.Metrics.GetMetrics()
-	if metrics.DeviceCount != 1 {
-		t.Errorf("Expected device count 1, got %d", metrics.DeviceCount)
 	}
 }
 

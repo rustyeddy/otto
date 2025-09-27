@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rustyeddy/otto/device"
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/rustyeddy/otto/utils"
 )
@@ -29,7 +28,6 @@ type Station struct {
 	Ifaces     []*Iface      `json:"iface"`
 
 	messanger.Messanger  `json:"-"`
-	*device.DeviceManager `json:"devices"`
 
 	errq   chan error
 	errors []error `json:"errors"`
@@ -349,27 +347,27 @@ func (st *Station) Stop() {
 // name in the stations device manager. This library is basically a
 // key value store, anything supporting the Name Interface:
 // i.e. Name() string.
-func (s *Station) AddDevice(d device.Name) {
-	if d == nil {
-		return
-	}
-	name := d.Name()
+//func (s *Station) AddDevice(d device.Name) {
+//	if d == nil {
+//		return
+//	}
+//	name := d.Name()
 
 	// store generically
-	s.devicesMu.Lock()
-	if s.devices == nil {
-		s.devices = make(map[string]any)
-	}
-	s.devices[name] = d
-	devCount := len(s.devices)
-	s.devicesMu.Unlock()
+//	s.devicesMu.Lock()
+//	if s.devices == nil {
+//		s.devices = make(map[string]any)
+//	}
+//	s.devices[name] = d
+//	devCount := len(s.devices)
+//	s.devicesMu.Unlock()
 
 	// Update device metrics
-	if s.Metrics != nil {
-		s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
-	}
+//	if s.Metrics != nil {
+//		s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
+//	}
 	// TODO: Track active vs total
-}
+//}
 
 // GetDevice returns the device (anythig supporting the Name (Name()) interface)
 func (s *Station) GetDevice(name string) any {
