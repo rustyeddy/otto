@@ -36,15 +36,20 @@ func NewMQTTBlasters(count int) *MQTTBlasters {
 		Running: false,
 		Wait:    2000,
 	}
-
+	
+	sm := station.GetStationManager()
 	mb.Blasters = make([]*Blaster, mb.Count)
 	for i := 0; i < mb.Count; i++ {
 		id := fmt.Sprintf("station-%d", i)
 		topic := fmt.Sprintf("ss/d/%s/temphum", id)
 
+		st, err := sm.Add(id)
+		if err != nil {
+		 	panic(err)
+		}
 		mb.Blasters[i] = &Blaster{
 			Topic:   topic,
-			Station: station.NewStation(id),
+			Station: st,
 		}
 	}
 	return mb

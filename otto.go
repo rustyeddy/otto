@@ -131,7 +131,6 @@ import (
 	"log/slog"
 
 	"github.com/rustyeddy/otto/data"
-	"github.com/rustyeddy/otto/device"
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/rustyeddy/otto/server"
 	"github.com/rustyeddy/otto/station"
@@ -185,10 +184,6 @@ func (o *OttO) Init() {
 		return
 	}
 	o.done = make(chan any)
-
-	if o.Mock {
-		device.Mock(true)
-	}
 
 	if o.Messanger == nil {
 		topic := messanger.GetTopics().Data("station")

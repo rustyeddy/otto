@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/utils"
 )
 
 func TestMsgMaker(t *testing.T) {
 	wd := WeatherData{}
-	messanger.GetTopics().SetStationName("test-station")
+	utils.SetStationName("test-station")
 	msg := wd.NewMsg(messanger.GetTopics().Data("weather"))
 	exp := []string{"ss", "d", "test-station", "weather"}
 	for i := 0; i < len(exp); i++ {
