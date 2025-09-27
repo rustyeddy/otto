@@ -7,6 +7,7 @@ import (
 	"time"
 
 	gomqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMockClient_Connect(t *testing.T) {
@@ -394,19 +395,14 @@ func TestMQTT_Error(t *testing.T) {
 	}
 }
 
-func TestMQTT_PublishEdgeCases(t *testing.T) {
+func TestMQTTPublishEdgeCases(t *testing.T) {
 	// Test Publish method edge cases to improve coverage from 42.9%
 	mock := NewMockClient()
 	mqtt := NewMQTT("test-client")
 	mqtt.Client = mock
 
-	// Test panic on empty topic
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("expected panic for empty topic")
-		}
-	}()
-	mqtt.Publish("", "test")
+	err := mqtt.Publish("", "test")
+	assert.Error(t, err, "Expected error when publishing to MQTT with no topic")
 }
 
 func TestMQTT_PublishWithNilClient(t *testing.T) {

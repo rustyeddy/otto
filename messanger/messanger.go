@@ -99,7 +99,7 @@ func GetMessanger() Messanger {
 type MessangerBase struct {
 	id    string
 	topic []string
-	subs  map[string][]MsgHandler
+	subs  map[string]MsgHandler
 	error
 
 	Published int
@@ -109,7 +109,7 @@ func NewMessangerBase(id string, topic ...string) *MessangerBase {
 	return &MessangerBase{
 		id:    id,
 		topic: topic,
-		subs:  make(map[string][]MsgHandler),
+		subs:  make(map[string]MsgHandler),
 	}
 }
 
@@ -137,9 +137,9 @@ func (mb *MessangerBase) Error() error {
 // actual subscription logic (e.g., MQTT broker subscription).
 func (mb *MessangerBase) Subscribe(topic string, handler MsgHandler) error {
 	if mb.subs == nil {
-		mb.subs = make(map[string][]MsgHandler)
+		mb.subs = make(map[string]MsgHandler)
 	}
-	mb.subs[topic] = append(mb.subs[topic], handler)
+	mb.subs[topic] = handler
 	return nil
 }
 

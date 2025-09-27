@@ -2,12 +2,12 @@ package messanger
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/rustyeddy/otto/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetTopics(t *testing.T) {
@@ -76,13 +76,6 @@ func TestServeHTTP(t *testing.T) {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	fmt.Printf("decodedTopics:  %+v\n", decodedTopics)
-
-	// if decodedTopics.Topicmap[stationName] != "TestStation" {
-	// 	t.Errorf("Expected StationName to be 'TestStation', got '%s'", decodedTopics.TopicMap[stationName])
-	// }
-
-	// if len(decodedTopics.Topics) != 2 {
-	// 	t.Errorf("Expected 2 topics in Topicmap, got %d", len(decodedTopics.Topicmap))
-	// }
+	assert.Equal(t, 0, decodedTopics.Topicmap["ss/c/TesstStation/foo"])
+	assert.Equal(t, 0, decodedTopics.Topicmap["ss/d/TesstStation/bar"])
 }

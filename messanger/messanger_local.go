@@ -26,6 +26,7 @@ func (m *MessangerLocal) ID() string {
 
 // Subscribe stores subscription handlers locally (base implementation already handles it).
 func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error {
+	root.insert(topic, handler)
 	return m.MessangerBase.Subscribe(topic, handler)
 }
 
@@ -33,29 +34,21 @@ func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error {
 // Returns an error if publishing fails (local impl always succeeds).
 func (m *MessangerLocal) Pub(topic string, value any) error {
 	m.Published++
-	// Local publish dispatch: call handlers synchronously if present.
-	if handlers, ok := m.subs[topic]; ok {
-		msg := NewMsg(topic, toBytesUnchecked(value), m.id)
-		for _, h := range handlers {
-			m.error = h(msg)
-		}
-	}
-	return nil
-}
 
-// PubMsg publishes a pre-built Msg. Returns error on failure.
-func (m *MessangerLocal) PubMsg(msg *Msg) error {
-	if msg == nil {
-		return fmt.Errorf("nil message")
+	if topic == "" {
+		return fmt.Errorf("No topic")
 	}
-	m.Published++
-	// dispatch to local subscribers for the topic
-	if handlers, ok := m.subs[msg.Topic]; ok {
-		for _, h := range handlers {
-			h(msg)
-		}
+	if len(m.subs) == 0 {
+		return fmt.Errorf("No subscribers")
 	}
-	return nil
+
+	b, err := Bytes(value)
+	if err != nil {
+		return err
+	}
+
+	msg := NewMsg(topic, b, m.id)
+	return m.PubMsg(msg)
 }
 
 // PubData publishes arbitrary data to the default topic of this messanger.
@@ -74,6 +67,24 @@ func (m *MessangerLocal) PubData(data any) error {
 	return m.PubMsg(msg)
 }
 
+// PubMsg publishes a pre-built Msg. Returns error on failure.
+func (m *MessangerLocal) PubMsg(msg *Msg) error {
+	m.Published++
+
+	if msg == nil {
+		return fmt.Errorf("nil message")
+	}
+
+	// look up local routing table to pass message along to subscribers
+	n := root.lookup(msg.Topic)
+	if n == nil {
+		return fmt.Errorf("No subscribers for %s\n", msg.Topic)
+	}
+
+	n.pub(msg)
+	return nil
+}
+
 func (m *MessangerLocal) Error() error {
 	return m.MessangerBase.Error()
 }
@@ -82,7 +93,11 @@ func (m *MessangerLocal) Close() {
 	// clear subscriptions
 	m.Lock()
 	defer m.Unlock()
-	m.subs = make(map[string][]MsgHandler)
+
+	// remove the handler from the root node
+	for t, h := range m.subs {
+		root.remove(t, h)
+	}
 	slog.Debug("MessangerLocal.Close", "id", m.ID())
 }
 

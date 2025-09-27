@@ -12,7 +12,7 @@ import (
 
 // Topics maintains the list of topics used by otto and the
 // applications. It maintains the topic format and a count for each
-// time the topic is used
+// time the topic is used.
 type Topics struct {
 	TopicFmt string
 	Topicmap map[string]int

@@ -30,7 +30,7 @@ func (m *MessangerMQTT) ID() string {
 // Subscribe will literally subscribe to the provide MQTT topic with
 // the specified message handler.
 func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error {
-	m.subs[topic] = append(m.subs[topic], handler)
+	m.subs[topic] = handler
 	return m.MQTT.Subscribe(topic, handler)
 }
 
@@ -116,7 +116,7 @@ func (m *MessangerMQTT) Close() {
 
 	// Clear local subscriptions
 	if m.subs != nil {
-		m.subs = make(map[string][]MsgHandler)
+		m.subs = make(map[string]MsgHandler)
 	}
 
 	slog.Debug("MessangerMQTT.Close", "id", m.ID())

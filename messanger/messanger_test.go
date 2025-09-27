@@ -150,7 +150,7 @@ func TestMessangerBase_Topic(t *testing.T) {
 }
 func TestMessangerBase_ServeHTTP(t *testing.T) {
 	mb := NewMessangerBase("test-id", "topic1", "topic2")
-	mb.subs["topic1"] = []MsgHandler{func(msg *Msg) error { return nil }}
+	mb.subs["topic1"] = func(msg *Msg) error { return nil }
 	mb.Published = 5
 
 	req, err := http.NewRequest(http.MethodGet, "/messanger", nil)

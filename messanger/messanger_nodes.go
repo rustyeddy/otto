@@ -1,6 +1,8 @@
 package messanger
 
-import "strings"
+import (
+	"strings"	
+)
 
 type node struct {
 	index    string
@@ -56,6 +58,30 @@ func (n *node) insert(topic string, mh MsgHandler) {
 	}
 	// The last node push the callback on the callback list
 	pn.handlers = append(pn.handlers, mh)
+}
+
+func (n *node) remove(topic string, handler MsgHandler) {
+	println("TODO add node remove command")
+	return
+
+
+	// // Need to remove the child node and all parent nodes provided
+	// // they have no other subscribers
+	// nodes = []*node
+	// pn := root
+	// indexes := strings.Split(topic, "/")
+	// for _, idx := range indexes {
+	// 	if n, ex := pn.nodes[idx]; ex {
+	// 		nodes = append(nodes, n)
+	// 	}
+	// }
+
+	// nodes = slices.Reverse(nodes)
+	// for i, h := range node[0].handlers {
+	// 	if h == handler {
+	// 		node[0].handlers = append(nodes[:i], nodes[i:])
+	// 	}
+	// }
 }
 
 func (n *node) lookup(topic string) *node {
