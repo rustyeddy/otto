@@ -25,6 +25,7 @@ func (m *MockMessanger) Sub() error                      { return nil }
 func (m *MockMessanger) Error() error                    { return nil }
 func (m *MockMessanger) Close()                          {}
 func (m *MockMessanger) SetTopic(topic string)           {}
+func (m *MockMessanger) Topic() string				     { return "" }
 func (m *MockMessanger) Subscribe(topic string, handler messanger.MsgHandler) error {
 	return nil
 }
@@ -43,9 +44,7 @@ func newStationForTest(id string) (*Station, error) {
 		done:       make(chan bool, 1),
 		Metrics:    NewStationMetrics(),
 		Messanger:  &MockMessanger{},
-		DeviceManager: device.DeviceManager{
-			Devices: make(map[string]device.Device), // Initialize the devices map
-		},
+		DeviceManager: device.GetDeviceManager(),
 		devices: make(map[string]any),
 	}
 
@@ -117,7 +116,7 @@ func TestStationInit(t *testing.T) {
 	station.Init()
 
 	// Verify hostname was set (might be empty in test environment)
-	t.Logf("Hostname after init: %s", station.Hostname)
+	assert.NotNil(t, station.Hostname)
 
 	// Verify metrics were initialized
 	metrics := station.Metrics.GetMetrics()
@@ -173,8 +172,7 @@ func TestStationTicker(t *testing.T) {
 
 	// Verify announcements were sent
 	metrics := station.Metrics.GetMetrics()
-	t.Logf("Announcements sent: %d", metrics.AnnouncementsSent)
-	// Don't assert exact count since timing can vary
+	assert.Equal(t, uint64(3), metrics.AnnouncementsSent)
 	assert.True(t, metrics.AnnouncementsSent > 0, "Should have sent some announcements")
 }
 

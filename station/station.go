@@ -29,7 +29,7 @@ type Station struct {
 	Ifaces     []*Iface      `json:"iface"`
 
 	messanger.Messanger  `json:"-"`
-	device.DeviceManager `json:"devices"`
+	*device.DeviceManager `json:"devices"`
 
 	errq   chan error
 	errors []error `json:"errors"`
@@ -134,7 +134,7 @@ func newStation(id string) (*Station, error) {
 		st.Messanger = &NoopMessanger{}
 	} else {
 		// Use the workspace-wide topic name from utils for station topics
-		topic := utils.StationName
+		topic := utils.StationName()
 		if topic == "" {
 			// fallback to previous pattern if utils not configured
 			topic = "otto/stations"

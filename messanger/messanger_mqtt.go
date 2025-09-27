@@ -127,6 +127,7 @@ func (m *MessangerMQTT) Close() {
 type MsgPrinter struct{}
 
 // MsgHandler will print out the message that has been supplied.
-func (m *MsgPrinter) MsgHandler(msg *Msg) {
+func (m *MsgPrinter) MsgHandler(msg *Msg) error {
 	fmt.Printf("%+v\n", msg)
+	return nil
 }

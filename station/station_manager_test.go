@@ -302,76 +302,66 @@ func TestStationManagerServeHTTP(t *testing.T) {
 	})
 }
 
-func TestStationManagerEventHandling(t *testing.T) {
+func TestStationManagerCapacity(t *testing.T) {
 	sm := NewStationManager()
 
-	t.Run("Event channel capacity", func(t *testing.T) {
+	done := make(chan (interface{}))
+	eventCount := 0
 
-		done := make(chan (interface{}))
-		eventCount := 0
-
-		// create a goroutine to snarf up the events
-		go func() {
-			for {
-				select {
-				case <-sm.EventQ:
-					eventCount++
-				case <-done:
-					break
-				}
-			}
-		}()
-
-		// Test that we can queue events without blocking
-		for i := 0; i < 10; i++ {
-			event := &StationEvent{
-				Type:      "test",
-				Device:    "sensor1",
-				StationID: fmt.Sprintf("station-%d", i),
-				Value:     "test-value",
-				Timestamp: time.Now(),
-			}
-
+	// create a goroutine to snarf up the events
+	go func() {
+		for {
 			select {
-			case sm.EventQ <- event:
-				// Successfully queued
-			case <-time.After(100 * time.Millisecond):
-				t.Errorf("Event queue blocked at event %d", i)
+			case <-sm.EventQ:
+				eventCount++
+			case <-done:
+				break
 			}
 		}
-		done <- true
+	}()
 
-		assert.Equal(t, 10, eventCount)
-	})
-
-	t.Run("Event processing", func(t *testing.T) {
-		// Add a station first
-		stationID := "event-test-station"
-		station, err := sm.Add(stationID)
-		require.NoError(t, err)
-		require.NotNil(t, station)
-
+	// Test that we can queue events without blocking
+	for i := 0; i < 10; i++ {
 		event := &StationEvent{
-			Type:      "sensor-reading",
-			Device:    "temperature",
-			StationID: stationID,
-			Value:     "25.5",
+			Type:      "test",
+			Device:    "sensor1",
+			StationID: fmt.Sprintf("station-%d", i),
+			Value:     "test-value",
 			Timestamp: time.Now(),
 		}
 
-		// Queue the event
 		select {
 		case sm.EventQ <- event:
-			// Event queued successfully
-
+			// Successfully queued
 		case <-time.After(100 * time.Millisecond):
-			t.Fatal("Failed to queue event")
+			t.Errorf("Event queue blocked at event %d", i)
 		}
+	}
+	done <- true
 
-		// Verify the event was queued (channel should be non-empty)
-		assert.Equal(t, 1, len(sm.EventQ), "Event should be queued")
-	})
+	assert.Equal(t, 10, eventCount)
+}
 
+func TestEventQProcessing(t *testing.T) {
+	sm := NewStationManager()
+
+	// Add a station first
+	stationID := "event-test-station"
+	station, err := sm.Add(stationID)
+	require.NoError(t, err)
+	require.NotNil(t, station)
+
+	event := &StationEvent{
+		Type:      "sensor-reading",
+		Device:    "temperature",
+		StationID: stationID,
+		Value:     "25.5",
+		Timestamp: time.Now(),
+	}
+	sm.EventQ <- event
+	
+	// Verify the event was queued (channel should be non-empty)
+	assert.Equal(t, 1, len(sm.EventQ), "Event should be queued")
 }
 
 func TestStationManagerEdgeCases(t *testing.T) {

@@ -157,6 +157,8 @@ func TestMessangerLocalPubData(t *testing.T) {
 	}
 }
 
+// TestMessangerLocalClose needs to be implemented, however we need to have
+// a way to accurately identify the subscriber that needs to be removed.
 func TestMessangerLocalClose(t *testing.T) {
 	// Setup
 	// m := NewMessangerLocal("test-id", "test/topic")
