@@ -160,6 +160,7 @@ func TestMessangerLocalPubData(t *testing.T) {
 
 func TestMessangerLocalClose(t *testing.T) {
 	// Setup
+	resetNodes() // Start with clean nodes
 	m := NewMessangerLocal("test-id", "test/topic")
 
 	// Create some subscriptions and publish some messages
@@ -186,6 +187,48 @@ func TestMessangerLocalClose(t *testing.T) {
 
 	if handlerCalled {
 		t.Error("Handler should not have been called after Close()")
+	}
+}
+
+func TestMessangerLocalCloseNodeCleanup(t *testing.T) {
+	// Test that Close() properly cleans up nodes
+	resetNodes()
+	m := NewMessangerLocal("test-id")
+
+	handler := func(msg *Msg) error {
+		return nil
+	}
+
+	// Subscribe to multiple topics to create a node tree
+	m.Subscribe("test/topic1", handler)
+	m.Subscribe("test/topic2", handler) 
+	m.Subscribe("test/deep/nested/topic", handler)
+	m.Subscribe("other/topic", handler)
+
+	// Verify nodes were created
+	if len(root.nodes) == 0 {
+		t.Fatal("Expected nodes to be created after subscriptions")
+	}
+
+	// Verify we have the expected top-level nodes
+	if root.nodes["test"] == nil {
+		t.Error("Expected 'test' node to be created")
+	}
+	if root.nodes["other"] == nil {
+		t.Error("Expected 'other' node to be created")
+	}
+
+	// Call Close to clean up
+	m.Close()
+
+	// Verify all nodes were cleaned up
+	if len(root.nodes) != 0 {
+		t.Errorf("Expected all nodes to be cleaned up after Close(), but found %d nodes", len(root.nodes))
+	}
+
+	// Verify subscriptions were cleared
+	if len(m.subs) != 0 {
+		t.Errorf("Expected subscriptions to be cleared after Close(), but found %d subscriptions", len(m.subs))
 	}
 }
 

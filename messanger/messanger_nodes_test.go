@@ -48,6 +48,58 @@ func TestInsertAndLookup(t *testing.T) {
 	}
 }
 
+func TestNodeRemove(t *testing.T) {
+	root := newNode("/")
+	handler := func(msg *Msg) error {
+		return nil
+	}
+
+	// Insert some handlers
+	root.insert("test/topic", handler)
+	root.insert("test/topic2", handler)
+	root.insert("test/deep/nested/topic", handler)
+
+	// Verify nodes were created
+	if len(root.nodes) != 1 {
+		t.Fatalf("Expected 1 top-level node, got %d", len(root.nodes))
+	}
+	testNode := root.nodes["test"]
+	if testNode == nil {
+		t.Fatal("Expected 'test' node to exist")
+	}
+
+	// Verify nested structure
+	if len(testNode.nodes) != 3 { // topic, topic2, deep
+		t.Fatalf("Expected 3 child nodes under 'test', got %d", len(testNode.nodes))
+	}
+
+	// Remove one topic and verify cleanup
+	root.remove("test/deep/nested/topic", nil)
+
+	// The deep nested path should be cleaned up
+	deepNode := testNode.nodes["deep"]
+	if deepNode != nil {
+		t.Error("Expected 'deep' node to be removed after cleanup")
+	}
+
+	// But other topics should remain
+	if testNode.nodes["topic"] == nil {
+		t.Error("Expected 'topic' node to remain")
+	}
+	if testNode.nodes["topic2"] == nil {
+		t.Error("Expected 'topic2' node to remain")
+	}
+
+	// Remove all remaining topics
+	root.remove("test/topic", nil)
+	root.remove("test/topic2", nil)
+
+	// Now the entire test branch should be cleaned up
+	if len(root.nodes) != 0 {
+		t.Errorf("Expected root to have no child nodes after all topics removed, got %d", len(root.nodes))
+	}
+}
+
 func TestWildcardLookup(t *testing.T) {
 	root := newNode("/")
 	handlerCalled := false

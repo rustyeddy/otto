@@ -26,6 +26,7 @@ func (m *MessangerLocal) ID() string {
 
 // Subscribe stores subscription handlers locally (base implementation already handles it).
 func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error {
+	root.insert(topic, handler)
 	return m.MessangerBase.Subscribe(topic, handler)
 }
 
@@ -82,6 +83,12 @@ func (m *MessangerLocal) Close() {
 	// clear subscriptions
 	m.Lock()
 	defer m.Unlock()
+
+	// remove all handlers from the root node for each topic
+	for topic := range m.subs {
+		root.remove(topic, nil) // Pass nil since we're removing all handlers for the topic
+	}
+	
 	m.subs = make(map[string][]MsgHandler)
 	slog.Debug("MessangerLocal.Close", "id", m.ID())
 }

@@ -58,6 +58,46 @@ func (n *node) insert(topic string, mh MsgHandler) {
 	pn.handlers = append(pn.handlers, mh)
 }
 
+func (n *node) remove(topic string, handler MsgHandler) {
+	indexes := strings.Split(topic, "/")
+	
+	// Track the path to the target node
+	path := make([]*node, 0, len(indexes)+1)
+	pn := n
+	path = append(path, pn)
+	
+	// Navigate to the target node, building the path
+	for _, idx := range indexes {
+		if nn, ex := pn.nodes[idx]; ex {
+			pn = nn
+			path = append(path, pn)
+		} else {
+			// Topic not found, nothing to remove
+			return
+		}
+	}
+	
+	// For the Close() use case, we clear all handlers for the topic
+	// This is appropriate since Close() should remove all subscriptions for this messanger instance
+	targetNode := path[len(path)-1]
+	targetNode.handlers = nil
+	
+	// Clean up empty nodes from leaf to root
+	for i := len(path) - 1; i > 0; i-- {
+		node := path[i]
+		parent := path[i-1]
+		parentIndex := indexes[i-1]
+		
+		// Remove node if it has no handlers and no child nodes
+		if len(node.handlers) == 0 && len(node.nodes) == 0 {
+			delete(parent.nodes, parentIndex)
+		} else {
+			// If this node is not empty, stop cleanup (parent nodes above might still be needed)
+			break
+		}
+	}
+}
+
 func (n *node) lookup(topic string) *node {
 	indexes := strings.Split(topic, "/")
 	pn := n
