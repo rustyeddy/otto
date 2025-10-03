@@ -27,7 +27,7 @@ type Station struct {
 	Local      bool          `json:"local"`
 	Ifaces     []*Iface      `json:"iface"`
 
-	messanger.Messanger  `json:"-"`
+	messanger.Messanger `json:"-"`
 
 	errq   chan error
 	errors []error `json:"errors"`
@@ -75,34 +75,6 @@ func isTestMode() bool {
 	return false
 }
 
-// NoopMessanger satisfies messanger.Messanger without doing any work.
-// This is used during tests to prevent external connections.
-type NoopMessanger struct {
-	topic string
-}
-
-func (n *NoopMessanger) ID() string { return "noop" }
-func (n *NoopMessanger) Subscribe(topic string, handler messanger.MsgHandler) error {
-	// no-op
-	return nil
-}
-func (n *NoopMessanger) SetTopic(topic string) { n.topic = topic }
-func (n *NoopMessanger) Topic() string         { return n.topic }
-
-// PubMsg no-op implementation
-func (n *NoopMessanger) PubMsg(msg *messanger.Msg) error {
-	// no-op
-	return nil
-}
-
-// PubData no-op implementation
-func (n *NoopMessanger) PubData(_ any) error {
-	// no-op
-	return nil
-}
-func (n *NoopMessanger) Error() error { return nil }
-func (n *NoopMessanger) Close()       {}
-
 // NewStation creates a new Station with an ID as provided
 // by the first parameter. Here we need to detect a duplicate
 // station before trying to register another one.
@@ -127,19 +99,14 @@ func newStation(id string) (*Station, error) {
 		devices:    make(map[string]any),
 	}
 
-	// Use a no-op messanger when running tests to avoid external deps
-	if isTestMode() {
-		st.Messanger = &NoopMessanger{}
-	} else {
-		// Use the workspace-wide topic name from utils for station topics
-		topic := utils.StationName()
-		if topic == "" {
-			// fallback to previous pattern if utils not configured
-			topic = "otto/stations"
-		}
-		messanger.NewMessanger("local", topic+"/"+id)
-		st.Messanger = messanger.GetMessanger()
+	// Use the workspace-wide topic name from utils for station topics
+	topic := utils.StationName()
+	if topic == "" {
+		// fallback to previous pattern if utils not configured
+		topic = "otto/stations"
 	}
+	messanger.NewMessanger("local", topic+"/"+id)
+	st.Messanger = messanger.GetMessanger()
 
 	go st.errorHandler()
 	return st, nil
@@ -353,7 +320,7 @@ func (st *Station) Stop() {
 //	}
 //	name := d.Name()
 
-	// store generically
+// store generically
 //	s.devicesMu.Lock()
 //	if s.devices == nil {
 //		s.devices = make(map[string]any)
@@ -362,11 +329,11 @@ func (st *Station) Stop() {
 //	devCount := len(s.devices)
 //	s.devicesMu.Unlock()
 
-	// Update device metrics
+// Update device metrics
 //	if s.Metrics != nil {
 //		s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
 //	}
-	// TODO: Track active vs total
+// TODO: Track active vs total
 //}
 
 // GetDevice returns the device (anythig supporting the Name (Name()) interface)

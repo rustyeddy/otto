@@ -57,7 +57,7 @@ var (
 type MsgHandler func(msg *Msg) error
 
 type MessageHandler interface {
-	HandleMsg()	func(msg *Msg) error
+	HandleMsg() func(msg *Msg) error
 }
 
 // Messanger is the interface that all messangers must implement
@@ -68,6 +68,7 @@ type Messanger interface {
 	Topic() string
 
 	// Publish methods should return an error when something goes wrong.
+	Pub(topic string, msg any) error
 	PubMsg(msg *Msg) error
 	PubData(data any) error
 

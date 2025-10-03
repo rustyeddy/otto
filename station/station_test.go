@@ -9,46 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rustyeddy/otto/messanger"
 	"github.com/stretchr/testify/assert"
 )
-
-// Mock messanger for testing
-type MockMessanger struct{}
-
-func (m *MockMessanger) ID() string                      { return "mock-id" }
-func (m *MockMessanger) PubData(data any) error          { return nil }
-func (m *MockMessanger) PubMsg(msg *messanger.Msg) error { return nil }
-func (m *MockMessanger) PubEvent(event string) error     { return nil }
-func (m *MockMessanger) Sub() error                      { return nil }
-func (m *MockMessanger) Error() error                    { return nil }
-func (m *MockMessanger) Close()                          {}
-func (m *MockMessanger) SetTopic(topic string)           {}
-func (m *MockMessanger) Topic() string				     { return "" }
-func (m *MockMessanger) Subscribe(topic string, handler messanger.MsgHandler) error {
-	return nil
-}
-
-// newStationForTest creates a station with mock dependencies for testing
-func newStationForTest(id string) (*Station, error) {
-	if id == "" {
-		return nil, fmt.Errorf("station ID cannot be empty")
-	}
-
-	st := &Station{
-		ID:         id,
-		Expiration: 3 * time.Minute,
-		Duration:   1 * time.Minute,
-		errq:       make(chan error, 10),
-		done:       make(chan bool, 1),
-		Metrics:    NewStationMetrics(),
-		Messanger:  &MockMessanger{},
-		devices: make(map[string]any),
-	}
-
-	go st.errorHandler()
-	return st, nil
-}
 
 // Replace conflicting helper with one that calls the package-level reset
 func resetStationManager() {
@@ -105,7 +67,7 @@ func TestNewStation(t *testing.T) {
 func TestStationInit(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStationForTest("init-test") // Use test version
+	station, err := newStation("init-test") // Use test version
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -126,7 +88,7 @@ func TestStationInit(t *testing.T) {
 func TestStationSayHello(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStationForTest("hello-test") // Use test version
+	station, err := newStation("hello-test") // Use test version
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -151,7 +113,7 @@ func TestStationSayHello(t *testing.T) {
 func TestStationTicker(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStationForTest("ticker-test-unique") // Use test version
+	station, err := newStation("ticker-test-unique") // Use test version
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
