@@ -9,7 +9,7 @@ import (
 
 type Store struct {
 	Filename string
-	Source   map[string]map[string]float64
+	Datas    map[string]*Timeseries
 	StoreQ   chan *messanger.Msg
 
 	f *os.File
@@ -19,18 +19,11 @@ var (
 	store *Store
 )
 
-func GetStore() *Store {
-	if store == nil {
-		store = NewStore()
-	}
-	return store
-}
-
-func NewStore() *Store {
-	m := make(map[string]map[string]float64)
+func NewFileStore(fname string) *Store {
+	m := make(map[string]*Timeseries)
 	q := make(chan *messanger.Msg)
 	store := &Store{
-		Source: m,
+		Datas:  m,
 		StoreQ: q,
 	}
 
@@ -42,11 +35,21 @@ func NewStore() *Store {
 			}
 		}
 	}()
-
 	return store
 }
 
 func (s *Store) Store(msg *messanger.Msg) error {
 	slog.Info("Store: ", "message", msg)
 	return nil
+}
+
+func (s *Store) Save(label string, ts *Timeseries) error {
+	s.Datas[label] = ts
+	// now write to file
+	return nil
+}
+
+func (s *Store) Load(label string) (*Timeseries, error) {
+	return s.Datas[label], nil
+
 }

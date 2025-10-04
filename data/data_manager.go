@@ -48,7 +48,7 @@ func (dm *DataManager) Add(station, label string, data any) {
 	}
 	ts, ex := stmap[label]
 	if !ex {
-		stmap[label] = NewTimeseries(station, label)
+		stmap[label] = NewTimeseries(label)
 	}
 	ts = stmap[label]
 	ts.Add(data)

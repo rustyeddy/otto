@@ -3,48 +3,55 @@ package data
 import (
 	"fmt"
 	"time"
-
-	"github.com/rustyeddy/otto/utils"
 )
 
 // Timeseries represents a single source of data over a time period
 type Timeseries struct {
-	Station   string        `json:"station"`
-	Label     string        `json:"label"`
-	Timestamp time.Duration `json:"start"`
-	Data      []*Data       `json:"data"`
+	ID    string `json:"id"`
+	Datas []Data `json:"data"`
 }
 
 // NewTimeseries will start a new data timeseries with the given label
-func NewTimeseries(station, label string) *Timeseries {
+func NewTimeseries(ID string) *Timeseries {
 	return &Timeseries{
-		Station:   station,
-		Label:     label,
-		Timestamp: utils.Timestamp(),
+		ID: ID,
 	}
 }
 
 // Add a new Data point to the given Timeseries
-func (ts *Timeseries) Add(d any) *Data {
-	dat := &Data{
-		Value:     d,
-		Timestamp: utils.Timestamp(),
+func (ts *Timeseries) Add(d any) Data {
+	dat := &DataPoint{
+		value:     d,
+		timestamp: time.Now(),
 	}
-	ts.Data = append(ts.Data, dat)
+	ts.Datas = append(ts.Datas, dat)
 	return dat
 }
 
 // Len returns the number of data points contained in this timeseries
 func (ts *Timeseries) Len() int {
-	return len(ts.Data)
+	return len(ts.Datas)
+}
+
+func (ts *Timeseries) GetReadingsInRange(start time.Time, end time.Time) []Data {
+	var series []Data
+	for _, d := range ts.Datas {
+		if d.Timestamp().After(end) {
+			break
+		}
+		if d.Timestamp().After(start) {
+			series = append(series, d)
+		}
+	}
+	return series
 }
 
 // String returns a human readable string describing the data
 // contained therein.
 func (ts *Timeseries) String() string {
-	str := fmt.Sprintf("%s[%s]", ts.Station, ts.Label)
-	str = fmt.Sprintf("%-20s start: %s\n\t", str, ts.Timestamp)
-	for _, d := range ts.Data {
+	str := fmt.Sprintf("%s", ts.ID)
+	str = fmt.Sprintf("%-20s\n\t", str)
+	for _, d := range ts.Datas {
 		str += d.String()
 	}
 	str += "\n"
