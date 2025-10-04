@@ -8,8 +8,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -60,33 +58,12 @@ type StationConfig struct {
 	MessangerType        string
 }
 
-// Helper function to detect test mode
-func isTestMode() bool {
-	// Detect "go test" by checking executable name and -test.* flags
-	base := filepath.Base(os.Args[0])
-	if strings.HasSuffix(base, ".test") {
-		return true
-	}
-	for _, a := range os.Args {
-		if strings.HasPrefix(a, "-test.") {
-			return true
-		}
-	}
-	return false
-}
-
 // NewStation creates a new Station with an ID as provided
 // by the first parameter. Here we need to detect a duplicate
 // station before trying to register another one.
 func newStation(id string) (*Station, error) {
 	if id == "" {
 		return nil, errors.New("station ID cannot be empty")
-	}
-
-	// Check for duplicate stations using the station manager
-	sm := GetStationManager()
-	if existingStation := sm.Get(id); existingStation != nil {
-		return nil, fmt.Errorf("station with ID %s already exists", id)
 	}
 
 	st := &Station{

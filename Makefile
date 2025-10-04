@@ -7,10 +7,19 @@ init:
 	git update --init 
 
 test:
-	go test -cover ./...
+	rm -f cover.out
+	go test -coverprofile=cover.out -cover ./...
 
 verbose:
-	go test -v -cover ./...
+	rm -f cover.out
+	go test -v -coverprofile=cover.out -cover ./...
+
+coverage: test
+	go tool cover -func=cover.out
+
+html: test
+	rm -f coverage.html
+	go tool cover -html=cover.out -o coverage.html
 
 # go test -coverprofile=./cover.out ./...
 # go tool cover -func=cover.out

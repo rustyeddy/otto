@@ -359,7 +359,7 @@ func TestEventQProcessing(t *testing.T) {
 		Timestamp: time.Now(),
 	}
 	sm.EventQ <- event
-	
+
 	// Verify the event was queued (channel should be non-empty)
 	assert.Equal(t, 1, len(sm.EventQ), "Event should be queued")
 }

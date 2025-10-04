@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Replace conflicting helper with one that calls the package-level reset
@@ -42,16 +43,11 @@ func TestNewStation(t *testing.T) {
 			station, err := newStation(tt.id)
 
 			if tt.wantErr {
-				if err == nil {
-					t.Error("Expected error but got none")
-				}
+				require.Error(t, err, "Expected error but got none")
 				return
 			}
 
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
-			}
+			require.NoError(t, err, "Unexpected error: ", err)
 
 			if station.ID != tt.id {
 				t.Errorf("Expected ID %s, got %s", tt.id, station.ID)

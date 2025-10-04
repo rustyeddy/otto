@@ -28,6 +28,16 @@ func (ts *Timeseries) Add(d any) Data {
 	return dat
 }
 
+// Add a new Data point to the given Timeseries
+func (ts *Timeseries) AddTimestamp(d any, t time.Time) Data {
+	dat := &DataPoint{
+		value:     d,
+		timestamp: t,
+	}
+	ts.Datas = append(ts.Datas, dat)
+	return dat
+}
+
 // Len returns the number of data points contained in this timeseries
 func (ts *Timeseries) Len() int {
 	return len(ts.Datas)
@@ -49,8 +59,7 @@ func (ts *Timeseries) GetReadingsInRange(start time.Time, end time.Time) []Data 
 // String returns a human readable string describing the data
 // contained therein.
 func (ts *Timeseries) String() string {
-	str := fmt.Sprintf("%s", ts.ID)
-	str = fmt.Sprintf("%-20s\n\t", str)
+	str := fmt.Sprintf("%s: ", ts.ID)
 	for _, d := range ts.Datas {
 		str += d.String()
 	}

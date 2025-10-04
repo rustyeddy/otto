@@ -3,7 +3,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>messanger: Go Coverage Report</title>
+		<title>data: Go Coverage Report</title>
 		<style>
 			body {
 				background: black;
@@ -55,21 +55,75 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/rustyeddy/otto/messanger/messanger.go (95.8%)</option>
+				<option value="file0">github.com/rustyeddy/otto/data/data.go (100.0%)</option>
 				
-				<option value="file1">github.com/rustyeddy/otto/messanger/messanger_local.go (79.3%)</option>
+				<option value="file1">github.com/rustyeddy/otto/data/timeseries.go (100.0%)</option>
 				
-				<option value="file2">github.com/rustyeddy/otto/messanger/messanger_mqtt.go (12.5%)</option>
+				<option value="file2">github.com/rustyeddy/otto/mesh/mesh.go (80.4%)</option>
 				
-				<option value="file3">github.com/rustyeddy/otto/messanger/messanger_nodes.go (100.0%)</option>
+				<option value="file3">github.com/rustyeddy/otto/messanger/messanger.go (60.5%)</option>
 				
-				<option value="file4">github.com/rustyeddy/otto/messanger/mqtt.go (72.6%)</option>
+				<option value="file4">github.com/rustyeddy/otto/messanger/messanger_local.go (67.4%)</option>
 				
-				<option value="file5">github.com/rustyeddy/otto/messanger/mqtt_mock.go (68.3%)</option>
+				<option value="file5">github.com/rustyeddy/otto/messanger/messanger_mqtt.go (78.0%)</option>
 				
-				<option value="file6">github.com/rustyeddy/otto/messanger/msg.go (93.1%)</option>
+				<option value="file6">github.com/rustyeddy/otto/messanger/messanger_nodes.go (94.4%)</option>
 				
-				<option value="file7">github.com/rustyeddy/otto/messanger/topics.go (92.3%)</option>
+				<option value="file7">github.com/rustyeddy/otto/messanger/mqtt.go (90.5%)</option>
+				
+				<option value="file8">github.com/rustyeddy/otto/messanger/mqtt_mock.go (99.3%)</option>
+				
+				<option value="file9">github.com/rustyeddy/otto/messanger/msg.go (93.1%)</option>
+				
+				<option value="file10">github.com/rustyeddy/otto/messanger/topics.go (86.4%)</option>
+				
+				<option value="file11">github.com/rustyeddy/otto/otto.go (2.9%)</option>
+				
+				<option value="file12">github.com/rustyeddy/otto/otto/cmd_cli.go (2.5%)</option>
+				
+				<option value="file13">github.com/rustyeddy/otto/otto/cmd_file.go (7.1%)</option>
+				
+				<option value="file14">github.com/rustyeddy/otto/otto/cmd_msg.go (84.6%)</option>
+				
+				<option value="file15">github.com/rustyeddy/otto/otto/cmd_msg_connect.go (50.0%)</option>
+				
+				<option value="file16">github.com/rustyeddy/otto/otto/cmd_msg_pub.go (33.3%)</option>
+				
+				<option value="file17">github.com/rustyeddy/otto/otto/cmd_msg_sub.go (11.1%)</option>
+				
+				<option value="file18">github.com/rustyeddy/otto/otto/cmd_root.go (16.7%)</option>
+				
+				<option value="file19">github.com/rustyeddy/otto/otto/cmd_serve.go (100.0%)</option>
+				
+				<option value="file20">github.com/rustyeddy/otto/otto/cmd_station.go (25.0%)</option>
+				
+				<option value="file21">github.com/rustyeddy/otto/otto/cmd_stats.go (33.3%)</option>
+				
+				<option value="file22">github.com/rustyeddy/otto/otto/cmd_ticker.go (33.3%)</option>
+				
+				<option value="file23">github.com/rustyeddy/otto/otto/cmd_version.go (50.0%)</option>
+				
+				<option value="file24">github.com/rustyeddy/otto/server/ping.go (100.0%)</option>
+				
+				<option value="file25">github.com/rustyeddy/otto/server/server.go (0.0%)</option>
+				
+				<option value="file26">github.com/rustyeddy/otto/server/ws.go (0.0%)</option>
+				
+				<option value="file27">github.com/rustyeddy/otto/station/station.go (83.3%)</option>
+				
+				<option value="file28">github.com/rustyeddy/otto/station/station_manager.go (55.4%)</option>
+				
+				<option value="file29">github.com/rustyeddy/otto/station/station_metrics.go (83.3%)</option>
+				
+				<option value="file30">github.com/rustyeddy/otto/utils/log.go (100.0%)</option>
+				
+				<option value="file31">github.com/rustyeddy/otto/utils/rand.go (100.0%)</option>
+				
+				<option value="file32">github.com/rustyeddy/otto/utils/station_name.go (100.0%)</option>
+				
+				<option value="file33">github.com/rustyeddy/otto/utils/stats.go (100.0%)</option>
+				
+				<option value="file34">github.com/rustyeddy/otto/utils/timers.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -83,43 +137,424 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none">package messanger
+		<pre class="file" id="file0" style="display: none">package data
+
+import (
+        "fmt"
+        "time"
+)
+
+var Truncate time.Duration
+
+type Data interface {
+        Timestamp() time.Time
+        Value() any
+        String() string
+}
+
+// Data is an array of timestamps and values representing the same
+// source of data over a period of time
+type DataPoint struct {
+        value     any       `json:"value"`
+        timestamp time.Time `json:"time-increment"`
+}
+
+func NewData(dat any, ts time.Time) Data <span class="cov8" title="1">{
+        return NewDataPoint(dat, ts)
+}</span>
+
+func NewDataPoint(dat any, ts time.Time) *DataPoint <span class="cov8" title="1">{
+        d := &amp;DataPoint{
+                value:     dat,
+                timestamp: ts,
+        }
+        return d
+}</span>
+
+func (d DataPoint) Timestamp() time.Time <span class="cov8" title="1">{
+        return d.timestamp
+}</span>
+
+func (d DataPoint) Value() any <span class="cov8" title="1">{
+        return d.value
+}</span>
+
+func SetTruncateValue(d time.Duration) <span class="cov8" title="1">{
+        Truncate = d
+}</span>
+
+// Return the float64 representation of the data. If the data is not
+// represented by a float64 value a panic will follow
+func (d DataPoint) Float() float64 <span class="cov8" title="1">{
+        return d.value.(float64)
+}</span>
+
+// Int returns the integer value of the data. If the data is not
+// an integer a panic will result.
+func (d DataPoint) Int() int <span class="cov8" title="1">{
+        return d.value.(int)
+}</span>
+func (d DataPoint) String() string <span class="cov8" title="1">{
+        return fmt.Sprintf("%v, ", d.Value())
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package data
+
+import (
+        "fmt"
+        "time"
+)
+
+// Timeseries represents a single source of data over a time period
+type Timeseries struct {
+        ID    string `json:"id"`
+        Datas []Data `json:"data"`
+}
+
+// NewTimeseries will start a new data timeseries with the given label
+func NewTimeseries(ID string) *Timeseries <span class="cov8" title="1">{
+        return &amp;Timeseries{
+                ID: ID,
+        }
+}</span>
+
+// Add a new Data point to the given Timeseries
+func (ts *Timeseries) Add(d any) Data <span class="cov8" title="1">{
+        dat := &amp;DataPoint{
+                value:     d,
+                timestamp: time.Now(),
+        }
+        ts.Datas = append(ts.Datas, dat)
+        return dat
+}</span>
+
+// Add a new Data point to the given Timeseries
+func (ts *Timeseries) AddTimestamp(d any, t time.Time) Data <span class="cov8" title="1">{
+        dat := &amp;DataPoint{
+                value:     d,
+                timestamp: t,
+        }
+        ts.Datas = append(ts.Datas, dat)
+        return dat
+}</span>
+
+// Len returns the number of data points contained in this timeseries
+func (ts *Timeseries) Len() int <span class="cov8" title="1">{
+        return len(ts.Datas)
+}</span>
+
+func (ts *Timeseries) GetReadingsInRange(start time.Time, end time.Time) []Data <span class="cov8" title="1">{
+        var series []Data
+        for _, d := range ts.Datas </span><span class="cov8" title="1">{
+                if d.Timestamp().After(end) </span><span class="cov8" title="1">{
+                        break</span>
+                }
+                <span class="cov8" title="1">if d.Timestamp().After(start) </span><span class="cov8" title="1">{
+                        series = append(series, d)
+                }</span>
+        }
+        <span class="cov8" title="1">return series</span>
+}
+
+// String returns a human readable string describing the data
+// contained therein.
+func (ts *Timeseries) String() string <span class="cov8" title="1">{
+        str := fmt.Sprintf("%s: ", ts.ID)
+        for _, d := range ts.Datas </span><span class="cov8" title="1">{
+                str += d.String()
+        }</span>
+        <span class="cov8" title="1">str += "\n"
+        return str</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package mesh
 
 import (
         "encoding/json"
+        "fmt"
+        "log/slog"
+        "net/http"
+        "time"
+        // mqtt "github.com/eclipse/paho.mqtt.golang"
+)
+
+// MeshNetwork represents a network of devices that have meshed up.
+type MeshNetwork struct {
+        ID         string `json:"id"`
+        Pass       string `json:"passwd"`
+        MeshRouter `json:"router"`
+
+        RootId string               `json:"rootid"`
+        Nodes  map[string]*MeshNode `json:"nodes"`
+}
+
+var (
+        mn MeshNetwork
+)
+
+// GetNode will return the node associated with the given ID
+func (m *MeshNetwork) GetNode(nid string) (mn *MeshNode) <span class="cov8" title="1">{
+        var e bool
+
+        if mn, e = m.Nodes[nid]; !e </span><span class="cov8" title="1">{
+                mn = &amp;MeshNode{Id: nid}
+                m.Nodes[nid] = mn
+        }</span>
+        <span class="cov8" title="1">return mn</span>
+}
+
+// UpdateRoot will reroot the mesh network with the new root id
+func (m *MeshNetwork) UpdateRoot(rootid string) <span class="cov8" title="1">{
+
+        // TODO create a fully configured node and schedule network topology updates.
+        // l.Printf("%s.%s %s[%.0f]: rootid: %s, self: %s, parent: %s\n",
+        //        addr, typ, msgtype, layer, rootid, self, parent);
+        if m.RootId != rootid </span><span class="cov8" title="1">{
+                // we have a change of roots
+                slog.Info("Root Node has changed", "from", m.RootId, "to", rootid)
+                m.RootId = rootid
+        }</span>
+}
+
+// ServeHTTP provides a REST interface to the config structure
+func (m MeshNetwork) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        w.Header().Set("Content-Type", "application/json")
+
+        r.ParseForm()
+        switch r.Method </span>{
+        case "GET":<span class="cov0" title="0">
+                json.NewEncoder(w).Encode(m)</span>
+
+        case "POST", "PUT":<span class="cov0" title="0">
+                // TODO
+                http.Error(w, "Not Yet Supported", 401)</span>
+        }
+}
+
+// MeshRouter is the optional IP router for the mesh network
+type MeshRouter struct {
+        SSID string `json:"ssid"`
+        Pass string `json:"passwd"`
+        Host string `json:"host"`
+}
+
+// MeshNode represents a single node in the ESP-MESH network, this allows us
+// to keep track of our inventory fleet.
+type MeshNode struct {
+        Id       string            `json:"id"`
+        Parent   string            `json:"parend"`
+        Layer    int               `json:"layer"`
+        Children map[string]string `json:"children"`
+        Updated  time.Time         `json:"time"`
+}
+
+// NewNode will create a new network node
+func NewNode(d map[string]interface{}) *MeshNode <span class="cov8" title="1">{
+        self := d["self"].(string)
+        parent := d["parent"].(string)
+        pnode := mn.GetNode(parent)
+
+        mn := &amp;MeshNode{
+                Id:      self,
+                Parent:  pnode.Id,
+                Layer:   int(d["layer"].(float64)),
+                Updated: time.Now(),
+        }
+        return mn
+}</span>
+
+// UpdateParent will reestablish the the given parent node
+func (n *MeshNode) UpdateParent(p *MeshNode) <span class="cov8" title="1">{
+        if n.Parent != p.Id </span><span class="cov8" title="1">{
+                slog.Info("n.Parent has changed", "from", n.Parent, "to", p.Id)
+        }</span>
+        <span class="cov8" title="1">n.Parent = p.Id</span>
+}
+
+// UpdateChild will re-establish the given child node
+func (n *MeshNode) UpdateChild(c *MeshNode) <span class="cov8" title="1">{
+        slog.Info("Update child", "Parent ", n.Id)
+        if n.Children == nil </span><span class="cov8" title="1">{
+                n.Children = make(map[string]string)
+        }</span>
+
+        <span class="cov8" title="1">if _, e := n.Children[c.Id]; e </span><span class="cov0" title="0">{
+                slog.Info("update existing child ")
+        }</span> else<span class="cov8" title="1"> {
+                slog.Info(" ADDING NEW child ")
+        }</span>
+        <span class="cov8" title="1">n.Children[c.Id] = c.Id
+        slog.Info(c.Id)</span>
+}
+
+// String representation of this meshnode
+func (n *MeshNode) String() string <span class="cov8" title="1">{
+        str := fmt.Sprintf("NODE self - %s :=: parent - %s :=: layer - %d last update: %q\n",
+                n.Id, n.Parent, n.Layer, n.Updated)
+        if len(n.Children) &lt; 1 </span><span class="cov0" title="0">{
+                return str
+        }</span>
+        <span class="cov8" title="1">str += "Chilren:\n"
+        for _, mn := range n.Children </span><span class="cov8" title="1">{
+                str += "\t" + mn + "\n"
+        }</span>
+        <span class="cov8" title="1">return str</span>
+}
+
+// MeshMessage is what is passed around amoung mesh nodes
+type MeshMessage struct {
+        Addr string `json:"addr"`
+        Typ  string `json:"type"`
+        Data []byte `json:"data"`
+}
+
+// MeshHeartBeat is a periodic message that advertises the liveness of the
+// given mesh node
+type MeshHeartBeat struct {
+        Typ    string `json:"type"`   // heartbeat
+        Id     string `json:"self"`   // macaddr of advertising node
+        Parent string `json:"parent"` // macaddr of parent
+        Layer  int    `json:"layer"`  // node layer
+}
+
+// MsgRecv reads a meshnode message and handles the payload
+func (mn MeshNetwork) MsgRecv(topic string, payload []byte) <span class="cov0" title="0">{
+        /*
+                var m MeshMessage
+                err := json.Unmarshal(payload, &amp;m)
+                if err != nil {
+                        slog.Error("Failed to unmarshal payload")
+                        return
+                }
+
+                // unravel the json message and verify our current node information
+                paths := strings.Split(topic, "/")
+                if len(paths) != 3 {
+                        slog.Error("Error unsupported path len", "pathlen", len(paths))
+                        return
+                }
+
+                rootid := paths[1]
+                data := m.Data
+                msgtype := m.data["type"]
+
+                switch msgtype {
+                case "heartbeat":
+
+                        self, _ := data["self"].(string)
+                        parent, _ := data["parent"].(string)
+                        layer, _ := data["layer"].(int)
+                        mn.Update(rootid, self, parent, layer)
+
+                default:
+                        slog.Fatalln("Unknown message type: ", msgtype)
+                }
+        */
+        return
+}</span>
+
+// Update a mesh network with the given information
+func (mn MeshNetwork) Update(rootid, id, parent string, layer int) <span class="cov8" title="1">{
+
+        slog.Debug("[MESH] Update [id/parent/rootid/layer]: ", id, parent, rootid, layer)
+        if mn.RootId != rootid </span><span class="cov8" title="1">{
+                slog.Info("[MESH] Root %s has changed to %s\n", mn.RootId, rootid)
+                mn.RootId = rootid
+        }</span>
+
+        <span class="cov8" title="1">node := mn.GetNode(id)
+        if node == nil || node.Id == "" </span><span class="cov0" title="0">{
+                node.Parent = parent
+        }</span>
+
+        <span class="cov8" title="1">if node.Layer != layer </span><span class="cov8" title="1">{
+                slog.Info("[MESH] Node %s layer has changed from %d to %d\n", node.Id, node.Layer, "layer", layer)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Package messanger provides an interface and implementation for a messaging system
+// that supports subscribing to topics, publishing messages, and handling errors.
+// It includes a base implementation and allows for different types of messangers
+// such as "local" and "mqtt".
+
+// MsgHandler defines the function signature for handling messages.
+// It is used as a callback for subscribers to process incoming messages.
+
+// Messanger is the interface that all messanger implementations must adhere to.
+// It provides methods for subscribing to topics, publishing messages, setting topics,
+// retrieving the current topic, handling errors, and closing the messanger.
+
+// NewMessanger creates a new instance of a Messanger based on the provided ID.
+// Supported IDs include "local" and "mqtt". If a messanger already exists, it logs
+// a warning and replaces the existing instance with the new one.
+
+// GetMessanger returns the singleton instance of the Messanger. It ensures that
+// only one instance of the Messanger exists at any given time.
+
+// MessangerBase is a base implementation of the Messanger interface. It provides
+// common functionality such as managing topics, subscriptions, and published message
+// counts. It can be extended by specific messanger implementations.
+
+// NewMessangerBase creates a new instance of MessangerBase with the given ID and topics.
+// It initializes the subscription map and sets the provided topics.
+
+// ID returns the unique identifier of the MessangerBase instance.
+
+// Topic returns the first topic in the list of topics managed by the MessangerBase.
+// If no topics are set, it returns an empty string.
+
+// SetTopic appends a new topic to the list of topics managed by the MessangerBase.
+
+// Error returns the current error state of the MessangerBase instance.
+
+// ServeHTTP is the REST API entry point for the messanger package. It provides
+// information about the messanger instance, including its ID, topics, subscriptions,
+// and the number of published messages. The response is returned in JSON format.
+package messanger
+
+import (
+        "encoding/json"
+        "fmt"
         "log/slog"
         "net/http"
         "sync"
 )
 
 var (
-        messanger Messanger
-        once      sync.Once
+        messanger     Messanger
+        messangerLock sync.Mutex
+        once          sync.Once
 )
 
 // Subscriber is an interface that defines a struct needs to have the
 // Callback(topic string, data []byte) function defined.
-type MsgHandler func(msg *Msg)
+type MsgHandler func(msg *Msg) error
 
+type MessageHandler interface {
+        HandleMsg() func(msg *Msg) error
+}
+
+// Messanger is the interface that all messangers must implement
 type Messanger interface {
         ID() string
         Subscribe(topic string, handler MsgHandler) error
         SetTopic(topic string)
         Topic() string
-        PubMsg(msg *Msg)
-        PubData(data any)
+
+        // Publish methods should return an error when something goes wrong.
+        Pub(topic string, msg any) error
+        PubMsg(msg *Msg) error
+        PubData(data any) error
+
         Error() error
         Close()
 }
 
 func NewMessanger(id string, topics ...string) Messanger <span class="cov8" title="1">{
-        if messanger != nil </span><span class="cov8" title="1">{
-                slog.Warn("Calling new messanger when one already exists",
-                        "old", messanger.ID(), "new", id)
-                messanger = nil
-        }</span>
-
-        <span class="cov8" title="1">switch id </span>{
+        switch id </span>{
         case "local":<span class="cov8" title="1">
                 messanger = NewMessangerLocal(id, topics...)</span>
         case "mqtt":<span class="cov8" title="1">
@@ -127,12 +562,18 @@ func NewMessanger(id string, topics ...string) Messanger <span class="cov8" titl
         default:<span class="cov8" title="1">
                 messanger = nil</span>
         }
+        <span class="cov8" title="1">if messanger != nil &amp;&amp; messanger.ID() != id </span><span class="cov0" title="0">{
+                slog.Warn("Messanger already initialized with a different ID",
+                        "existing", messanger.ID(), "requested", id)
+        }</span>
         <span class="cov8" title="1">return messanger</span>
 }
 
 // GetMessangerInstance returns the singleton instance of MessangerBase.
 // It ensures that only one instance of MessangerBase is created.
 func GetMessanger() Messanger <span class="cov8" title="1">{
+        messangerLock.Lock()
+        defer messangerLock.Unlock()
         return messanger
 }</span>
 
@@ -140,7 +581,7 @@ func GetMessanger() Messanger <span class="cov8" title="1">{
 type MessangerBase struct {
         id    string
         topic []string
-        subs  map[string][]MsgHandler
+        subs  map[string]MsgHandler
         error
 
         Published int
@@ -150,7 +591,7 @@ func NewMessangerBase(id string, topic ...string) *MessangerBase <span class="co
         return &amp;MessangerBase{
                 id:    id,
                 topic: topic,
-                subs:  make(map[string][]MsgHandler),
+                subs:  make(map[string]MsgHandler),
         }
 }</span>
 
@@ -173,11 +614,66 @@ func (mb *MessangerBase) Error() error <span class="cov8" title="1">{
         return mb.error
 }</span>
 
+// Subscribe stores the subscription locally in the base implementation.
+// Specific messanger implementations should override this method to handle
+// actual subscription logic (e.g., MQTT broker subscription).
+func (mb *MessangerBase) Subscribe(topic string, handler MsgHandler) error <span class="cov8" title="1">{
+        if mb.subs == nil </span><span class="cov0" title="0">{
+                mb.subs = make(map[string]MsgHandler)
+        }</span>
+        <span class="cov8" title="1">mb.subs[topic] = handler
+        return nil</span>
+}
+
+// PubMsg publishes a pre-formatted Msg structure.
+// This base implementation only increments the Published counter.
+// Specific messanger implementations should override this method to handle
+// actual message publishing.
+func (mb *MessangerBase) PubMsg(msg *Msg) error <span class="cov0" title="0">{
+        if msg == nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("nil message")
+        }</span>
+        <span class="cov0" title="0">mb.Published++
+        // Base implementation just counts - specific messanger types should override
+        // to actually publish the message
+        slog.Debug("MessangerBase.PubMsg", "topic", msg.Topic, "published_count", mb.Published)
+        return nil</span>
+}
+
+// PubData publishes data to the messanger's default topic.
+// It handles various data types by converting them to a byte array before publishing.
+// If no topic is set, it returns an error.
+func (mb *MessangerBase) PubData(data any) error <span class="cov0" title="0">{
+        if len(mb.topic) == 0 </span><span class="cov0" title="0">{
+                return fmt.Errorf("no topic set")
+        }</span>
+
+        <span class="cov0" title="0">topic := mb.topic[0] // Use the first topic as default
+
+        // Convert data to bytes
+        bytes, err := Bytes(data)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to convert data to bytes: %w", err)
+        }</span>
+
+        // Create and publish message
+        <span class="cov0" title="0">msg := NewMsg(topic, bytes, mb.id)
+        return mb.PubMsg(msg)</span>
+}
+
+// Close is implemented to satisfy the messanger interface.
+// Base implementation does nothing - specific messanger implementations
+// should override this method to handle cleanup (e.g., closing connections).
+func (mb *MessangerBase) Close() <span class="cov0" title="0">{
+        // Base implementation does nothing
+        slog.Debug("MessangerBase.Close", "id", mb.id)
+}</span>
+
 // ServeHTTP is the REST API entry point for the messanger package
 func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
 
         var subs []string
-        for s, _ := range m.subs </span><span class="cov8" title="1">{
+        for s := range m.subs </span><span class="cov8" title="1">{
                 subs = append(subs, s)
         }</span>
 
@@ -201,84 +697,130 @@ func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) <span c
 }
 </pre>
 		
-		<pre class="file" id="file1" style="display: none">package messanger
+		<pre class="file" id="file4" style="display: none">package messanger
 
 import (
+        "fmt"
         "log/slog"
         "sync"
 )
 
+// MessangerLocal is a simple in-process messanger useful for tests and local usage.
+// It implements the Messanger interface and uses MessangerBase for common behavior.
 type MessangerLocal struct {
         *MessangerBase
         sync.Mutex `json:"-"`
 }
 
-// NewMessanger with the given ID and a variable number of topics that
-// it will subscribe to.
+// NewMessangerLocal creates a new local messanger instance.
 func NewMessangerLocal(id string, topics ...string) *MessangerLocal <span class="cov8" title="1">{
-        m := &amp;MessangerLocal{
+        return &amp;MessangerLocal{
                 MessangerBase: NewMessangerBase(id, topics...),
         }
-        return m
 }</span>
 
-// Subscribe will literally subscribe to the provide MQTT topic with
-// the specified message handler.
+func (m *MessangerLocal) ID() string <span class="cov8" title="1">{
+        return m.MessangerBase.ID()
+}</span>
+
+// Subscribe stores subscription handlers locally (base implementation already handles it).
 func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error <span class="cov8" title="1">{
-        m.subs[topic] = append(m.subs[topic], handler)
-        if root == nil </span><span class="cov0" title="0">{
-                root = newNode("/")
+        root.insert(topic, handler)
+        return m.MessangerBase.Subscribe(topic, handler)
+}</span>
+
+// Pub publishes a value to an explicit topic using the local messanger.
+// Returns an error if publishing fails (local impl always succeeds).
+func (m *MessangerLocal) Pub(topic string, value any) error <span class="cov8" title="1">{
+        m.Published++
+
+        if topic == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("No topic")
         }</span>
-        <span class="cov8" title="1">root.insert(topic, handler)
+        <span class="cov8" title="1">if len(m.subs) == 0 </span><span class="cov8" title="1">{
+                return fmt.Errorf("No subscribers")
+        }</span>
+
+        <span class="cov8" title="1">b, err := Bytes(value)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">msg := NewMsg(topic, b, m.id)
+        return m.PubMsg(msg)</span>
+}
+
+// PubData publishes arbitrary data to the default topic of this messanger.
+// Returns error if no topic is configured or conversion fails.
+func (m *MessangerLocal) PubData(data any) error <span class="cov8" title="1">{
+        if len(m.topic) == 0 </span><span class="cov8" title="1">{
+                return fmt.Errorf("no topic set")
+        }</span>
+        <span class="cov8" title="1">topic := m.topic[0]
+        bytes, err := Bytes(data)
+        if err != nil </span><span class="cov8" title="1">{
+                m.error = fmt.Errorf("failed to convert data to bytes: %w", err)
+                return m.error
+        }</span>
+        <span class="cov8" title="1">msg := NewMsg(topic, bytes, m.id)
+        return m.PubMsg(msg)</span>
+}
+
+// PubMsg publishes a pre-built Msg. Returns error on failure.
+func (m *MessangerLocal) PubMsg(msg *Msg) error <span class="cov8" title="1">{
+        m.Published++
+
+        if msg == nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("nil message")
+        }</span>
+
+        // look up local routing table to pass message along to subscribers
+        <span class="cov8" title="1">n := root.lookup(msg.Topic)
+        if n == nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("No subscribers for %s\n", msg.Topic)
+        }</span>
+
+        <span class="cov8" title="1">n.pub(msg)
         return nil</span>
 }
 
-// Close is implemented to satisfy the messanger interface
-func (m *MessangerLocal) Close() <span class="cov8" title="1">{
-        // TODO - need to unsubscribe handlers for this messanger
-        resetNodes()
-        m.MessangerBase.subs = nil
+func (m *MessangerLocal) Error() error <span class="cov0" title="0">{
+        return m.MessangerBase.Error()
 }</span>
 
-// Pub a message via MQTT with the given topic and value
-func (m *MessangerLocal) Pub(topic string, value any) <span class="cov8" title="1">{
-        m.Published++
-        buf, err := Bytes(value)
-        if err != nil </span><span class="cov0" title="0">{
-                m.error = err
-                return
-        }</span>
+func (m *MessangerLocal) Close() <span class="cov0" title="0">{
+        // clear subscriptions
+        m.Lock()
+        defer m.Unlock()
 
-        <span class="cov8" title="1">msg := NewMsg(topic, buf, m.id)
-        m.PubMsg(msg)</span>
+        // remove the handler from the root node
+        for t, h := range m.subs </span><span class="cov0" title="0">{
+                root.remove(t, h)
+        }</span>
+        <span class="cov0" title="0">slog.Debug("MessangerLocal.Close", "id", m.ID())</span>
 }
 
-// PubMsg sends an MQTT message based on the content of the Msg structure
-func (m *MessangerLocal) PubMsg(msg *Msg) <span class="cov8" title="1">{
-        n := root.lookup(msg.Topic)
-        if n == nil </span><span class="cov8" title="1">{
-                slog.Info("No subscribers", "topic", msg.Topic)
-                return
+// helper: convert common types to []byte as used by local pub dispatch.
+// This helper is internal and will call the workspace Bytes() when possible.
+// If Bytes() is not available, keep a minimal fallback implementation.
+func toBytesUnchecked(v any) []byte <span class="cov0" title="0">{
+        // try using Bytes helper if available in this package
+        if b, err := Bytes(v); err == nil </span><span class="cov0" title="0">{
+                return b
         }</span>
-        <span class="cov8" title="1">n.pub(msg)</span>
-}
-
-// Publish given data to this messangers topic
-func (m *MessangerLocal) PubData(data any) <span class="cov8" title="1">{
-        if m.topic[0] == "" </span><span class="cov0" title="0">{
-                slog.Error("Device.Publish failed has no Topic", "name", m.ID)
-                return
-        }</span>
-        <span class="cov8" title="1">buf, err := Bytes(data)
-        if err != nil </span><span class="cov0" title="0">{
-                panic(err)</span>
+        // best-effort fallback
+        <span class="cov0" title="0">switch x := v.(type) </span>{
+        case []byte:<span class="cov0" title="0">
+                return x</span>
+        case string:<span class="cov0" title="0">
+                return []byte(x)</span>
+        default:<span class="cov0" title="0">
+                return []byte(fmt.Sprintf("%v", v))</span>
         }
-        <span class="cov8" title="1">msg := NewMsg(m.topic[0], buf, m.id)
-        m.PubMsg(msg)</span>
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package messanger
+		<pre class="file" id="file5" style="display: none">package messanger
 
 import (
         "fmt"
@@ -309,70 +851,115 @@ func (m *MessangerMQTT) ID() string <span class="cov8" title="1">{
 
 // Subscribe will literally subscribe to the provide MQTT topic with
 // the specified message handler.
-func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error <span class="cov0" title="0">{
-        m.subs[topic] = append(m.subs[topic], handler)
+func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error <span class="cov8" title="1">{
+        m.subs[topic] = handler
         return m.MQTT.Subscribe(topic, handler)
 }</span>
 
 // Publish a message via MQTT with the given topic and value
-func (m *MessangerMQTT) Pub(topic string, value any) <span class="cov0" title="0">{
+// Now returns an error to indicate publish failures.
+func (m *MessangerMQTT) Pub(topic string, value any) error <span class="cov8" title="1">{
         m.Published++
-        m.Publish(topic, value)
-}</span>
-
-// PubMsg sends an MQTT message based on the content of the Msg structure
-func (m *MessangerMQTT) PubMsg(msg *Msg) <span class="cov0" title="0">{
-        m.Publish(msg.Topic, msg.Data)
-}</span>
-
-// Publish given data to this messangers topic
-func (m *MessangerMQTT) PubData(data any) <span class="cov0" title="0">{
-        if len(m.topic) &lt; 1 || m.topic[0] == "" </span><span class="cov0" title="0">{
-                slog.Error("Device.Publish failed has no Topic", "name", m.MessangerBase.id)
-                return
+        // If underlying Publish has an error return, prefer to return that.
+        // Many MQTT publish helper implementations return nothing; keep compatibility
+        // by ignoring a return if none exists. If the underlying Publish returns an error,
+        // attempt to return it (best-effort).
+        if m.MQTT != nil </span><span class="cov8" title="1">{
+                // If underlying Publish has an error signature, call and return it.
+                _ = m.MQTT.Publish(topic, value)
+        }</span> else <span class="cov0" title="0">{
+                // best-effort: do nothing
         }</span>
-        <span class="cov0" title="0">var buf []byte
-
-        switch data.(type) </span>{
-        case []byte:<span class="cov0" title="0">
-                buf = data.([]byte)</span>
-
-        case string:<span class="cov0" title="0">
-                buf = []byte(data.(string))</span>
-
-        case int:<span class="cov0" title="0">
-                str := fmt.Sprintf("%d", data.(int))
-                buf = []byte(str)</span>
-
-        case float64:<span class="cov0" title="0">
-                str := fmt.Sprintf("%5.2f", data.(float64))
-                buf = []byte(str)</span>
-
-        default:<span class="cov0" title="0">
-                slog.Error("Unknown Type: ", "topic", m.Topic, "type", fmt.Sprintf("%T", data))</span>
-        }
-
-        <span class="cov0" title="0">msg := NewMsg(m.topic[0], buf, m.MessangerBase.id)
-        m.PubMsg(msg)</span>
+        <span class="cov8" title="1">return nil</span>
 }
 
-func (m *MessangerMQTT) Error() error <span class="cov0" title="0">{
-        return m.MQTT.Error()
-}</span>
+// PubMsg sends an MQTT message based on the content of the Msg structure
+func (m *MessangerMQTT) PubMsg(msg *Msg) error <span class="cov8" title="1">{
+        if msg == nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("nil message")
+        }</span>
+        // Underlying Publish will actually send the payload
+        <span class="cov8" title="1">if m.MQTT != nil </span><span class="cov8" title="1">{
+                _ = m.Publish(msg.Topic, msg.Data)
+        }</span>
+        // Count it via base
+        <span class="cov8" title="1">m.Published++
+        return nil</span>
+}
+
+// Publish given data to this messangers topic
+func (m *MessangerMQTT) PubData(data any) error <span class="cov8" title="1">{
+        if len(m.topic) &lt; 1 || m.topic[0] == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("Device.Publish failed: no Topic for messanger %s", m.MessangerBase.id)
+        }</span>
+        <span class="cov8" title="1">var buf []byte
+
+        switch d := data.(type) </span>{
+        case []byte:<span class="cov8" title="1">
+                buf = d</span>
+
+        case string:<span class="cov8" title="1">
+                buf = []byte(d)</span>
+
+        case int:<span class="cov8" title="1">
+                str := fmt.Sprintf("%d", d)
+                buf = []byte(str)</span>
+
+        case float64:<span class="cov8" title="1">
+                str := fmt.Sprintf("%5.2f", d)
+                buf = []byte(str)</span>
+
+        default:<span class="cov8" title="1">
+                slog.Error("Unknown Type: ", "topic", m.Topic(), "type", fmt.Sprintf("%T", data))
+                return fmt.Errorf("unsupported data type: %T", data)</span>
+        }
+
+        <span class="cov8" title="1">msg := NewMsg(m.topic[0], buf, m.MessangerBase.id)
+        return m.PubMsg(msg)</span>
+}
+
+func (m *MessangerMQTT) Error() error <span class="cov8" title="1">{
+        if m.MQTT != nil </span><span class="cov8" title="1">{
+                return m.MQTT.Error()
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Close cleanly shuts down the MQTT messanger by closing the MQTT connection
+// and clearing local subscriptions. It implements the Messanger interface.
+func (m *MessangerMQTT) Close() <span class="cov0" title="0">{
+        m.Lock()
+        defer m.Unlock()
+
+        // Close the MQTT connection
+        if m.MQTT != nil </span><span class="cov0" title="0">{
+                m.MQTT.Close()
+        }</span>
+
+        // Clear local subscriptions
+        <span class="cov0" title="0">if m.subs != nil </span><span class="cov0" title="0">{
+                m.subs = make(map[string]MsgHandler)
+        }</span>
+
+        <span class="cov0" title="0">slog.Debug("MessangerMQTT.Close", "id", m.ID())</span>
+}
 
 // MsgPrinter will simply print a Msg that has been supplied. TODO,
 // create a member function that will print messages by msg ID.
 type MsgPrinter struct{}
 
 // MsgHandler will print out the message that has been supplied.
-func (m *MsgPrinter) MsgHandler(msg *Msg) <span class="cov0" title="0">{
+func (m *MsgPrinter) MsgHandler(msg *Msg) error <span class="cov8" title="1">{
         fmt.Printf("%+v\n", msg)
+        return nil
 }</span>
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package messanger
+		<pre class="file" id="file6" style="display: none">package messanger
 
-import "strings"
+import (
+        "strings"        
+)
 
 type node struct {
         index    string
@@ -430,6 +1017,30 @@ func (n *node) insert(topic string, mh MsgHandler) <span class="cov8" title="1">
         <span class="cov8" title="1">pn.handlers = append(pn.handlers, mh)</span>
 }
 
+func (n *node) remove(topic string, handler MsgHandler) <span class="cov0" title="0">{
+        println("TODO add node remove command")
+        return
+
+
+        // // Need to remove the child node and all parent nodes provided
+        // // they have no other subscribers
+        // nodes = []*node
+        // pn := root
+        // indexes := strings.Split(topic, "/")
+        // for _, idx := range indexes {
+        //         if n, ex := pn.nodes[idx]; ex {
+        //                 nodes = append(nodes, n)
+        //         }
+        // }
+
+        // nodes = slices.Reverse(nodes)
+        // for i, h := range node[0].handlers {
+        //         if h == handler {
+        //                 node[0].handlers = append(nodes[:i], nodes[i:])
+        //         }
+        // }
+}</span>
+
 func (n *node) lookup(topic string) *node <span class="cov8" title="1">{
         indexes := strings.Split(topic, "/")
         pn := n
@@ -465,7 +1076,7 @@ func (n *node) pub(m *Msg) <span class="cov8" title="1">{
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package messanger
+		<pre class="file" id="file7" style="display: none">package messanger
 
 import (
         "fmt"
@@ -533,13 +1144,13 @@ func (m *MQTT) ID() string <span class="cov8" title="1">{
 // IsConnected will tell you if the MQTT client is connected to
 // the specified broker
 func (m *MQTT) IsConnected() bool <span class="cov8" title="1">{
-        if m.Client == nil </span><span class="cov0" title="0">{
+        if m.Client == nil </span><span class="cov8" title="1">{
                 return false
         }</span>
         <span class="cov8" title="1">return m.Client.IsConnected()</span>
 }
 
-func (m *MQTT) Error() error <span class="cov0" title="0">{
+func (m *MQTT) Error() error <span class="cov8" title="1">{
         return m.error
 }</span>
 
@@ -583,7 +1194,7 @@ func (m *MQTT) Connect() error <span class="cov8" title="1">{
 // Subscribe will cause messangers to the given topic to be passed along to the
 // MsgHandle f
 func (m *MQTT) Subscribe(topic string, f MsgHandler) error <span class="cov8" title="1">{
-        if m.Client == nil </span><span class="cov0" title="0">{
+        if m.Client == nil </span><span class="cov8" title="1">{
                 slog.Error("MQTT Client is not connected to a broker")
                 return fmt.Errorf("MQTT Client is not connected to broker: %s", m.Broker)
         }</span>
@@ -595,7 +1206,8 @@ func (m *MQTT) Subscribe(topic string, f MsgHandler) error <span class="cov8" ti
                 f(msg)
         }</span>)
 
-        <span class="cov8" title="1">if token.Wait() &amp;&amp; token.Error() != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">token.Wait()
+        if token.Error() != nil </span><span class="cov8" title="1">{
                 // TODO: add routing that automatically subscribes subscribers when a
                 // connection has been made
                 m.error = token.Error()
@@ -605,30 +1217,30 @@ func (m *MQTT) Subscribe(topic string, f MsgHandler) error <span class="cov8" ti
 }
 
 // Publish will publish a value to the given topic
-func (m *MQTT) Publish(topic string, value any) <span class="cov8" title="1">{
+func (m *MQTT) Publish(topic string, value any) error <span class="cov8" title="1">{
         var t gomqtt.Token
 
-        if topic == "" </span><span class="cov0" title="0">{
-                panic("topic is nil")</span>
-        }
+        if topic == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("MQTT Publish topic is nil")
+        }</span>
 
-        <span class="cov8" title="1">if m.Client == nil </span><span class="cov0" title="0">{
-                slog.Warn("MQTT Client is not connected to a broker")
-                return
+        <span class="cov8" title="1">if m.Client == nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("MQTT Client is not connected to a broker")
         }</span>
 
         <span class="cov8" title="1">if t = m.Client.Publish(topic, byte(0), false, value); t == nil </span><span class="cov0" title="0">{
                 if false </span><span class="cov0" title="0">{
-                        slog.Info("MQTT Pub NULL token: ", "topic", topic, "value", value)
+                        return fmt.Errorf("MQTT Pub NULL token topic %s - value: %+v", topic, value)
                 }</span>
-                <span class="cov0" title="0">return</span>
+                <span class="cov0" title="0">return nil</span>
         }
 
         <span class="cov8" title="1">t.Wait()
-        if t.Error() != nil </span><span class="cov0" title="0">{
+        if t.Error() != nil </span><span class="cov8" title="1">{
                 m.error = t.Error()
-                slog.Error("MQTT Publish token: ", "error", t.Error())
+                return fmt.Errorf("MQTT Publish token error %+v", t.Error())
         }</span>
+        <span class="cov8" title="1">return nil</span>
 }
 
 // Close will disconnect from the MQTT broker and close the client
@@ -638,7 +1250,7 @@ func (m *MQTT) Close() <span class="cov8" title="1">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">// mqtt_mock.go
+		<pre class="file" id="file8" style="display: none">// mqtt_mock.go
 // Mock implementation of the paho.mqtt.golang Client interface for testing.
 // Provides comprehensive mocking of MQTT operations including connection,
 // publishing, subscribing, and message handling.
@@ -713,7 +1325,7 @@ func (m *MockMessage) Duplicate() bool   <span class="cov8" title="1">{ return m
 func (m *MockMessage) Qos() byte         <span class="cov8" title="1">{ return m.qos }</span>
 func (m *MockMessage) Retained() bool    <span class="cov8" title="1">{ return m.retained }</span>
 func (m *MockMessage) Topic() string     <span class="cov8" title="1">{ return m.topic }</span>
-func (m *MockMessage) MessageID() uint16 <span class="cov0" title="0">{ return m.messageID }</span>
+func (m *MockMessage) MessageID() uint16 <span class="cov8" title="1">{ return m.messageID }</span>
 func (m *MockMessage) Payload() []byte   <span class="cov8" title="1">{ return m.payload }</span>
 func (m *MockMessage) Ack()              <span class="cov8" title="1">{ m.acked = true }</span>
 
@@ -722,7 +1334,7 @@ type MockClientOptionsReader struct {
         clientID string
 }
 
-func (m *MockClientOptionsReader) ClientID() string <span class="cov0" title="0">{ return m.clientID }</span>
+func (m *MockClientOptionsReader) ClientID() string <span class="cov8" title="1">{ return m.clientID }</span>
 
 // Publication represents a published message for testing
 type Publication struct {
@@ -783,7 +1395,7 @@ func (m *MockClient) IsConnected() bool <span class="cov8" title="1">{
         return m.connected
 }</span>
 
-func (m *MockClient) IsConnectionOpen() bool <span class="cov0" title="0">{
+func (m *MockClient) IsConnectionOpen() bool <span class="cov8" title="1">{
         return m.IsConnected()
 }</span>
 
@@ -850,15 +1462,15 @@ func (m *MockClient) Subscribe(topic string, qos byte, callback gomqtt.MessageHa
         return NewMockToken(nil)</span>
 }
 
-func (m *MockClient) SubscribeMultiple(filters map[string]byte, callback gomqtt.MessageHandler) gomqtt.Token <span class="cov0" title="0">{
+func (m *MockClient) SubscribeMultiple(filters map[string]byte, callback gomqtt.MessageHandler) gomqtt.Token <span class="cov8" title="1">{
         m.mu.Lock()
         defer m.mu.Unlock()
 
-        if m.subscribeErr != nil </span><span class="cov0" title="0">{
+        if m.subscribeErr != nil </span><span class="cov8" title="1">{
                 return NewMockToken(m.subscribeErr)
         }</span>
 
-        <span class="cov0" title="0">for topic, qos := range filters </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">for topic, qos := range filters </span><span class="cov8" title="1">{
                 sub := Subscription{
                         Topic:   topic,
                         QoS:     qos,
@@ -867,7 +1479,7 @@ func (m *MockClient) SubscribeMultiple(filters map[string]byte, callback gomqtt.
                 m.subscriptions[topic] = sub
         }</span>
 
-        <span class="cov0" title="0">return NewMockToken(nil)</span>
+        <span class="cov8" title="1">return NewMockToken(nil)</span>
 }
 
 func (m *MockClient) Unsubscribe(topics ...string) gomqtt.Token <span class="cov8" title="1">{
@@ -882,26 +1494,26 @@ func (m *MockClient) Unsubscribe(topics ...string) gomqtt.Token <span class="cov
 }
 
 // Routing methods
-func (m *MockClient) AddRoute(topic string, callback gomqtt.MessageHandler) <span class="cov0" title="0">{
+func (m *MockClient) AddRoute(topic string, callback gomqtt.MessageHandler) <span class="cov8" title="1">{
         m.mu.Lock()
         defer m.mu.Unlock()
         m.routes[topic] = callback
 }</span>
 
-func (m *MockClient) RemoveRoute(topic string) <span class="cov0" title="0">{
+func (m *MockClient) RemoveRoute(topic string) <span class="cov8" title="1">{
         m.mu.Lock()
         defer m.mu.Unlock()
         delete(m.routes, topic)
 }</span>
 
 // Configuration methods
-func (m *MockClient) OptionsReader() gomqtt.ClientOptionsReader <span class="cov0" title="0">{
+func (m *MockClient) OptionsReader() gomqtt.ClientOptionsReader <span class="cov8" title="1">{
         // For testing purposes, we'll panic if this is called
         // Most MQTT testing doesn't require options reader functionality
         panic("OptionsReader not implemented in mock - modify test if needed")</span>
 }
 
-func (m *MockClient) SetOrderMatters(matter bool) {<span class="cov0" title="0">
+func (m *MockClient) SetOrderMatters(matter bool) {<span class="cov8" title="1">
         // No-op for mock
 }</span>
 
@@ -939,19 +1551,19 @@ func (m *MockClient) GetPublications() []Publication <span class="cov8" title="1
 }</span>
 
 // GetSubscriptions returns all active subscriptions
-func (m *MockClient) GetSubscriptions() map[string]Subscription <span class="cov0" title="0">{
+func (m *MockClient) GetSubscriptions() map[string]Subscription <span class="cov8" title="1">{
         m.mu.RLock()
         defer m.mu.RUnlock()
 
         subs := make(map[string]Subscription)
-        for k, v := range m.subscriptions </span><span class="cov0" title="0">{
+        for k, v := range m.subscriptions </span><span class="cov8" title="1">{
                 subs[k] = v
         }</span>
-        <span class="cov0" title="0">return subs</span>
+        <span class="cov8" title="1">return subs</span>
 }
 
 // ClearPublications clears the publication history
-func (m *MockClient) ClearPublications() <span class="cov0" title="0">{
+func (m *MockClient) ClearPublications() <span class="cov8" title="1">{
         m.mu.Lock()
         defer m.mu.Unlock()
         m.publications = nil
@@ -973,25 +1585,25 @@ func (m *MockClient) SimulateMessage(topic string, payload []byte) error <span c
         }
 
         // Check routes
-        <span class="cov0" title="0">if handler, ok := m.routes[topic]; ok </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if handler, ok := m.routes[topic]; ok </span><span class="cov8" title="1">{
                 msg := NewMockMessage(topic, payload)
-                if handler != nil </span><span class="cov0" title="0">{
+                if handler != nil </span><span class="cov8" title="1">{
                         go handler(m, msg)
                         return nil
                 }</span>
         }
 
-        <span class="cov0" title="0">return errors.New("no handler found for topic: " + topic)</span>
+        <span class="cov8" title="1">return errors.New("no handler found for topic: " + topic)</span>
 }
 
 // SimulateConnectionLost simulates a connection loss
-func (m *MockClient) SimulateConnectionLost(err error) <span class="cov0" title="0">{
+func (m *MockClient) SimulateConnectionLost(err error) <span class="cov8" title="1">{
         m.mu.Lock()
         m.connected = false
         handler := m.connectionLostHandler
         m.mu.Unlock()
 
-        if handler != nil </span><span class="cov0" title="0">{
+        if handler != nil </span><span class="cov8" title="1">{
                 go handler(m, err)
         }</span>
 }
@@ -1004,14 +1616,14 @@ func (m *MockClient) IsDisconnectCalled() bool <span class="cov8" title="1">{
 }</span>
 
 // GetLastPublication returns the most recent publication
-func (m *MockClient) GetLastPublication() *Publication <span class="cov0" title="0">{
+func (m *MockClient) GetLastPublication() *Publication <span class="cov8" title="1">{
         m.mu.RLock()
         defer m.mu.RUnlock()
 
-        if len(m.publications) == 0 </span><span class="cov0" title="0">{
+        if len(m.publications) == 0 </span><span class="cov8" title="1">{
                 return nil
         }</span>
-        <span class="cov0" title="0">return &amp;m.publications[len(m.publications)-1]</span>
+        <span class="cov8" title="1">return &amp;m.publications[len(m.publications)-1]</span>
 }
 
 // HasSubscription checks if a topic is subscribed
@@ -1041,7 +1653,7 @@ func (m *MockClient) Reset() <span class="cov8" title="1">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package messanger
+		<pre class="file" id="file9" style="display: none">package messanger
 
 import (
         "encoding/json"
@@ -1066,6 +1678,7 @@ type Msg struct {
         Args   []string `json:"args"`
         Data   []byte   `json:"msg"`
         Source string   `json:"source"`
+        Valid  bool     `json:"valid"`
 
         Timestamp time.Duration `json:"timestamp"`
 }
@@ -1125,6 +1738,7 @@ func NewMsg(topic string, data []byte, source string) *Msg <span class="cov8" ti
                 Data:      data,
                 Timestamp: utils.Timestamp(),
                 Source:    source,
+                Valid:     ValidateTopic(topic),
         }
 
         if msgSaver != nil &amp;&amp; msgSaver.Saving </span><span class="cov0" title="0">{
@@ -1186,7 +1800,7 @@ func (msg *Msg) Map() (map[string]interface{}, error) <span class="cov8" title="
         var m map[string]interface{}
         err := json.Unmarshal(msg.Data, &amp;m)
         if err != nil </span><span class="cov8" title="1">{
-                return nil, fmt.Errorf("Failed to unmarshal data: %s", err)
+                return nil, fmt.Errorf("failed to unmarshal data: %s", err)
         }</span>
         <span class="cov8" title="1">return m, nil</span>
 }
@@ -1247,22 +1861,24 @@ func (ms *MsgSaver) ServeHTTP(w http.ResponseWriter, r *http.Request) <span clas
 }</span>
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package messanger
+		<pre class="file" id="file10" style="display: none">package messanger
 
 import (
         "encoding/json"
         "fmt"
         "log/slog"
         "net/http"
+        "strings"
+
+        "github.com/rustyeddy/otto/utils"
 )
 
 // Topics maintains the list of topics used by otto and the
 // applications. It maintains the topic format and a count for each
-// time the topic is used
+// time the topic is used.
 type Topics struct {
-        StationName string
-        TopicFmt    string
-        Topicmap    map[string]int
+        TopicFmt string
+        Topicmap map[string]int
 }
 
 var (
@@ -1271,33 +1887,50 @@ var (
 
 func init() <span class="cov8" title="1">{
         topics = &amp;Topics{
-                TopicFmt:    "ss/%s/%s/%s",
-                Topicmap:    make(map[string]int),
-                StationName: "",
+                TopicFmt: "ss/%s/%s/%s",
+                Topicmap: make(map[string]int),
         }
 }</span>
+
+// validate topic
+func ValidateTopic(topic string) bool <span class="cov8" title="1">{
+        path := strings.Split(topic, "/")
+        if len(path) &lt; 4 </span><span class="cov8" title="1">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">if path[0] != "ss" </span><span class="cov8" title="1">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">if path[1] != "c" &amp;&amp; path[1] != "d" </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">if path[2] == "" || path[3] == "" </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        // here we have to accept the station id and topic it advertises
+        // because we can't know what the station IDs are.
+        <span class="cov8" title="1">return true</span>
+}
 
 // GetTopics will return the Topics structure, one per application.
 func GetTopics() *Topics <span class="cov8" title="1">{
         return topics
 }</span>
 
-// SetStationName will use the value to set the station that will be
-// used when publishing messages from this station.
-func (t *Topics) SetStationName(name string) <span class="cov8" title="1">{
-        t.StationName = name
-}</span>
-
 // Control will return a control topic e.g. ss/c/station/foo
 func (t *Topics) Control(topic string) string <span class="cov8" title="1">{
-        top := fmt.Sprintf(t.TopicFmt, "c", t.StationName, topic)
+        top := fmt.Sprintf(t.TopicFmt, "c", utils.StationName(), topic)
         t.Topicmap[top]++
         return top
 }</span>
 
 // Control will return a data topic e.g. ss/d/station/foo
 func (t *Topics) Data(topic string) string <span class="cov8" title="1">{
-        top := fmt.Sprintf(t.TopicFmt, "d", t.StationName, topic)
+        top := fmt.Sprintf(t.TopicFmt, "d", utils.StationName(), topic)
         t.Topicmap[top]++
         return top
 }</span>
@@ -1312,6 +1945,1954 @@ func (t Topics) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="c
                 slog.Error("Error wrote data", "error", err)
         }</span>
 }
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">/*
+OttO is a set of Go packages (framework) that help build IoT
+applications. The goal is to decouple the IoT sensors, actuators,
+etc. from the framework hardware interfaces such as GPIO, I2C, serial
+ports, etc.
+
+# Features include
+
+Device level abstraction. Each device has a name that translates into
+a path that can be used by MQTT and HTTP REST interface for
+communication with other systems.
+
+Device manager that keeps track of all application devices,
+configuration and status. This interface attempts to be agnostic to
+the underlying drivers, including gpiocdev, I2C, periph.io, etc.
+
+Message based architecture abstracting all communications into a
+standard message format. With functionality that can save messages for
+later replay or diagnostics.
+
+MQTT messaging built into all devices and components according to
+functionality and need
+
+HTTP Rest interface and corresponding API for all components of the
+framework.
+
+Drivers for a few different breakout boards meant to run on the
+Raspberry Pi.
+
+Station module to represent a single application on a given device or
+a series of stations for a networked controller.
+
+Messanger (not to be confused with messages) implements a Pub/Sub
+(MQTT or other) interface between components of your application
+
+# HTTP REST Server for data gathering and configuration
+
+# Websockets for realtime bidirectional communication with a UI
+
+High performance Web server built in to serve interactive UI's
+and modern API's
+
+Station manager to manage the stations that make up an entire sensor
+network
+
+Data Manager for temporary data caching and interfaces to update
+your favorite cloud based timeseries database
+
+Message library for standardized messages built to be communicate
+events and information between pacakges.
+
+The primary communication model for OttO is a messaging system based
+on the Pub/Sub model defaulting to MQTT. oTTo is also heavily invested
+in HTTP to implement user interfaces and REST/Graph APIs.
+
+Messaging and HTTP use paths to specify the subject of interest. These
+paths can be generically reduced to an ordered collection of strings
+seperated by slashes '/'.  Both MQTT topics, http URI's and UNIX
+filesystems use this same schema which we use the generalize the
+identity of the elements we are addressing.
+
+In other words we can generalize the following identities:
+
+For example:
+
+            File: /home/rusty/data/hb/temperature
+                HTTP: /api/data/hb/temperature
+                MQTT: ss/station/hb/temperature
+
+The data within the highest level topic temperature can be represented
+say by JSON `{ farenhiet: 100.07 }`
+
+### Meta Data (Station Information)
+
+For example when a station comes alive it can provide some information
+about itself using the topic:
+
+        ```ss/m/be:ef:ca:fe:02/station```
+
+The station will announce itself along with some meta information and
+it's capabilities.  The body of the message might look something like
+this:
+
+```json
+
+        {
+                "id": "be:ef:ca:fe:02",
+                "ip": "10.11.24.24",
+            "sensors": [
+                        "tempc",
+                        "humidity",
+                        "light"
+                ],
+                "relays": [
+                        "heater",
+                        "light"
+                ],
+        }
+
+```
+
+### Sensor Data
+
+Sensor data takes on the form:
+
+        ```ss/d/&lt;station&gt;/&lt;sensor&gt;/&lt;index&gt;```
+
+Where the source is the Station ID publishing the respective data.
+The sensor is the type of data being produced (temp, humidity,
+lidar, GPS).
+
+The index is useful in application where there is more than one
+device, such as sensors, motors, etc.
+
+The value published by the sensors is typically going to be floating
+point, however these values may also be integers, strings or byte
+arrays.
+
+### Control Data
+
+        ```ss/c/&lt;source&gt;/&lt;device&gt;/&lt;index&gt;```
+
+This is essentially the same as the sensor except that control
+commands are used to have a particular device change, for example
+turning a relay on or off.
+*/
+package otto
+
+import (
+        "fmt"
+        "log/slog"
+
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/rustyeddy/otto/server"
+        "github.com/rustyeddy/otto/station"
+)
+
+// Controller is a message handler that oversees all interactions
+// with the application.
+type Controller interface {
+        Init()
+        Start() error
+        Stop()
+        MsgHandler(m *messanger.Msg)
+}
+
+// OttO is a large wrapper around the Station, Server,
+// DataManager and Messanger, including some convenience functions.
+type OttO struct {
+        Name string
+
+        *station.Station
+        *station.StationManager
+        *server.Server
+        messanger.Messanger
+
+        Mock bool
+        hub  bool // maybe hub should be a different struct?
+        done chan any
+}
+
+// global variables and structures
+var (
+        Version     string
+        Interactive bool
+)
+
+func init() <span class="cov8" title="1">{
+        Version = "0.0.9"
+}</span>
+
+func (o *OttO) Done() chan any <span class="cov0" title="0">{
+        return o.done
+}</span>
+
+// OttO is a convinience function starting the MQTT and HTTP servers,
+// the station manager and other stuff.
+func (o *OttO) Init() <span class="cov0" title="0">{
+        if o.done != nil </span><span class="cov0" title="0">{
+                // server has already been started
+                fmt.Println("Server has already been started")
+                return
+        }</span>
+        <span class="cov0" title="0">o.done = make(chan any)
+
+        if o.Messanger == nil </span><span class="cov0" title="0">{
+                topic := messanger.GetTopics().Data("station")
+                o.Messanger = messanger.NewMessangerMQTT("otto", topic)
+                ms := messanger.GetMsgSaver()
+                ms.Saving = true
+        }</span>
+
+        <span class="cov0" title="0">if o.StationManager == nil </span><span class="cov0" title="0">{
+                o.StationManager = station.GetStationManager()
+        }</span>
+
+        <span class="cov0" title="0">var err error
+        if o.Station == nil </span><span class="cov0" title="0">{
+                o.Station, err = o.StationManager.Add(o.Name)
+                if err != nil </span><span class="cov0" title="0">{
+                        slog.Error("Unable to create station")
+                        return
+                }</span>
+                // Initialzie the local station
+                <span class="cov0" title="0">o.Station.Init()</span>
+        }
+
+        <span class="cov0" title="0">if o.Server == nil </span><span class="cov0" title="0">{
+                o.Server = server.GetServer()
+        }</span>
+}
+
+func (o *OttO) Start() error <span class="cov0" title="0">{
+        go o.Server.Start(o.done)
+
+        if o.StationManager != nil </span><span class="cov0" title="0">{
+                o.StationManager.Start()
+        }</span>
+
+        <span class="cov0" title="0">&lt;-o.done
+        o.Stop()
+        return nil</span>
+}
+
+func (o *OttO) Stop() <span class="cov0" title="0">{
+        &lt;-o.done
+        slog.Info("Done, cleaning up()")
+
+        if err := server.GetServer().Close(); err != nil </span><span class="cov0" title="0">{
+                slog.Error("Failed to close server", "error", err)
+        }</span>
+
+        <span class="cov0" title="0">if o.Messanger != nil </span><span class="cov0" title="0">{
+                o.Messanger.Close()
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package otto
+
+import (
+        "fmt"
+        "io"
+        "strings"
+
+        "github.com/chzyer/readline"
+        "github.com/spf13/cobra"
+)
+
+var cliCmd = &amp;cobra.Command{
+        Use:   "cli",
+        Short: "Run auto in interactive CLI mode",
+        Long:  `Run auto in interactive CLI mode`,
+        Run:   cliRun,
+}
+
+var (
+        rl *readline.Instance
+)
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(cliCmd)
+}</span>
+
+func init_readline() <span class="cov0" title="0">{
+        var completer = readline.NewPrefixCompleter()
+        for _, child := range rootCmd.Commands() </span><span class="cov0" title="0">{
+                pcFromCommands(completer, child)
+        }</span>
+
+        <span class="cov0" title="0">var err error
+        rl, err = readline.NewEx(&amp;readline.Config{
+                Prompt:       "otto\033[31m»\033[0m ",
+                HistoryFile:  "/tmp/readline.tmp",
+                AutoComplete: completer,
+                // InterruptPrompt:   "^C",
+                EOFPrompt:         "exit",
+                HistorySearchFold: true,
+                // FuncFilterInputRune: filterInput,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+        <span class="cov0" title="0">rl.CaptureExitSignal()</span>
+        // l.SetOutput(rl.Stderr())
+}
+
+func cliRun(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+
+        init_readline()
+
+        defer rl.Close()
+        running := true
+        for running </span><span class="cov0" title="0">{
+                running = cliLine()
+                // if !running &amp;&amp; otto.Done() != nil {
+                //         otto.Done() &lt;- true
+                // }
+        }</span>
+        <span class="cov0" title="0">fmt.Println("Exiting, cleanup")
+        // otto.Cleanup()
+        fmt.Println("Good Bye!")</span>
+}
+
+func pcFromCommands(parent readline.PrefixCompleterInterface, c *cobra.Command) <span class="cov0" title="0">{
+        pc := readline.PcItem(c.Use)
+        parent.SetChildren(append(parent.GetChildren(), pc))
+        for _, child := range c.Commands() </span><span class="cov0" title="0">{
+                pcFromCommands(pc, child)
+        }</span>
+}
+
+func cliLine() bool <span class="cov0" title="0">{
+        line, err := rl.Readline()
+        if err == readline.ErrInterrupt </span><span class="cov0" title="0">{
+                if len(line) == 0 </span><span class="cov0" title="0">{
+                        return false
+                }</span> else<span class="cov0" title="0"> {
+                        return true
+                }</span>
+        } else<span class="cov0" title="0"> if err == io.EOF </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov0" title="0">return RunLine(line)</span>
+}
+
+func RunLine(line string) bool <span class="cov0" title="0">{
+        line = strings.TrimSpace(line)
+        if line == "exit" || line == "quit" </span><span class="cov0" title="0">{
+                return false
+        }</span>
+
+        <span class="cov0" title="0">if len(line) == 0 </span><span class="cov0" title="0">{
+                return true
+        }</span>
+
+        <span class="cov0" title="0">args := strings.Split(line, " ")
+        cmd, args, err := rootCmd.Find(args)
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Printf("Error running cmd %q: %s\n", line, err)
+        }</span>
+
+        <span class="cov0" title="0">cmd.ParseFlags(args)
+        cmd.Run(cmd, args)
+        return true</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package otto
+
+import (
+        "bufio"
+        "log/slog"
+        "os"
+
+        "github.com/rustyeddy/otto"
+        "github.com/spf13/cobra"
+)
+
+var fileCmd = &amp;cobra.Command{
+        Use:   "file",
+        Short: "read otto commands from a file",
+        Long:  `Run otto with the commands in the file`,
+        Run:   fileRun,
+}
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(fileCmd)
+}</span>
+
+func fileRun(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        otto.Interactive = true
+        fname := args[0]
+        file, err := os.Open(fname)
+        if err != nil </span><span class="cov0" title="0">{
+                slog.Error(err.Error())
+        }</span>
+        <span class="cov0" title="0">defer file.Close()
+
+        scanner := bufio.NewScanner(file)
+        for scanner.Scan() </span><span class="cov0" title="0">{
+                line := scanner.Text()
+                RunLine(line)
+        }</span>
+        <span class="cov0" title="0">if err := scanner.Err(); err != nil </span><span class="cov0" title="0">{
+                slog.Error(err.Error())
+        }</span>
+        <span class="cov0" title="0">return</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">/*
+Copyright © 2024 NAME HERE &lt;EMAIL ADDRESS&gt;
+*/
+package otto
+
+import (
+        "fmt"
+        "io"
+        "os"
+
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/spf13/cobra"
+)
+
+type mqttConfiguration struct {
+        Broker  string
+        Enabled bool
+}
+
+var (
+        mqttConfig mqttConfiguration
+
+        // mqttCmd represents the mqtt command
+        mqttCmd = &amp;cobra.Command{
+                Use:   "mqtt",
+                Short: "Configure and interact with MQTT broker",
+                Long:  `This command can be used to interact and diagnose an MQTT broker`,
+                Run:   mqttRun,
+        }
+
+        cmdWriter io.Writer = os.Stdout
+)
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(mqttCmd)
+        mqttCmd.PersistentFlags().StringVar(&amp;mqttConfig.Broker, "broker", "localhost", "Set the MQTT Broker")
+        cmdWriter = io.Discard
+}</span>
+
+func mqttRun(cmd *cobra.Command, args []string) <span class="cov8" title="1">{
+        m := messanger.GetMQTT()
+
+        // If the broker config changes and mqtt is connected, disconnect
+        // and reconnect to new broker
+        if mqttConfig.Broker != m.Broker </span><span class="cov0" title="0">{
+                m.Broker = mqttConfig.Broker
+        }</span>
+
+        <span class="cov8" title="1">connected := false
+        if m.Client != nil </span><span class="cov0" title="0">{
+                connected = m.IsConnected()
+        }</span>
+
+        <span class="cov8" title="1">fmt.Fprintf(cmdWriter, "Broker: %s\n", m.Broker)
+        fmt.Fprintf(cmdWriter, "Connected: %t\n", connected)
+        fmt.Fprintf(cmdWriter, "Debug: %t\n", m.Debug)
+        fmt.Fprintln(cmdWriter, "\nSubscriptions")</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">/*
+Copyright © 2024 NAME HERE &lt;EMAIL ADDRESS&gt;
+*/
+package otto
+
+import (
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/spf13/cobra"
+)
+
+// brokerCmd represents the broker command
+var mqttConnectCmd = &amp;cobra.Command{
+        Use:   "connect",
+        Short: "Connect to the mqtt broker",
+        Long:  `Connect to the MQTT broker`,
+        Run:   runMQTTConnect,
+}
+
+func init() <span class="cov8" title="1">{
+        mqttCmd.AddCommand(mqttConnectCmd)
+}</span>
+
+func runMQTTConnect(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        messanger.GetMQTT()
+}</span>
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">/*
+Copyright © 2024 NAME HERE &lt;EMAIL ADDRESS&gt;
+*/
+package otto
+
+import (
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/spf13/cobra"
+)
+
+// brokerCmd represents the broker command
+var mqttPubCmd = &amp;cobra.Command{
+        Use:   "pub",
+        Short: "Publish to the mqtt topic",
+        Long:  `Publish to mqtt tocpic`,
+        Run:   runMQTTPub,
+}
+
+func init() <span class="cov8" title="1">{
+        mqttCmd.AddCommand(mqttPubCmd)
+}</span>
+
+func runMQTTPub(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        m := messanger.GetMQTT()
+        m.Publish(args[0], args[1])
+}</span>
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">/*
+Copyright © 2024 NAME HERE &lt;EMAIL ADDRESS&gt;
+*/
+package otto
+
+import (
+        "fmt"
+
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/spf13/cobra"
+)
+
+// brokerCmd represents the broker command
+var mqttSubCmd = &amp;cobra.Command{
+        Use:   "sub",
+        Short: "Subscribe to the mqtt topic",
+        Long:  `Subscribe to mqtt tocpic`,
+        Run:   runMQTTSub,
+}
+
+func init() <span class="cov8" title="1">{
+        mqttCmd.AddCommand(mqttSubCmd)
+}</span>
+
+func runMQTTSub(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        m := messanger.GetMQTT()
+        if m.Client == nil || !m.IsConnected() </span><span class="cov0" title="0">{
+                err := m.Connect()
+                if err != nil </span><span class="cov0" title="0">{
+                        fmt.Printf("Failed to connect to mqtt broker: %s: %s\n", m.Broker, err)
+                        return
+                }</span>
+        }
+
+        <span class="cov0" title="0">p := &amp;messanger.MsgPrinter{}
+        m.Subscribe(args[0], p.MsgHandler)</span>
+}
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">package otto
+
+import (
+        "log/slog"
+
+        "github.com/spf13/cobra"
+)
+
+var (
+        appdir string
+)
+
+var rootCmd = &amp;cobra.Command{
+        Use:   "otto",
+        Short: "OttO is an IoT platform for creating cool IoT apps and hubs",
+        Long: `This is cool stuff and you will be able to find a lot of cool information 
+                in the following documentation https://rustyeddy.com/otto/`,
+        Run: ottoRun,
+}
+
+func init() <span class="cov8" title="1">{
+        rootCmd.PersistentFlags().StringVar(&amp;appdir, "appdir", "embed", "root of the web app")
+}</span>
+
+func GetRootCmd() *cobra.Command <span class="cov0" title="0">{
+        return rootCmd
+}</span>
+
+func Execute() <span class="cov0" title="0">{
+        if err := rootCmd.Execute(); err != nil </span><span class="cov0" title="0">{
+                slog.Error(err.Error())
+                return
+        }</span>
+}
+
+func ottoRun(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        cmd.Usage()
+}</span>
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package otto
+
+import (
+        "github.com/spf13/cobra"
+)
+
+var serveCmd = &amp;cobra.Command{
+        Use:   "serve",
+        Short: "Start oTTo the Server",
+        Long:  `Start OttO the IoT Server`,
+        Run:   serveRun,
+}
+
+var (
+        foreground bool
+)
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(serveCmd)
+        serveCmd.Flags().BoolVar(&amp;foreground, "foreground", false, "Run the server command in the foreground")
+}</span>
+
+func serveRun(cmd *cobra.Command, args []string) {<span class="cov0" title="0">
+        // otto.OttO()
+}</span>
+</pre>
+		
+		<pre class="file" id="file20" style="display: none">package otto
+
+import (
+        "fmt"
+        "time"
+
+        "github.com/rustyeddy/otto/station"
+        "github.com/spf13/cobra"
+)
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(stationCmd)
+}</span>
+
+var stationCmd = &amp;cobra.Command{
+        Use:   "station",
+        Short: "Get station information",
+        Long:  `Get a list of stations as well as details of a given station`,
+        Run:   stationRun,
+}
+
+func stationRun(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        stations := station.GetStationManager()
+        for _, st := range stations.Stations </span><span class="cov0" title="0">{
+                fmt.Printf("station: %s: %s/%v\n",
+                        st.ID, st.LastHeard.Format(time.RFC3339), st.Expiration)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package otto
+
+import (
+        "fmt"
+
+        "github.com/rustyeddy/otto/utils"
+        "github.com/spf13/cobra"
+)
+
+var statsCmd = &amp;cobra.Command{
+        Use:   "stats",
+        Short: "Display runtime stats",
+        Long:  `Display runtime stats`,
+        Run:   statsRun,
+}
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(statsCmd)
+}</span>
+
+func statsRun(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        stats := utils.GetStats()
+        fmt.Printf("Stats: %+v\n", stats)
+}</span>
+</pre>
+		
+		<pre class="file" id="file22" style="display: none">package otto
+
+import (
+        "fmt"
+
+        "github.com/rustyeddy/otto/utils"
+        "github.com/spf13/cobra"
+)
+
+var (
+        tickerCmd = &amp;cobra.Command{
+                Use:   "timers",
+                Short: "Display and manage timers",
+                Long:  "Display and manage timers, stop, start and reset timers ",
+                Run:   tickerRun,
+        }
+)
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(tickerCmd)
+}</span>
+
+func tickerRun(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+        t := utils.GetTickers()
+        fmt.Printf("%+v\n", t)
+}</span>
+</pre>
+		
+		<pre class="file" id="file23" style="display: none">package otto
+
+import (
+        "fmt"
+
+        "github.com/spf13/cobra"
+)
+
+func init() <span class="cov8" title="1">{
+        rootCmd.AddCommand(versionCmd)
+}</span>
+
+var (
+        version = "0.1.0"
+
+        versionCmd = &amp;cobra.Command{
+                Use:   "version",
+                Short: "Print the version number of otto",
+                Long:  `All software has versions. This is OttO's`,
+                Run: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                        fmt.Println(version)
+                }</span>,
+        }
+)
+</pre>
+		
+		<pre class="file" id="file24" style="display: none">package server
+
+import (
+        "fmt"
+        "net/http"
+)
+
+// Ping is a full fledged Request handler, You can write your own!
+type Ping struct {
+}
+
+// ServeHTTP will respond to the writer with 'Pong'
+func (p Ping) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        fmt.Fprint(w, "Pong\n")
+}</span>
+</pre>
+		
+		<pre class="file" id="file25" style="display: none">package server
+
+import (
+        "context"
+        "embed"
+        "encoding/json"
+        "html/template"
+        "log/slog"
+        "net/http"
+        "path/filepath"
+
+        "github.com/rustyeddy/otto/messanger"
+)
+
+type OttOServer interface {
+}
+
+// Server serves up HTTP on Addr (default 0.0.0.0:8011)
+// It takes care of REST API, serving the web app if Appdir
+// does not equal nil and initial Websocket upgrade
+type Server struct {
+        *http.Server       `json:"-"`
+        *http.ServeMux     `json:"-"`
+        *template.Template `json:"-"`
+
+        EndPoints map[string]http.Handler `json:"routes"`
+}
+
+var (
+        wserv  WServe
+        server *Server
+)
+
+func GetServer() *Server <span class="cov0" title="0">{
+        if server == nil </span><span class="cov0" title="0">{
+                server = NewServer()
+        }</span>
+        <span class="cov0" title="0">return server</span>
+}
+
+func NewServer() *Server <span class="cov0" title="0">{
+        s := &amp;Server{
+                Server: &amp;http.Server{
+                        Addr: ":8011",
+                },
+        }
+        s.ServeMux = http.NewServeMux()
+        return s
+}</span>
+
+// Register to handle HTTP requests for particular paths in the
+// URL or MQTT channel.
+func (s *Server) Register(p string, h http.Handler) <span class="cov0" title="0">{
+
+        // get this to log to a file (or syslog) by default
+        slog.Info("HTTP REST API Registered: ", "path", p)
+        if s.EndPoints == nil </span><span class="cov0" title="0">{
+                s.EndPoints = make(map[string]http.Handler)
+        }</span>
+        <span class="cov0" title="0">s.EndPoints[p] = h
+        s.Handle(p, h)</span>
+}
+
+// Start the HTTP server after registering REST API callbacks
+// and initializing the Web application directory
+func (s *Server) Start(done chan any) <span class="cov0" title="0">{
+        s.Register("/ping", Ping{})
+        s.Register("/api", s)
+        s.Register("/api/topics", messanger.GetTopics())
+
+        slog.Info("Starting hub Web and REST server on ", "addr", s.Addr)
+        go http.ListenAndServe(s.Addr, s.ServeMux)
+        &lt;-done
+        s.Shutdown(context.Background())
+        return
+}</span>
+
+func (s *Server) Appdir(path, file string) <span class="cov0" title="0">{
+        slog.Info("appdir", "path", path)
+        s.Register(path, http.FileServer(http.Dir(file)))
+}</span>
+
+func (s *Server) EmbedTempl(path string, fsys embed.FS, data any) <span class="cov0" title="0">{
+
+        s.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                url := r.URL.Path
+                ext := filepath.Ext(url)
+
+                switch ext </span>{
+                case ".css":<span class="cov0" title="0">
+                        w.Header().Set("Content-Type", "text/css")
+                        http.ServeFileFS(w, r, fsys, "app"+url)
+                        return</span>
+
+                case ".js":<span class="cov0" title="0">
+                        w.Header().Set("Content-Type", "application/javascript")
+                        http.ServeFileFS(w, r, fsys, "app"+url)
+                        return</span>
+
+                default:<span class="cov0" title="0">
+                        var err error
+                        if s.Template == nil </span><span class="cov0" title="0">{
+                                s.Template, err = template.ParseFS(fsys, "app/*.html")
+                                if err != nil </span><span class="cov0" title="0">{
+                                        slog.Error("Failed to parse web template: ", "error", err.Error())
+                                        return
+                                }</span>
+                        }
+                        <span class="cov0" title="0">s.Template.Execute(w, data)</span>
+                }
+        })
+}
+
+func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        ep := struct {
+                Routes []string
+        }{}
+        for e, _ := range s.EndPoints </span><span class="cov0" title="0">{
+                ep.Routes = append(ep.Routes, e)
+        }</span>
+
+        <span class="cov0" title="0">w.Header().Set("Content-Type", "application/json")
+        err := json.NewEncoder(w).Encode(ep)
+        if err != nil </span><span class="cov0" title="0">{
+                slog.Error("Server.ServeHTTP failed to encode", "error", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file26" style="display: none">package server
+
+import (
+        "fmt"
+        "log/slog"
+        "net/http"
+
+        "github.com/gorilla/websocket"
+        "github.com/rustyeddy/otto/messanger"
+)
+
+type Websock struct {
+        *websocket.Conn
+        writeQ chan *messanger.Msg
+        Done   chan any
+}
+
+var (
+        Websocks []*Websock
+)
+
+func NewWebsock(conn *websocket.Conn) *Websock <span class="cov0" title="0">{
+        ws := &amp;Websock{
+                Conn:   conn,
+                Done:   make(chan any),
+                writeQ: make(chan *messanger.Msg),
+        }
+        return ws
+}</span>
+
+func (ws *Websock) GetWriteQ() chan *messanger.Msg <span class="cov0" title="0">{
+        return ws.writeQ
+}</span>
+
+var upgrader = websocket.Upgrader{
+        ReadBufferSize:  1024,
+        WriteBufferSize: 1024,
+        CheckOrigin:     checkOrigin,
+}
+
+func checkOrigin(r *http.Request) bool <span class="cov0" title="0">{
+        return true
+}</span>
+
+type WServe struct {
+}
+
+func (ws WServe) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        slog.Info("[I] Connected with Websocket")
+
+        conn, err := upgrader.Upgrade(w, r, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                slog.Error("Websocket Upgrader err", "error", err)
+                return
+        }</span>
+        <span class="cov0" title="0">defer conn.Close()
+
+        wsock := NewWebsock(conn)
+        go func() </span><span class="cov0" title="0">{
+                for </span><span class="cov0" title="0">{
+                        // var messanger StationEvent
+                        mt, message, err := conn.ReadMessage()
+                        if err != nil </span><span class="cov0" title="0">{
+                                slog.Error("websocket read:", "error", err)
+                                break</span>
+                        }
+                        <span class="cov0" title="0">fmt.Printf("%v - %v - %s\n", mt, message, err)</span>
+                }
+        }()
+
+        <span class="cov0" title="0">Websocks = append(Websocks, wsock)
+        wq := wsock.GetWriteQ()
+        for </span><span class="cov0" title="0">{
+                select </span>{
+                case msg, ok := &lt;-wq:<span class="cov0" title="0">
+                        fmt.Printf("Recieved message for ws: %+v\n", msg)
+                        if !ok </span><span class="cov0" title="0">{
+                                break</span>
+                        }
+
+                        <span class="cov0" title="0">jbytes, err := msg.JSON()
+                        if err != nil </span><span class="cov0" title="0">{
+                                slog.Error("Failed to JSONify message: ", "error", err)
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">err = conn.WriteJSON(jbytes)
+                        if err != nil </span><span class="cov0" title="0">{
+                                slog.Error("Failed to write web socket", "error", err)
+                                return
+                        }</span>
+
+                case &lt;-wsock.Done:<span class="cov0" title="0">
+                        break</span>
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file27" style="display: none">package station
+
+import (
+        "context"
+        "encoding/json"
+        "errors"
+        "fmt"
+        "net"
+        "net/http"
+        "os"
+        "sync"
+        "time"
+
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/rustyeddy/otto/utils"
+)
+
+// Station is the primary structure that holds an array of
+// Sensors which in turn hold a timeseries of datapoints.
+type Station struct {
+        ID         string        `json:"id"`
+        LastHeard  time.Time     `json:"last-heard"`
+        Expiration time.Duration `json:"expiration"` // how long to timeout a station
+        Hostname   string        `json:"hostname"`
+        Local      bool          `json:"local"`
+        Ifaces     []*Iface      `json:"iface"`
+
+        messanger.Messanger `json:"-"`
+
+        errq   chan error
+        errors []error `json:"errors"`
+
+        time.Duration `json:"duration"`
+        ticker        *time.Ticker `json:"-"`
+
+        done   chan bool          `json:"-"`
+        cancel context.CancelFunc `json:"-"`
+        mu     sync.RWMutex       `json:"-"`
+
+        // Add metrics
+        Metrics *StationMetrics `json:"metrics"`
+
+        // Internal generic device store for tests and loose coupling
+        devicesMu sync.RWMutex `json:"-"`
+        devices   map[string]any
+}
+
+type Iface struct {
+        Name    string
+        IPAddrs []net.IP
+        MACAddr string
+}
+
+type StationConfig struct {
+        AnnouncementInterval time.Duration
+        Timeout              time.Duration
+        MaxErrors            int
+        MessangerType        string
+}
+
+// NewStation creates a new Station with an ID as provided
+// by the first parameter. Here we need to detect a duplicate
+// station before trying to register another one.
+func newStation(id string) (*Station, error) <span class="cov8" title="1">{
+        if id == "" </span><span class="cov8" title="1">{
+                return nil, errors.New("station ID cannot be empty")
+        }</span>
+
+        <span class="cov8" title="1">st := &amp;Station{
+                ID:         id,
+                Expiration: 3 * time.Minute,
+                Duration:   1 * time.Minute,
+                errq:       make(chan error, 10),
+                done:       make(chan bool, 1),
+                Metrics:    NewStationMetrics(),
+                devices:    make(map[string]any),
+        }
+
+        // Use the workspace-wide topic name from utils for station topics
+        topic := utils.StationName()
+        if topic == "" </span><span class="cov0" title="0">{
+                // fallback to previous pattern if utils not configured
+                topic = "otto/stations"
+        }</span>
+        <span class="cov8" title="1">messanger.NewMessanger("local", topic+"/"+id)
+        st.Messanger = messanger.GetMessanger()
+
+        go st.errorHandler()
+        return st, nil</span>
+}
+
+// Initialize the local station
+func (st *Station) Init() <span class="cov8" title="1">{
+        // get IP addresses
+        _ = st.GetNetwork()
+
+        // set hostname
+        if hn, err := os.Hostname(); err == nil </span><span class="cov8" title="1">{
+                st.Hostname = hn
+        }</span>
+
+        // Update network metrics
+        <span class="cov8" title="1">if st.Metrics != nil </span><span class="cov8" title="1">{
+                ifCount := len(st.Ifaces)
+                ipCount := 0
+                for _, ifc := range st.Ifaces </span><span class="cov8" title="1">{
+                        ipCount += len(ifc.IPAddrs)
+                }</span>
+                <span class="cov8" title="1">st.Metrics.UpdateNetworkMetrics(ifCount, ipCount)</span>
+        }
+
+        // mark last heard now
+        <span class="cov8" title="1">st.mu.Lock()
+        st.LastHeard = time.Now()
+        st.mu.Unlock()</span>
+}
+
+func (st *Station) SaveError(err error) <span class="cov8" title="1">{
+        if err == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov8" title="1">select </span>{
+        case st.errq &lt;- err:<span class="cov8" title="1"></span>
+        default:<span class="cov0" title="0">
+                // channel full, record directly
+                if st.Metrics != nil </span><span class="cov0" title="0">{
+                        st.Metrics.RecordError()
+                }</span>
+        }
+}
+
+// StartTicker will cause the station timer to go off at
+// st.Duration time periods to either perform an announcement
+// or in the case we are a hub we will time the station out after
+// station.Period * 3.
+func (st *Station) StartTicker(duration time.Duration) error <span class="cov8" title="1">{
+        if duration &lt;= 0 </span><span class="cov0" title="0">{
+                duration = st.Duration
+                if duration &lt;= 0 </span><span class="cov0" title="0">{
+                        duration = time.Minute
+                }</span>
+        }
+
+        // Add context support for clean cancellation
+        <span class="cov8" title="1">ctx, cancel := context.WithCancel(context.Background())
+        st.cancel = cancel
+
+        // create ticker
+        st.ticker = time.NewTicker(duration)
+
+        // just to get started
+        go func() </span><span class="cov8" title="1">{
+                for </span><span class="cov8" title="1">{
+                        select </span>{
+                        case &lt;-ctx.Done():<span class="cov8" title="1">
+                                return</span>
+                        case &lt;-st.done:<span class="cov0" title="0">
+                                return</span>
+                        case &lt;-st.ticker.C:<span class="cov8" title="1">
+                                st.SayHello()</span>
+                        }
+                }
+        }()
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (st *Station) SayHello() <span class="cov8" title="1">{
+        // publish a simple hello payload if available
+        if st.Messanger != nil </span><span class="cov8" title="1">{
+                payload := map[string]any{
+                        "type": "hello",
+                        "id":   st.ID,
+                        "ts":   time.Now().UTC(),
+                }
+                if err := st.Messanger.PubData(payload); err != nil </span><span class="cov8" title="1">{
+                        // record the error for metrics / diagnostics
+                        st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
+                }</span>
+        }
+
+        // Record metrics
+        <span class="cov8" title="1">if st.Metrics != nil </span><span class="cov8" title="1">{
+                st.Metrics.RecordAnnouncement()
+        }</span>
+
+        <span class="cov8" title="1">st.mu.Lock()
+        st.LastHeard = time.Now()
+        st.mu.Unlock()</span>
+}
+
+// GetNetwork will set the IP addresses
+func (st *Station) GetNetwork() error <span class="cov8" title="1">{
+        var ifaces []*Iface
+
+        sysIfaces, err := net.Interfaces()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">for _, sysIf := range sysIfaces </span><span class="cov8" title="1">{
+                // skip down interfaces
+                if sysIf.Flags&amp;net.FlagUp == 0 </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                // create iface
+                <span class="cov8" title="1">ifc := &amp;Iface{
+                        Name:    sysIf.Name,
+                        MACAddr: sysIf.HardwareAddr.String(),
+                }
+                addrs, _ := sysIf.Addrs()
+                for _, a := range addrs </span><span class="cov8" title="1">{
+                        var ip net.IP
+                        switch v := a.(type) </span>{
+                        case *net.IPNet:<span class="cov8" title="1">
+                                ip = v.IP</span>
+                        case *net.IPAddr:<span class="cov0" title="0">
+                                ip = v.IP</span>
+                        }
+                        <span class="cov8" title="1">if ip == nil </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov8" title="1">ifc.IPAddrs = append(ifc.IPAddrs, ip)</span>
+                }
+
+                <span class="cov8" title="1">ifaces = append(ifaces, ifc)</span>
+        }
+
+        <span class="cov8" title="1">st.mu.Lock()
+        st.Ifaces = ifaces
+        st.mu.Unlock()
+
+        // update network metrics
+        if st.Metrics != nil </span><span class="cov8" title="1">{
+                ifCount := len(ifaces)
+                ipCount := 0
+                for _, ifc := range ifaces </span><span class="cov8" title="1">{
+                        ipCount += len(ifc.IPAddrs)
+                }</span>
+                <span class="cov8" title="1">st.Metrics.UpdateNetworkMetrics(ifCount, ipCount)</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// Update() will append a new data value to the series
+// of data points.
+func (s *Station) Update(msg *messanger.Msg) <span class="cov8" title="1">{
+        // Record metrics
+        if s.Metrics != nil &amp;&amp; msg != nil </span><span class="cov8" title="1">{
+                var size uint64
+                if msg.Data != nil </span><span class="cov8" title="1">{
+                        size = uint64(len(msg.Data))
+                }</span>
+                <span class="cov8" title="1">s.Metrics.RecordMessageReceived(size)</span>
+        }
+
+        // Update last heard
+        <span class="cov8" title="1">s.mu.Lock()
+        s.LastHeard = time.Now()
+        s.mu.Unlock()</span>
+
+        // TODO: Actually process the message data
+}
+
+// Stop the station from advertising
+func (st *Station) Stop() <span class="cov8" title="1">{
+        // Cancel context if available
+        if st.cancel != nil </span><span class="cov8" title="1">{
+                st.cancel()
+        }</span>
+
+        // Stop ticker
+        <span class="cov8" title="1">if st.ticker != nil </span><span class="cov8" title="1">{
+                st.ticker.Stop()
+        }</span>
+
+        // Close channels and cleanup
+        <span class="cov8" title="1">select </span>{
+        case st.done &lt;- true:<span class="cov8" title="1"></span>
+        default:<span class="cov0" title="0"></span>
+        }
+
+        // Safely close messanger
+        <span class="cov8" title="1">if st.Messanger != nil </span><span class="cov8" title="1">{
+                st.Messanger.Close()
+        }</span>
+}
+
+// AddDevice will do what it says by placing the device with a given
+// name in the stations device manager. This library is basically a
+// key value store, anything supporting the Name Interface:
+// i.e. Name() string.
+//func (s *Station) AddDevice(d device.Name) {
+//        if d == nil {
+//                return
+//        }
+//        name := d.Name()
+
+// store generically
+//        s.devicesMu.Lock()
+//        if s.devices == nil {
+//                s.devices = make(map[string]any)
+//        }
+//        s.devices[name] = d
+//        devCount := len(s.devices)
+//        s.devicesMu.Unlock()
+
+// Update device metrics
+//        if s.Metrics != nil {
+//                s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
+//        }
+// TODO: Track active vs total
+//}
+
+// GetDevice returns the device (anythig supporting the Name (Name()) interface)
+func (s *Station) GetDevice(name string) any <span class="cov0" title="0">{
+        s.devicesMu.RLock()
+        defer s.devicesMu.RUnlock()
+        return s.devices[name]
+}</span>
+
+// Create an endpoint for this device to be queried.
+func (s Station) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        w.Header().Set("Content-Type", "application/json")
+        _ = json.NewEncoder(w).Encode(s)
+}</span>
+
+func (st *Station) IsHealthy() bool <span class="cov8" title="1">{
+        st.mu.RLock()
+        last := st.LastHeard
+        exp := st.Expiration
+        st.mu.RUnlock()
+
+        healthy := true
+        if exp &gt; 0 </span><span class="cov8" title="1">{
+                healthy = time.Since(last) &lt; exp
+        }</span>
+
+        // record health check
+        <span class="cov8" title="1">if st.Metrics != nil </span><span class="cov8" title="1">{
+                st.Metrics.RecordHealthCheck(healthy)
+        }</span>
+        <span class="cov8" title="1">return healthy</span>
+}
+
+// GetMetricsEndpoint provides an HTTP endpoint for metrics
+func (st *Station) GetMetricsEndpoint() http.HandlerFunc <span class="cov0" title="0">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                w.Header().Set("Content-Type", "application/json")
+                m := st.Metrics.GetMetrics()
+                _ = json.NewEncoder(w).Encode(m)
+        }</span>
+}
+
+// errorHandler consumes the error queue and records metrics
+func (st *Station) errorHandler() <span class="cov8" title="1">{
+        for err := range st.errq </span><span class="cov8" title="1">{
+                if err == nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">st.mu.Lock()
+                st.errors = append(st.errors, err)
+                st.mu.Unlock()
+
+                if st.Metrics != nil </span><span class="cov8" title="1">{
+                        st.Metrics.RecordError()
+                }</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file28" style="display: none">package station
+
+import (
+        "encoding/json"
+        "fmt"
+        "log/slog"
+        "net/http"
+        "sync"
+        "time"
+
+        "github.com/rustyeddy/otto/messanger"
+        "github.com/rustyeddy/otto/server"
+)
+
+// StationManager keeps track of all the stations we have seen
+type StationManager struct {
+        Stations map[string]*Station `json:"stations"`
+        Stale    map[string]*Station `json:"stale"`
+        EventQ   chan *StationEvent  `json:"-"`
+
+        ticker *time.Ticker `json:"-"`
+        mu     *sync.Mutex  `json:"-"`
+}
+
+type StationEvent struct {
+        Type      string `json:"type"`
+        Device    string `json:"device"`
+        StationID string `json:"stationid"`
+        Value     string `json:"value"`
+        Timestamp time.Time
+}
+
+var (
+        stations *StationManager
+)
+
+func GetStationManager() *StationManager <span class="cov8" title="1">{
+        if stations == nil </span><span class="cov8" title="1">{
+                stations = NewStationManager()
+        }</span>
+        <span class="cov8" title="1">return stations</span>
+}
+
+func resetStations() <span class="cov8" title="1">{
+        stations = nil
+        stations = NewStationManager()
+}</span>
+
+func NewStationManager() (sm *StationManager) <span class="cov8" title="1">{
+        sm = &amp;StationManager{}
+        sm.Stations = make(map[string]*Station)
+        sm.Stale = make(map[string]*Station)
+        sm.mu = new(sync.Mutex)
+        // Buffer the event channel to avoid blocking producers and to satisfy tests
+        sm.EventQ = make(chan *StationEvent, 100)
+        return sm
+}</span>
+
+func (sm *StationManager) Callback(msg *messanger.Msg) <span class="cov8" title="1">{
+        sm.Update(msg)
+}</span>
+
+func (sm *StationManager) Start() <span class="cov0" title="0">{
+
+        srv := server.GetServer()
+        srv.Register("/api/stations", sm)
+
+        // Start a ticker to clean up stale entries
+        quit := make(chan struct{})
+        sm.ticker = time.NewTicker(10 * time.Second)
+        go func() </span><span class="cov0" title="0">{
+                for </span><span class="cov0" title="0">{
+                        select </span>{
+                        case &lt;-sm.ticker.C:<span class="cov0" title="0">
+                                for id, st := range sm.Stations </span><span class="cov0" title="0">{
+
+                                        // Don't try to timeout the local station
+                                        if st.Local </span><span class="cov0" title="0">{
+                                                continue</span>
+                                        }
+
+                                        // Do not timeout stations with a duration of 0
+                                        <span class="cov0" title="0">if st.Expiration == 0 </span><span class="cov0" title="0">{
+                                                slog.Info("Station %s expiration == 0 do not timeout", "id", id)
+                                                continue</span>
+                                        }
+
+                                        // Timeout a station if we have not heard from it in 3
+                                        // timeframes.
+                                        <span class="cov0" title="0">st.mu.Lock()
+
+                                        expires := st.LastHeard.Add(st.Expiration)
+                                        if expires.Sub(time.Now()) &lt; 0 </span><span class="cov0" title="0">{
+                                                sm.mu.Lock()
+                                                slog.Info("Station has timed out", "station", id)
+                                                sm.Stale[id] = st
+                                                delete(sm.Stations, id)
+                                                sm.mu.Unlock()
+                                        }</span>
+                                        <span class="cov0" title="0">st.mu.Unlock()</span>
+                                }
+
+                        case ev := &lt;-sm.EventQ:<span class="cov0" title="0">
+                                slog.Info("Station Event", "event", ev)
+                                st := sm.Get(ev.StationID)
+                                if st == nil </span><span class="cov0" title="0">{
+                                        slog.Warn("Station Event could not find station", "station", ev.StationID)
+                                        continue</span>
+                                }
+
+                        case &lt;-quit:<span class="cov0" title="0">
+                                sm.ticker.Stop()
+                                return</span>
+                        }
+                }
+        }()
+}
+
+func (sm *StationManager) Get(stid string) *Station <span class="cov8" title="1">{
+        sm.mu.Lock()
+        st, _ := sm.Stations[stid]
+        sm.mu.Unlock()
+        return st
+}</span>
+
+func (sm *StationManager) Add(st string) (station *Station, err error) <span class="cov8" title="1">{
+        if sm.Get(st) != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("Error adding an existing station")
+        }</span>
+        <span class="cov8" title="1">station, err = newStation(st)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">sm.mu.Lock()
+        sm.Stations[st] = station
+        sm.mu.Unlock()
+        return station, nil</span>
+}
+
+func (sm *StationManager) Update(msg *messanger.Msg) (st *Station) <span class="cov8" title="1">{
+
+        var err error
+
+        if !msg.Valid </span><span class="cov8" title="1">{
+                slog.Error("Update with an invalid topic", "topic", msg.Topic)
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">stid := msg.Station()
+        if stid == "" </span><span class="cov0" title="0">{
+                fmt.Printf("Msg path does not include staionId: %q\n", msg.Path)
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">st = sm.Get(stid)
+        if st == nil </span><span class="cov8" title="1">{
+                if st, err = sm.Add(stid); err != nil </span><span class="cov0" title="0">{
+                        fmt.Println("Station Manager failed to create new station: ", stid, err)
+                        return nil
+                }</span>
+        }
+
+        // data := msg.Data
+        <span class="cov8" title="1">st.Update(msg)
+        return st</span>
+}
+
+func (sm *StationManager) Count() int <span class="cov8" title="1">{
+        return len(sm.Stations)
+}</span>
+
+func (sm StationManager) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        w.Header().Set("Content-Type", "application/json")
+        switch r.Method </span>{
+        case "GET":<span class="cov8" title="1">
+                json.NewEncoder(w).Encode(sm)</span>
+
+        case "POST", "PUT":<span class="cov8" title="1">
+                http.Error(w, "Not Yet Supported", 401)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file29" style="display: none">package station
+
+import (
+        "sync"
+        "time"
+)
+
+// StationMetrics holds various performance and operational metrics
+type StationMetrics struct {
+        // Announcement metrics
+        AnnouncementsSent     uint64    `json:"announcements_sent"`
+        AnnouncementsReceived uint64    `json:"announcements_received"`
+        LastAnnouncementSent  time.Time `json:"last_announcement_sent"`
+        LastAnnouncementRecv  time.Time `json:"last_announcement_received"`
+
+        // Message metrics
+        MessagesSent          uint64    `json:"messages_sent"`
+        MessagesReceived      uint64    `json:"messages_received"`
+        MessagesSentBytes     uint64    `json:"messages_sent_bytes"`
+        MessagesReceivedBytes uint64    `json:"messages_received_bytes"`
+        LastMessageSent       time.Time `json:"last_message_sent"`
+        LastMessageReceived   time.Time `json:"last_message_received"`
+
+        // Error metrics
+        ErrorCount uint64    `json:"error_count"`
+        LastError  time.Time `json:"last_error"`
+        ErrorRate  float64   `json:"error_rate"` // errors per minute
+
+        // Device metrics
+        DeviceCount      int    `json:"device_count"`
+        ActiveDevices    int    `json:"active_devices"`
+        DeviceErrorCount uint64 `json:"device_error_count"`
+
+        // Network metrics
+        NetworkInterfaceCount int `json:"network_interface_count"`
+        IPAddressCount        int `json:"ip_address_count"`
+
+        // Timing metrics
+        StartTime       time.Time     `json:"start_time"`
+        Uptime          time.Duration `json:"uptime"`
+        AvgResponseTime time.Duration `json:"avg_response_time"`
+        MaxResponseTime time.Duration `json:"max_response_time"`
+        MinResponseTime time.Duration `json:"min_response_time"`
+
+        // Health metrics
+        HealthCheckCount uint64  `json:"health_check_count"`
+        HealthyChecks    uint64  `json:"healthy_checks"`
+        UnhealthyChecks  uint64  `json:"unhealthy_checks"`
+        HealthScore      float64 `json:"health_score"` // percentage
+
+        // Resource metrics
+        MemoryUsage uint64  `json:"memory_usage_bytes"`
+        CPUUsage    float64 `json:"cpu_usage_percent"`
+        DiskUsage   uint64  `json:"disk_usage_bytes"`
+
+        mu sync.RWMutex `json:"-"`
+}
+
+// NewStationMetrics creates a new metrics instance
+func NewStationMetrics() *StationMetrics <span class="cov8" title="1">{
+        return &amp;StationMetrics{
+                StartTime:       time.Now(),
+                MinResponseTime: time.Hour, // Initialize to high value
+        }
+}</span>
+
+// UpdateMetrics updates the station's uptime and other time-based metrics
+func (m *StationMetrics) UpdateMetrics() <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.Uptime = time.Since(m.StartTime)
+
+        // Calculate error rate (errors per minute)
+        if m.Uptime &gt; 0 </span><span class="cov8" title="1">{
+                minutes := m.Uptime.Minutes()
+                if minutes &gt; 0 </span><span class="cov8" title="1">{
+                        m.ErrorRate = float64(m.ErrorCount) / minutes
+                }</span>
+        }
+
+        // Calculate health score
+        <span class="cov8" title="1">if m.HealthCheckCount &gt; 0 </span><span class="cov8" title="1">{
+                m.HealthScore = (float64(m.HealthyChecks) / float64(m.HealthCheckCount)) * 100.0
+        }</span>
+}
+
+// RecordAnnouncement records an outgoing announcement
+func (m *StationMetrics) RecordAnnouncement() <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.AnnouncementsSent++
+        m.LastAnnouncementSent = time.Now()
+}</span>
+
+// RecordAnnouncementReceived records an incoming announcement
+func (m *StationMetrics) RecordAnnouncementReceived() <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.AnnouncementsReceived++
+        m.LastAnnouncementRecv = time.Now()
+}</span>
+
+// RecordMessageSent records an outgoing message
+func (m *StationMetrics) RecordMessageSent(size uint64) <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.MessagesSent++
+        m.MessagesSentBytes += size
+        m.LastMessageSent = time.Now()
+}</span>
+
+// RecordMessageReceived records an incoming message
+func (m *StationMetrics) RecordMessageReceived(size uint64) <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.MessagesReceived++
+        m.MessagesReceivedBytes += size
+        m.LastMessageReceived = time.Now()
+}</span>
+
+// RecordError records an error occurrence
+func (m *StationMetrics) RecordError() <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.ErrorCount++
+        m.LastError = time.Now()
+}</span>
+
+// RecordResponseTime records a response time measurement
+func (m *StationMetrics) RecordResponseTime(duration time.Duration) <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        // Update min/max response times
+        if duration &lt; m.MinResponseTime </span><span class="cov8" title="1">{
+                m.MinResponseTime = duration
+        }</span>
+        <span class="cov8" title="1">if duration &gt; m.MaxResponseTime </span><span class="cov8" title="1">{
+                m.MaxResponseTime = duration
+        }</span>
+
+        // Calculate running average (exponential moving average for simplicity)
+        <span class="cov8" title="1">if m.AvgResponseTime == 0 </span><span class="cov8" title="1">{
+                m.AvgResponseTime = duration
+        }</span> else<span class="cov0" title="0"> {
+                m.AvgResponseTime = (m.AvgResponseTime + duration) / 2
+        }</span>
+}
+
+// RecordHealthCheck records a health check result
+func (m *StationMetrics) RecordHealthCheck(healthy bool) <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.HealthCheckCount++
+        if healthy </span><span class="cov8" title="1">{
+                m.HealthyChecks++
+        }</span> else<span class="cov8" title="1"> {
+                m.UnhealthyChecks++
+        }</span>
+}
+
+// UpdateDeviceMetrics updates device-related metrics
+func (m *StationMetrics) UpdateDeviceMetrics(deviceCount, activeDevices int, deviceErrors uint64) <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.DeviceCount = deviceCount
+        m.ActiveDevices = activeDevices
+        m.DeviceErrorCount = deviceErrors
+}</span>
+
+// UpdateNetworkMetrics updates network-related metrics
+func (m *StationMetrics) UpdateNetworkMetrics(interfaceCount, ipCount int) <span class="cov8" title="1">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+
+        m.NetworkInterfaceCount = interfaceCount
+        m.IPAddressCount = ipCount
+}</span>
+
+// GetMetrics returns a copy of current metrics
+func (m *StationMetrics) GetMetrics() StationMetrics <span class="cov8" title="1">{
+        // Update dynamic metrics before returning
+        m.UpdateMetrics()
+
+        m.mu.RLock()
+        defer m.mu.RUnlock()
+
+        // return a copy
+        return StationMetrics{
+                AnnouncementsSent:     m.AnnouncementsSent,
+                AnnouncementsReceived: m.AnnouncementsReceived,
+                LastAnnouncementSent:  m.LastAnnouncementSent,
+                LastAnnouncementRecv:  m.LastAnnouncementRecv,
+                MessagesSent:          m.MessagesSent,
+                MessagesReceived:      m.MessagesReceived,
+                MessagesSentBytes:     m.MessagesSentBytes,
+                MessagesReceivedBytes: m.MessagesReceivedBytes,
+                LastMessageSent:       m.LastMessageSent,
+                LastMessageReceived:   m.LastMessageReceived,
+                ErrorCount:            m.ErrorCount,
+                LastError:             m.LastError,
+                ErrorRate:             m.ErrorRate,
+                DeviceCount:           m.DeviceCount,
+                ActiveDevices:         m.ActiveDevices,
+                DeviceErrorCount:      m.DeviceErrorCount,
+                NetworkInterfaceCount: m.NetworkInterfaceCount,
+                IPAddressCount:        m.IPAddressCount,
+                StartTime:             m.StartTime,
+                Uptime:                m.Uptime,
+                AvgResponseTime:       m.AvgResponseTime,
+                MaxResponseTime:       m.MaxResponseTime,
+                MinResponseTime:       m.MinResponseTime,
+                HealthCheckCount:      m.HealthCheckCount,
+                HealthyChecks:         m.HealthyChecks,
+                UnhealthyChecks:       m.UnhealthyChecks,
+                HealthScore:           m.HealthScore,
+                MemoryUsage:           m.MemoryUsage,
+                CPUUsage:              m.CPUUsage,
+                DiskUsage:             m.DiskUsage,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file30" style="display: none">package utils
+
+import (
+        "fmt"
+        "log/slog"
+        "os"
+)
+
+var (
+        logfile string = "otto.log"
+)
+
+func InitLogger(lstr string, lf string) <span class="cov8" title="1">{
+        if lf == "" </span><span class="cov8" title="1">{
+                lf = logfile
+        }</span>
+        <span class="cov8" title="1">level := SetLogLevel(lstr)
+        f, err := os.OpenFile(logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+        if err != nil </span><span class="cov8" title="1">{
+                slog.Error("error opening log ", "err", err)
+        }</span>
+        <span class="cov8" title="1">l := slog.New(slog.NewTextHandler(f, &amp;slog.HandlerOptions{Level: level}))
+        slog.SetDefault(l)</span>
+}
+
+func SetLogLevel(loglevel string) slog.Level <span class="cov8" title="1">{
+        var level slog.Level
+
+        switch loglevel </span>{
+        case "debug":<span class="cov8" title="1">
+                level = slog.LevelDebug</span>
+
+        case "info":<span class="cov8" title="1">
+                level = slog.LevelInfo</span>
+
+        case "warn":<span class="cov8" title="1">
+                level = slog.LevelWarn</span>
+
+        case "error":<span class="cov8" title="1">
+                level = slog.LevelError</span>
+
+        default:<span class="cov8" title="1">
+                fmt.Printf("unknown loglevel %s sticking with warn", loglevel)</span>
+        }
+        <span class="cov8" title="1">slog.SetLogLoggerLevel(level)
+        return level</span>
+}
+</pre>
+		
+		<pre class="file" id="file31" style="display: none">package utils
+
+import (
+        "fmt"
+        "math/rand"
+        "net/http"
+)
+
+// PeriodicRandomData will collected a new random piece of data
+// every period and transmit it to the given mqtt channel
+type Rando struct {
+        F float64
+}
+
+func NewRando() (r *Rando) <span class="cov8" title="1">{
+        r = &amp;Rando{
+                F: 0.0,
+        }
+        return r
+}</span>
+
+func (p Rando) Float64() float64 <span class="cov8" title="1">{
+        p.F = rand.Float64()
+        return p.F
+}</span>
+
+func (p Rando) String() interface{} <span class="cov8" title="1">{
+        p.F = rand.Float64()
+        s := fmt.Sprintf("%f", p.F)
+        return s
+}</span>
+
+func (p Rando) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        fmt.Fprintf(w, "%f", p.Float64())
+}</span>
+</pre>
+		
+		<pre class="file" id="file32" style="display: none">package utils
+
+var (
+        stationName string
+)
+
+func SetStationName(name string) <span class="cov8" title="1">{
+        stationName = name
+}</span>
+
+func StationName() string <span class="cov8" title="1">{
+        return stationName
+}</span>
+</pre>
+		
+		<pre class="file" id="file33" style="display: none">package utils
+
+import "runtime"
+
+type Stats struct {
+        Goroutines int
+        CPUs int
+        runtime.MemStats
+        GoVersion string
+}
+
+func GetStats() *Stats <span class="cov8" title="1">{
+        var m runtime.MemStats
+        runtime.ReadMemStats(&amp;m)
+
+        s := &amp;Stats{
+                Goroutines: runtime.NumGoroutine(),
+                CPUs: runtime.NumCPU(),
+                MemStats: m,
+                GoVersion: runtime.Version(),
+        }
+
+        return s
+}</span>
+</pre>
+		
+		<pre class="file" id="file34" style="display: none">package utils
+
+import "time"
+
+// Ticker is a wrapper around time.Ticker it is given a name, it hold
+// the duration and kept in a map indexed by name such that it is easy
+// to lookup to shutdown or reset
+type Ticker struct {
+        Name string
+        *time.Ticker
+        Func func(t time.Time)
+
+        lastTick time.Time
+        ticks    int
+}
+
+var (
+        // Start time is the time otto started
+        StartTime time.Time
+
+        // the map with all our tickers
+        tickers = make(map[string]*Ticker)
+)
+
+func init() <span class="cov8" title="1">{
+        StartTime = time.Now()
+}</span>
+
+// Timestamp returns the time.Duration since the program was started,
+// useful to stamping communication messages.
+func Timestamp() time.Duration <span class="cov8" title="1">{
+        return time.Since(StartTime)
+}</span>
+
+// NewTicker creates a time.Ticker with the name n that will fire
+// every d time.Duration. The function f will be called every time
+// ticker goes off.  The ticker can be stoped, restarted and reset
+// with a different duration
+func NewTicker(n string, d time.Duration, f func(t time.Time)) *Ticker <span class="cov8" title="1">{
+        t := &amp;Ticker{
+                Name:   n,
+                Ticker: time.NewTicker(d),
+                Func:   f,
+        }
+
+        tickers[n] = t
+        go func() </span><span class="cov8" title="1">{
+                for tick := range t.Ticker.C </span><span class="cov8" title="1">{
+                        t.lastTick = time.Now()
+                        t.ticks++
+                        f(tick)
+                }</span>
+        }()
+        <span class="cov8" title="1">return t</span>
+}
+
+// GetTickers will return the map of all ticker values.
+func GetTickers() map[string]*Ticker <span class="cov8" title="1">{
+        return tickers
+}</span>
+
+// GetTicker will return the named ticker or nil if it does not exist
+func GetTicker(n string) *Ticker <span class="cov8" title="1">{
+        t, _ := tickers[n]
+        return t
+}</span>
 </pre>
 		
 		</div>
