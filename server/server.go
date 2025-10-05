@@ -4,10 +4,12 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"path/filepath"
+	"sync"
 
 	"github.com/rustyeddy/otto/messanger"
 )
@@ -23,7 +25,7 @@ type Server struct {
 	*http.ServeMux     `json:"-"`
 	*template.Template `json:"-"`
 
-	EndPoints map[string]http.Handler `json:"routes"`
+	EndPoints sync.Map `json:"routes"`
 }
 
 var (
@@ -50,15 +52,17 @@ func NewServer() *Server {
 
 // Register to handle HTTP requests for particular paths in the
 // URL or MQTT channel.
-func (s *Server) Register(p string, h http.Handler) {
+func (s *Server) Register(p string, h http.Handler) error {
+
+	if p == "" || h == nil {
+		return errors.New("Server.Register can not have null path or handler")
+	}
 
 	// get this to log to a file (or syslog) by default
-	slog.Info("HTTP REST API Registered: ", "path", p)
-	if s.EndPoints == nil {
-		s.EndPoints = make(map[string]http.Handler)
-	}
-	s.EndPoints[p] = h
+	//	slog.Info("HTTP REST API Registered: ", "path", p)
+	s.EndPoints.Store(p, h)
 	s.Handle(p, h)
+	return nil
 }
 
 // Start the HTTP server after registering REST API callbacks
@@ -78,6 +82,15 @@ func (s *Server) Start(done chan any) {
 func (s *Server) Appdir(path, file string) {
 	slog.Info("appdir", "path", path)
 	s.Register(path, http.FileServer(http.Dir(file)))
+}
+
+func (s *Server) EndPointCount() int {
+	count := 0
+	s.EndPoints.Range(func(k, v any) bool {
+		count++
+		return true
+	})
+	return count
 }
 
 func (s *Server) EmbedTempl(path string, fsys embed.FS, data any) {
@@ -115,9 +128,10 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ep := struct {
 		Routes []string
 	}{}
-	for e, _ := range s.EndPoints {
-		ep.Routes = append(ep.Routes, e)
-	}
+	s.EndPoints.Range(func(k, v any) bool {
+		ep.Routes = append(ep.Routes, k.(string))
+		return true
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(ep)

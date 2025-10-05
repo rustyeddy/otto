@@ -48,14 +48,8 @@ func TestNewStation(t *testing.T) {
 			}
 
 			require.NoError(t, err, "Unexpected error: ", err)
-
-			if station.ID != tt.id {
-				t.Errorf("Expected ID %s, got %s", tt.id, station.ID)
-			}
-
-			if station.Metrics == nil {
-				t.Error("Metrics should be initialized")
-			}
+			assert.Equal(t, tt.id, station.ID)
+			assert.NotNil(t, station.Metrics)
 		})
 	}
 }

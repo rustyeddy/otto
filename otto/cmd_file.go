@@ -37,5 +37,4 @@ func fileRun(cmd *cobra.Command, args []string) {
 	if err := scanner.Err(); err != nil {
 		slog.Error(err.Error())
 	}
-	return
 }

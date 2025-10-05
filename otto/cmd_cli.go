@@ -55,12 +55,8 @@ func cliRun(cmd *cobra.Command, args []string) {
 	running := true
 	for running {
 		running = cliLine()
-		// if !running && otto.Done() != nil {
-		// 	otto.Done() <- true
-		// }
 	}
 	fmt.Println("Exiting, cleanup")
-	// otto.Cleanup()
 	fmt.Println("Good Bye!")
 }
 
@@ -87,7 +83,8 @@ func cliLine() bool {
 	return RunLine(line)
 }
 
-func RunLine(line string) bool {
+var RunLine = func(line string) bool {
+	// func RunLine(line string) bool {
 	line = strings.TrimSpace(line)
 	if line == "exit" || line == "quit" {
 		return false

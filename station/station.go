@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/rustyeddy/otto/messanger"
-	"github.com/rustyeddy/otto/utils"
 )
 
 // Station is the primary structure that holds an array of
@@ -77,13 +76,13 @@ func newStation(id string) (*Station, error) {
 	}
 
 	// Use the workspace-wide topic name from utils for station topics
-	topic := utils.StationName()
-	if topic == "" {
-		// fallback to previous pattern if utils not configured
-		topic = "otto/stations"
-	}
-	messanger.NewMessanger("local", topic+"/"+id)
-	st.Messanger = messanger.GetMessanger()
+	// topic := utils.StationName()
+	// if topic == "" {
+	// 	// fallback to previous pattern if utils not configured
+	// 	topic = "otto/stations"
+	// }
+	// messanger.NewMessanger("local", topic+"/"+id)
+	// st.Messanger = messanger.GetMessanger()
 
 	go st.errorHandler()
 	return st, nil
