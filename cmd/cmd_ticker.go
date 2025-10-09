@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"fmt"
@@ -16,11 +16,11 @@ var (
 	}
 )
 
-func init() {
-	rootCmd.AddCommand(tickerCmd)
-}
-
 func tickerRun(cmd *cobra.Command, args []string) {
-	t := utils.GetTickers()
-	fmt.Printf("%+v\n", t)
+	tickers := utils.GetTickers()
+	tstr := ""
+	for n, _ := range tickers {
+		tstr += " " + n
+	}
+	fmt.Fprintf(cmdOutput, "%s\n", tstr)
 }

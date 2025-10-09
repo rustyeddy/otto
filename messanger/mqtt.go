@@ -49,7 +49,7 @@ func SetMQTTClient(c gomqtt.Client) *MQTT {
 
 // GetMQTT returns the singleton instance of the MQTT client, the
 // first time it is called it will initialize the client if needed.
-func GetMQTT() *MQTT {
+var GetMQTT = func() *MQTT {
 	if mqtt == nil {
 		mqtt = &MQTT{
 			id:     "default",
@@ -168,5 +168,7 @@ func (m *MQTT) Publish(topic string, value any) error {
 // Close will disconnect from the MQTT broker and close the client
 // connection.
 func (m *MQTT) Close() {
-	m.Client.Disconnect(1000)
+	if m.Client != nil {
+		m.Client.Disconnect(1000)
+	}
 }

@@ -81,15 +81,15 @@
 				
 				<option value="file12">github.com/rustyeddy/otto/otto/cmd_file.go (100.0%)</option>
 				
-				<option value="file13">github.com/rustyeddy/otto/otto/cmd_msg.go (84.6%)</option>
+				<option value="file13">github.com/rustyeddy/otto/otto/cmd_msg.go (100.0%)</option>
 				
-				<option value="file14">github.com/rustyeddy/otto/otto/cmd_msg_connect.go (50.0%)</option>
+				<option value="file14">github.com/rustyeddy/otto/otto/cmd_msg_connect.go (100.0%)</option>
 				
-				<option value="file15">github.com/rustyeddy/otto/otto/cmd_msg_pub.go (33.3%)</option>
+				<option value="file15">github.com/rustyeddy/otto/otto/cmd_msg_pub.go (100.0%)</option>
 				
-				<option value="file16">github.com/rustyeddy/otto/otto/cmd_msg_sub.go (11.1%)</option>
+				<option value="file16">github.com/rustyeddy/otto/otto/cmd_msg_sub.go (100.0%)</option>
 				
-				<option value="file17">github.com/rustyeddy/otto/otto/cmd_root.go (33.3%)</option>
+				<option value="file17">github.com/rustyeddy/otto/otto/cmd_root.go (50.0%)</option>
 				
 				<option value="file18">github.com/rustyeddy/otto/otto/cmd_serve.go (100.0%)</option>
 				
@@ -919,7 +919,7 @@ func SetMQTTClient(c gomqtt.Client) *MQTT <span class="cov8" title="1">{
 
 // GetMQTT returns the singleton instance of the MQTT client, the
 // first time it is called it will initialize the client if needed.
-func GetMQTT() *MQTT <span class="cov8" title="1">{
+var GetMQTT = func() *MQTT <span class="cov8" title="1">{
         if mqtt == nil </span><span class="cov8" title="1">{
                 mqtt = &amp;MQTT{
                         id:     "default",
@@ -1169,6 +1169,9 @@ type MockClient struct {
         // Callbacks
         onConnectHandler      gomqtt.OnConnectHandler
         connectionLostHandler gomqtt.ConnectionLostHandler
+
+        LastTopic   string
+        LastMessage string
 }
 
 // NewMockClient creates a new mock MQTT client
@@ -1231,7 +1234,6 @@ func (m *MockClient) Publish(topic string, qos byte, retained bool, payload inte
                 Retained: retained,
         }
         m.publications = append(m.publications, pub)
-
         return NewMockToken(m.publishErr)
 }</span>
 
@@ -2141,42 +2143,42 @@ import (
         "github.com/spf13/cobra"
 )
 
-type mqttConfiguration struct {
+type msgConfiguration struct {
         Broker  string
         Enabled bool
 }
 
 var (
-        mqttConfig mqttConfiguration
+        msgConfig msgConfiguration
 
-        // mqttCmd represents the mqtt command
-        mqttCmd = &amp;cobra.Command{
-                Use:   "mqtt",
-                Short: "Configure and interact with MQTT broker",
-                Long:  `This command can be used to interact and diagnose an MQTT broker`,
-                Run:   mqttRun,
+        // msgCmd represents the msg command
+        msgCmd = &amp;cobra.Command{
+                Use:   "msg",
+                Short: "Configure and interact with MSG broker",
+                Long:  `This command can be used to interact and diagnose an MSG broker`,
+                Run:   msgRun,
         }
 
         cmdWriter io.Writer = os.Stdout
 )
 
 func init() <span class="cov8" title="1">{
-        rootCmd.AddCommand(mqttCmd)
-        mqttCmd.PersistentFlags().StringVar(&amp;mqttConfig.Broker, "broker", "localhost", "Set the MQTT Broker")
+        rootCmd.AddCommand(msgCmd)
+        msgCmd.PersistentFlags().StringVar(&amp;msgConfig.Broker, "broker", "localhost", "Set the MSG Broker")
         cmdWriter = io.Discard
 }</span>
 
-func mqttRun(cmd *cobra.Command, args []string) <span class="cov8" title="1">{
+func msgRun(cmd *cobra.Command, args []string) <span class="cov8" title="1">{
         m := messanger.GetMQTT()
 
-        // If the broker config changes and mqtt is connected, disconnect
+        // If the broker config changes and msg is connected, disconnect
         // and reconnect to new broker
-        if mqttConfig.Broker != m.Broker </span><span class="cov0" title="0">{
-                m.Broker = mqttConfig.Broker
+        if msgConfig.Broker != m.Broker </span><span class="cov8" title="1">{
+                m.Broker = msgConfig.Broker
         }</span>
 
         <span class="cov8" title="1">connected := false
-        if m.Client != nil </span><span class="cov0" title="0">{
+        if m.Client != nil </span><span class="cov8" title="1">{
                 connected = m.IsConnected()
         }</span>
 
@@ -2198,18 +2200,18 @@ import (
 )
 
 // brokerCmd represents the broker command
-var mqttConnectCmd = &amp;cobra.Command{
+var msgConnectCmd = &amp;cobra.Command{
         Use:   "connect",
-        Short: "Connect to the mqtt broker",
-        Long:  `Connect to the MQTT broker`,
-        Run:   runMQTTConnect,
+        Short: "Connect to the msg broker",
+        Long:  `Connect to the msg broker`,
+        Run:   runMsgConnect,
 }
 
 func init() <span class="cov8" title="1">{
-        mqttCmd.AddCommand(mqttConnectCmd)
+        msgCmd.AddCommand(msgConnectCmd)
 }</span>
 
-func runMQTTConnect(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+func runMsgConnect(cmd *cobra.Command, args []string) <span class="cov8" title="1">{
         messanger.GetMQTT()
 }</span>
 </pre>
@@ -2225,18 +2227,18 @@ import (
 )
 
 // brokerCmd represents the broker command
-var mqttPubCmd = &amp;cobra.Command{
+var msgPubCmd = &amp;cobra.Command{
         Use:   "pub",
-        Short: "Publish to the mqtt topic",
-        Long:  `Publish to mqtt tocpic`,
-        Run:   runMQTTPub,
+        Short: "Publish to the msg topic",
+        Long:  `Publish to msg tocpic`,
+        Run:   runMsgPub,
 }
 
 func init() <span class="cov8" title="1">{
-        mqttCmd.AddCommand(mqttPubCmd)
+        msgCmd.AddCommand(msgPubCmd)
 }</span>
 
-func runMQTTPub(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+func runMsgPub(cmd *cobra.Command, args []string) <span class="cov8" title="1">{
         m := messanger.GetMQTT()
         m.Publish(args[0], args[1])
 }</span>
@@ -2255,28 +2257,24 @@ import (
 )
 
 // brokerCmd represents the broker command
-var mqttSubCmd = &amp;cobra.Command{
+var msgSubCmd = &amp;cobra.Command{
         Use:   "sub",
-        Short: "Subscribe to the mqtt topic",
-        Long:  `Subscribe to mqtt tocpic`,
-        Run:   runMQTTSub,
+        Short: "Subscribe to the msg topic",
+        Long:  `Subscribe to msg tocpic`,
+        Run:   runMSGSub,
 }
 
 func init() <span class="cov8" title="1">{
-        mqttCmd.AddCommand(mqttSubCmd)
+        msgCmd.AddCommand(msgSubCmd)
 }</span>
 
-func runMQTTSub(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+func runMSGSub(cmd *cobra.Command, args []string) <span class="cov8" title="1">{
         m := messanger.GetMQTT()
-        if m.Client == nil || !m.IsConnected() </span><span class="cov0" title="0">{
-                err := m.Connect()
-                if err != nil </span><span class="cov0" title="0">{
-                        fmt.Printf("Failed to connect to mqtt broker: %s: %s\n", m.Broker, err)
-                        return
-                }</span>
-        }
+        if m.Client == nil || !m.IsConnected() </span><span class="cov8" title="1">{
+                fmt.Printf("Warning MQTT is not connected to mqtt broker: %s\n", m.Broker)
+        }</span>
 
-        <span class="cov0" title="0">p := &amp;messanger.MsgPrinter{}
+        <span class="cov8" title="1">p := &amp;messanger.MsgPrinter{}
         m.Subscribe(args[0], p.MsgHandler)</span>
 }
 </pre>
@@ -2305,7 +2303,7 @@ func init() <span class="cov8" title="1">{
         rootCmd.PersistentFlags().StringVar(&amp;appdir, "appdir", "embed", "root of the web app")
 }</span>
 
-func GetRootCmd() *cobra.Command <span class="cov0" title="0">{
+func GetRootCmd() *cobra.Command <span class="cov8" title="1">{
         return rootCmd
 }</span>
 
@@ -2869,9 +2867,9 @@ func (st *Station) StartTicker(duration time.Duration) error <span class="cov8" 
         go func() </span><span class="cov8" title="1">{
                 for </span><span class="cov8" title="1">{
                         select </span>{
-                        case &lt;-ctx.Done():<span class="cov0" title="0">
+                        case &lt;-ctx.Done():<span class="cov8" title="1">
                                 return</span>
-                        case &lt;-st.done:<span class="cov8" title="1">
+                        case &lt;-st.done:<span class="cov0" title="0">
                                 return</span>
                         case &lt;-st.ticker.C:<span class="cov8" title="1">
                                 st.SayHello()</span>

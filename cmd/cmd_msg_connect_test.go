@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ func TestRunMQTTConnect(t *testing.T) {
 	args := []string{}
 
 	// Call the function
-	runMQTTConnect(cmd, args)
+	runMsgConnect(cmd, args)
 
 	// Since runMQTTConnect calls messanger.GetMQTT(), you would typically
 	// mock messanger.GetMQTT() and verify it was called. However, without

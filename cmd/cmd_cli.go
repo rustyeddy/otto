@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"fmt"
@@ -19,10 +19,6 @@ var cliCmd = &cobra.Command{
 var (
 	rl *readline.Instance
 )
-
-func init() {
-	rootCmd.AddCommand(cliCmd)
-}
 
 func init_readline() {
 	var completer = readline.NewPrefixCompleter()
@@ -56,8 +52,8 @@ func cliRun(cmd *cobra.Command, args []string) {
 	for running {
 		running = cliLine()
 	}
-	fmt.Println("Exiting, cleanup")
-	fmt.Println("Good Bye!")
+	fmt.Fprintln(cmdOutput, "Exiting, cleanup")
+	fmt.Fprintln(cmdOutput, "Good Bye!")
 }
 
 func pcFromCommands(parent readline.PrefixCompleterInterface, c *cobra.Command) {
@@ -97,7 +93,7 @@ var RunLine = func(line string) bool {
 	args := strings.Split(line, " ")
 	cmd, args, err := rootCmd.Find(args)
 	if err != nil {
-		fmt.Printf("Error running cmd %q: %s\n", line, err)
+		fmt.Fprintf(cmdOutput, "Error running cmd %q: %s\n", line, err)
 	}
 
 	cmd.ParseFlags(args)

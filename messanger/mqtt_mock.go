@@ -125,6 +125,9 @@ type MockClient struct {
 	// Callbacks
 	onConnectHandler      gomqtt.OnConnectHandler
 	connectionLostHandler gomqtt.ConnectionLostHandler
+
+	LastTopic   string
+	LastMessage string
 }
 
 // NewMockClient creates a new mock MQTT client
@@ -187,7 +190,6 @@ func (m *MockClient) Publish(topic string, qos byte, retained bool, payload inte
 		Retained: retained,
 	}
 	m.publications = append(m.publications, pub)
-
 	return NewMockToken(m.publishErr)
 }
 

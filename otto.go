@@ -223,7 +223,7 @@ func (o *OttO) Start() error {
 }
 
 func (o *OttO) Stop() {
-	<-o.done
+	o.done <- true
 	slog.Info("Done, cleaning up()")
 
 	if err := server.GetServer().Close(); err != nil {

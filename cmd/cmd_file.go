@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"bufio"
@@ -14,10 +14,6 @@ var fileCmd = &cobra.Command{
 	Short: "read otto commands from a file",
 	Long:  `Run otto with the commands in the file`,
 	Run:   fileRun,
-}
-
-func init() {
-	rootCmd.AddCommand(fileCmd)
 }
 
 func fileRun(cmd *cobra.Command, args []string) {

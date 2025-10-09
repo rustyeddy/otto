@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"github.com/spf13/cobra"
@@ -16,7 +16,6 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
 	serveCmd.Flags().BoolVar(&foreground, "foreground", false, "Run the server command in the foreground")
 }
 

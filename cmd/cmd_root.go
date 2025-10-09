@@ -1,13 +1,16 @@
-package otto
+package cmd
 
 import (
+	"io"
 	"log/slog"
+	"os"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	appdir string
+	appdir    string
+	cmdOutput io.Writer
 )
 
 var rootCmd = &cobra.Command{
@@ -19,7 +22,23 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	cmdOutput = os.Stdout
 	rootCmd.PersistentFlags().StringVar(&appdir, "appdir", "embed", "root of the web app")
+	rootCmd.SetOut(cmdOutput)
+
+	rootCmd.AddCommand(cliCmd)
+	rootCmd.AddCommand(fileCmd)
+
+	rootCmd.AddCommand(msgCmd)
+	msgCmd.AddCommand(msgConnectCmd)
+	msgCmd.AddCommand(msgPubCmd)
+	msgCmd.AddCommand(msgSubCmd)
+
+	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(stationCmd)
+	rootCmd.AddCommand(statsCmd)
+	rootCmd.AddCommand(tickerCmd)
+	rootCmd.AddCommand(versionCmd)
 }
 
 func GetRootCmd() *cobra.Command {

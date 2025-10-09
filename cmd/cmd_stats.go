@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"fmt"
@@ -14,11 +14,7 @@ var statsCmd = &cobra.Command{
 	Run:   statsRun,
 }
 
-func init() {
-	rootCmd.AddCommand(statsCmd)
-}
-
 func statsRun(cmd *cobra.Command, args []string) {
 	stats := utils.GetStats()
-	fmt.Printf("Stats: %+v\n", stats)
+	fmt.Fprintf(cmdOutput, "Stats: %+v\n", stats)
 }

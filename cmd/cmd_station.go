@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"fmt"
@@ -7,10 +7,6 @@ import (
 	"github.com/rustyeddy/otto/station"
 	"github.com/spf13/cobra"
 )
-
-func init() {
-	rootCmd.AddCommand(stationCmd)
-}
 
 var stationCmd = &cobra.Command{
 	Use:   "station",
@@ -21,8 +17,12 @@ var stationCmd = &cobra.Command{
 
 func stationRun(cmd *cobra.Command, args []string) {
 	stations := station.GetStationManager()
+	if stations == nil || stations.Count() == 0 {
+		return
+	}
+
 	for _, st := range stations.Stations {
-		fmt.Printf("station: %s: %s/%v\n",
+		fmt.Fprintf(cmdOutput, "station: %s: %s/%v\n",
 			st.ID, st.LastHeard.Format(time.RFC3339), st.Expiration)
 	}
 }

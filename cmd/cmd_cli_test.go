@@ -1,4 +1,4 @@
-package otto
+package cmd
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ var testCmd = &cobra.Command{
 	Use:   "test",
 	Short: "Test command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("test command executed")
+		fmt.Fprintln(cmdOutput, "test command executed")
 	},
 }
 
@@ -25,7 +25,7 @@ var testSubCmd = &cobra.Command{
 	Use:   "sub",
 	Short: "Test subcommand",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("test sub command executed")
+		fmt.Fprintln(cmdOutput, "test sub command executed")
 	},
 }
 
@@ -163,7 +163,8 @@ func TestRunLine(t *testing.T) {
 
 		// Capture output
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmdOutput = w
+		testCmd.SetOut(w)
 
 		result := RunLine("test")
 
@@ -171,7 +172,9 @@ func TestRunLine(t *testing.T) {
 		os.Stdout = originalStdout
 
 		output := make([]byte, 1024)
-		n, _ := r.Read(output)
+		n, err := r.Read(output)
+		assert.NoError(t, err)
+		assert.Less(t, 0, n)
 		r.Close()
 
 		assert.True(t, result, "RunLine should return true for valid command")
@@ -182,7 +185,7 @@ func TestRunLine(t *testing.T) {
 		// Capture stderr for error message
 		r, w, _ := os.Pipe()
 		originalStderr := os.Stderr
-		os.Stderr = w
+		cmdOutput = w
 
 		result := RunLine("nonexistent-command")
 
@@ -194,7 +197,7 @@ func TestRunLine(t *testing.T) {
 		r.Close()
 
 		assert.True(t, result, "RunLine should return true even for invalid commands")
-		assert.Contains(t, string(output), "Usage", "Usage should be displayed")
+		assert.Contains(t, string(output), "Error running cmd", "Usage should be displayed")
 
 		// Note: Error handling might write to stdout instead of stderr
 	})
@@ -204,7 +207,7 @@ func TestRunLine(t *testing.T) {
 		argTestCmd := &cobra.Command{
 			Use: "argtest",
 			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Printf("argtest executed with %d args\n", len(args))
+				fmt.Fprintf(cmdOutput, "argtest executed with %d args\n", len(args))
 			},
 		}
 		rootCmd.AddCommand(argTestCmd)
@@ -212,7 +215,7 @@ func TestRunLine(t *testing.T) {
 
 		// Capture output
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmdOutput = w
 
 		result := RunLine("argtest arg1 arg2")
 
@@ -231,7 +234,7 @@ func TestRunLine(t *testing.T) {
 		flagTestCmd := &cobra.Command{
 			Use: "flagtest",
 			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println("flagtest executed")
+				fmt.Fprintln(cmdOutput, "flagtest executed")
 			},
 		}
 		flagTestCmd.Flags().String("flag", "", "test flag")
