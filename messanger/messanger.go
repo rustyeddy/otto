@@ -103,7 +103,7 @@ func GetMessanger() Messanger {
 // MessangerBase
 type MessangerBase struct {
 	id    string
-	topic []string
+	topic string
 	subs  map[string]MsgHandler
 	error
 
@@ -123,14 +123,11 @@ func (mb *MessangerBase) ID() string {
 }
 
 func (mb *MessangerBase) Topic() string {
-	if len(mb.topic) < 1 {
-		return ""
-	}
-	return mb.topic[0]
+	return mb.topic
 }
 
 func (mb *MessangerBase) SetTopic(topic string) {
-	mb.topic = append(mb.topic, topic)
+	mb.topic = topic
 }
 
 func (mb *MessangerBase) Error() error {
@@ -167,11 +164,9 @@ func (mb *MessangerBase) PubMsg(msg *Msg) error {
 // It handles various data types by converting them to a byte array before publishing.
 // If no topic is set, it returns an error.
 func (mb *MessangerBase) PubData(data any) error {
-	if len(mb.topic) == 0 {
+	if mb.topic == "" {
 		return fmt.Errorf("no topic set")
 	}
-
-	topic := mb.topic[0] // Use the first topic as default
 
 	// Convert data to bytes
 	bytes, err := Bytes(data)
@@ -180,7 +175,7 @@ func (mb *MessangerBase) PubData(data any) error {
 	}
 
 	// Create and publish message
-	msg := NewMsg(topic, bytes, mb.id)
+	msg := NewMsg(mb.topic, bytes, mb.id)
 	return mb.PubMsg(msg)
 }
 
@@ -202,13 +197,13 @@ func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	mbase := struct {
 		ID        string
-		Topics    []string
+		Topic     string
 		Subs      []string
 		Published int
 	}{
 		ID:        m.id,
 		Subs:      subs,
-		Topics:    m.topic,
+		Topic:    m.topic,
 		Published: m.Published,
 	}
 
