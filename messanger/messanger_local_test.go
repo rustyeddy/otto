@@ -10,7 +10,9 @@ import (
 )
 
 func TestNewMessangerLocal(t *testing.T) {
-	m := NewMessangerLocal("test-id", "test/topic")
+	m, err := NewMessangerLocal("test-id", "test/topic")
+	assert.NoError(t, err)
+
 	if m.ID() != "test-id" {
 		t.Errorf("Expected ID 'test-id', got '%s'", m.ID())
 	}
@@ -20,8 +22,8 @@ func TestNewMessangerLocal(t *testing.T) {
 }
 
 func TestMessangerLocalSetTopic(t *testing.T) {
-	m := NewMessangerLocal("test-id")
-	m.SetTopic("new/topic")
+	m, err := NewMessangerLocal("test-id", "new/topic")
+	assert.NoError(t, err)
 	if m.Topic() != "new/topic" {
 		t.Errorf("Expected Topic 'new/topic', got '%s'", m.Topic())
 	}
@@ -29,7 +31,8 @@ func TestMessangerLocalSetTopic(t *testing.T) {
 
 func TestMessangerLocalSubscribe(t *testing.T) {
 	resetNodes() // Reset the node tree
-	m := NewMessangerLocal("test-id")
+	m, err := NewMessangerLocal("test-id", "test/topic")
+	assert.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -70,7 +73,8 @@ func TestMessangerLocalSubscribe(t *testing.T) {
 
 func TestMessangerLocalPub(t *testing.T) {
 	resetNodes()
-	m := NewMessangerLocal("test-id")
+	m, err := NewMessangerLocal("test-id")
+	assert.NoError(t, err)
 
 	tests := []struct {
 		name     string
@@ -103,7 +107,9 @@ func TestMessangerLocalPub(t *testing.T) {
 
 func TestMessangerLocalPubMsg(t *testing.T) {
 	resetNodes()
-	m := NewMessangerLocal("test-id")
+	m, err := NewMessangerLocal("test-id")
+	assert.NoError(t, err)
+
 	handlerCalled := false
 	expectedData := "test data"
 
@@ -127,7 +133,8 @@ func TestMessangerLocalPubMsg(t *testing.T) {
 
 func TestMessangerLocalPubData(t *testing.T) {
 	resetNodes()
-	m := NewMessangerLocal("test-id", "test/topic")
+	m, err := NewMessangerLocal("test-id", "test/topic")
+	assert.NoError(t, err)
 
 	tests := []struct {
 		name     string
@@ -195,11 +202,12 @@ func TestMessengerLocalPubDataWithNoTopic(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger without setting topic
-	messenger := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("test-device")
+	assert.NoError(t, err)
 
 	// Try to publish data - should log error and return early
 	testData := "test string"
-	err := messenger.PubData(testData)
+	err = messenger.PubData(testData)
 	assert.Error(t, err, "expected error when called with no topic")
 
 	err = messenger.Pub("", testData)
@@ -211,7 +219,9 @@ func TestMessengerLocalPubDataWithInvalidData(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger with topic
-	messenger := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("test-device")
+	assert.NoError(t, err)
+
 	messenger.SetTopic("test/topic")
 
 	// Try to publish data that can't be serialized (unsupported type)
@@ -221,7 +231,7 @@ func TestMessengerLocalPubDataWithInvalidData(t *testing.T) {
 	data := customStruct{Value: "test"}
 
 	// This should panic due to unsupported type
-	err := messenger.PubData(data)
+	err = messenger.PubData(data)
 	assert.Error(t, err, "expected error due to unsupported type")
 }
 
@@ -258,13 +268,14 @@ func TestMessengerLocalPubMsgWithNoSubscribers(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger
-	messenger := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("test-device")
+	assert.NoError(t, err)
 
 	// Create message for topic with no subscribers
 	msg := NewMsg("nonexistent/topic", []byte("test"), "test-id")
 
 	// Publish message - should log info about no subscribers
-	err := messenger.PubMsg(msg)
+	err = messenger.PubMsg(msg)
 	assert.Error(t, err, "No subscribers should return an error")
 
 	// Verify info message was logged
@@ -278,7 +289,8 @@ func TestMessengerLocalPubCountsPublications(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger
-	messenger := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("test-device")
+	assert.NoError(t, err)
 
 	// Verify initial count
 	if messenger.Published != 0 {
@@ -309,7 +321,9 @@ func TestMessengerLocalPubDataWithValidTopic(t *testing.T) {
 	messageReceived := false
 
 	// Create subscriber to receive messages
-	subscriber := NewMessangerLocal("subscriber")
+	subscriber, err := NewMessangerLocal("subscriber")
+	assert.NoError(t, err)
+
 	subscriber.Subscribe("test/data", func(msg *Msg) error {
 		messageReceived = true
 		// Verify message content
@@ -327,12 +341,13 @@ func TestMessengerLocalPubDataWithValidTopic(t *testing.T) {
 	})
 
 	// Create publisher with topic
-	publisher := NewMessangerLocal("publisher")
+	publisher, err := NewMessangerLocal("publisher")
+	assert.NoError(t, err)
 	publisher.SetTopic("test/data")
 
 	// Publish data using a supported type
 	testData := "test data"
-	err := publisher.PubData(testData)
+	err = publisher.PubData(testData)
 	assert.NoError(t, err, "Expected no error for publish data")
 
 	// Give time for message processing

@@ -15,12 +15,15 @@ type MessangerMQTT struct {
 
 // NewMessanger with the given ID and a variable number of topics that
 // it will subscribe to.
-func NewMessangerMQTT(id string, topics ...string) *MessangerMQTT {
+func NewMessangerMQTT(id string, topic ...string) (*MessangerMQTT, error) {
 	m := &MessangerMQTT{
-		MessangerBase: NewMessangerBase(id, topics...),
-		MQTT:          NewMQTT(id, topics...),
+		MQTT: NewMQTT(id, topic...),
 	}
-	return m
+	mb, err := NewMessangerBase(id, topic...)
+	if err == nil {
+		m.MessangerBase = mb
+	}
+	return m, err
 }
 
 func (m *MessangerMQTT) ID() string {
@@ -67,7 +70,7 @@ func (m *MessangerMQTT) PubMsg(msg *Msg) error {
 
 // Publish given data to this messangers topic
 func (m *MessangerMQTT) PubData(data any) error {
-	if len(m.topic) < 1 || m.topic[0] == "" {
+	if len(m.topic) < 1 || m.topic == "" {
 		return fmt.Errorf("Device.Publish failed: no Topic for messanger %s", m.MessangerBase.id)
 	}
 	var buf []byte
@@ -92,7 +95,7 @@ func (m *MessangerMQTT) PubData(data any) error {
 		return fmt.Errorf("unsupported data type: %T", data)
 	}
 
-	msg := NewMsg(m.topic[0], buf, m.MessangerBase.id)
+	msg := NewMsg(m.topic, buf, m.MessangerBase.id)
 	return m.PubMsg(msg)
 }
 

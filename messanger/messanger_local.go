@@ -14,10 +14,13 @@ type MessangerLocal struct {
 }
 
 // NewMessangerLocal creates a new local messanger instance.
-func NewMessangerLocal(id string, topics ...string) *MessangerLocal {
-	return &MessangerLocal{
-		MessangerBase: NewMessangerBase(id, topics...),
+func NewMessangerLocal(id string, topic ...string) (*MessangerLocal, error) {
+	m := &MessangerLocal{}
+	mb, err := NewMessangerBase(id, topic...)
+	if err == nil {
+		m.MessangerBase = mb
 	}
+	return m, err
 }
 
 func (m *MessangerLocal) ID() string {
@@ -57,13 +60,12 @@ func (m *MessangerLocal) PubData(data any) error {
 	if len(m.topic) == 0 {
 		return fmt.Errorf("no topic set")
 	}
-	topic := m.topic[0]
 	bytes, err := Bytes(data)
 	if err != nil {
 		m.error = fmt.Errorf("failed to convert data to bytes: %w", err)
 		return m.error
 	}
-	msg := NewMsg(topic, bytes, m.id)
+	msg := NewMsg(m.topic, bytes, m.id)
 	return m.PubMsg(msg)
 }
 

@@ -49,7 +49,6 @@ import (
 var (
 	messanger     Messanger
 	messangerLock sync.Mutex
-	once          sync.Once
 )
 
 // Subscriber is an interface that defines a struct needs to have the
@@ -76,20 +75,22 @@ type Messanger interface {
 	Close()
 }
 
-func NewMessanger(id string, topics ...string) Messanger {
-	switch id {
-	case "local":
-		messanger = NewMessangerLocal(id, topics...)
-	case "mqtt":
-		messanger = NewMessangerMQTT(id, topics...)
-	default:
-		messanger = nil
+func NewMessanger(id string, topic ...string) (Messanger, error) {
+	var err error
+
+	// TODO - make the messanger based on external mqtt or local messanger
+	// messanger, err = NewMessangerMQTT(id, topic...)
+	messanger, err = NewMessangerLocal(id, topic...)
+	if err != nil {
+		slog.Error("Failed to create local messanger, trying MQTT", "error", err)
+		return nil, err
 	}
+
 	if messanger != nil && messanger.ID() != id {
 		slog.Warn("Messanger already initialized with a different ID",
 			"existing", messanger.ID(), "requested", id)
 	}
-	return messanger
+	return messanger, err
 }
 
 // GetMessangerInstance returns the singleton instance of MessangerBase.
@@ -110,12 +111,20 @@ type MessangerBase struct {
 	Published int
 }
 
-func NewMessangerBase(id string, topic ...string) *MessangerBase {
-	return &MessangerBase{
+func NewMessangerBase(id string, topic ...string) (*MessangerBase, error) {
+	mb := &MessangerBase{
 		id:    id,
-		topic: topic,
+		topic: "",
 		subs:  make(map[string]MsgHandler),
 	}
+
+	if len(topic) > 1 {
+		return nil, fmt.Errorf("MessangerBase supports only one topic, got %d", len(topic))
+	} else if len(topic) > 0 {
+		mb.topic = topic[0]
+	}
+	return mb, nil
+
 }
 
 func (mb *MessangerBase) ID() string {
@@ -203,7 +212,7 @@ func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}{
 		ID:        m.id,
 		Subs:      subs,
-		Topic:    m.topic,
+		Topic:     m.topic,
 		Published: m.Published,
 	}
 

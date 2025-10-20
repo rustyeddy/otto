@@ -183,9 +183,15 @@ func (o *OttO) Init() {
 	}
 	o.done = make(chan any)
 
+	var err error
 	if o.Messanger == nil {
 		topic := messanger.GetTopics().Data("station")
-		o.Messanger = messanger.NewMessangerMQTT("otto", topic)
+		o.Messanger, err = messanger.NewMessangerMQTT("otto", topic)
+		if err != nil {
+			slog.Error("Failed to create MQTT messenger", "error", err)
+			return
+		}
+
 		ms := messanger.GetMsgSaver()
 		ms.Saving = true
 	}
@@ -194,7 +200,6 @@ func (o *OttO) Init() {
 		o.StationManager = station.GetStationManager()
 	}
 
-	var err error
 	if o.Station == nil {
 		o.Station, err = o.StationManager.Add(o.Name)
 		if err != nil {

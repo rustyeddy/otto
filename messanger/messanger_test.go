@@ -7,6 +7,9 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Mock implementation of the Messanger interface
@@ -118,30 +121,40 @@ func TestMessanger_Close(t *testing.T) {
 }
 func TestMessangerBase_Topic(t *testing.T) {
 	tests := []struct {
-		name     string
-		topics   []string
-		expected string
+		name      string
+		topics    []string
+		expected  string
+		expectErr bool
 	}{
 		{
-			name:     "No topics",
-			topics:   []string{},
-			expected: "",
+			name:      "No topics",
+			topics:    []string{},
+			expected:  "",
+			expectErr: false,
 		},
 		{
-			name:     "Single topic",
-			topics:   []string{"topic1"},
-			expected: "topic1",
+			name:      "Single topic",
+			topics:    []string{"topic1"},
+			expected:  "topic1",
+			expectErr: false,
 		},
 		{
-			name:     "Multiple topics",
-			topics:   []string{"topic1", "topic2"},
-			expected: "topic1",
+			name:      "Multiple topics",
+			topics:    []string{"topic1", "topic2"},
+			expected:  "topic1",
+			expectErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mb := NewMessangerBase("test-id", tt.topics...)
+			mb, err := NewMessangerBase("test-id", tt.topics...)
+			if tt.expectErr {
+				assert.Error(t, err)
+				return
+			} else {
+				assert.NoError(t, err)
+			}
 			if got := mb.Topic(); got != tt.expected {
 				t.Errorf("expected topic '%s', got '%s'", tt.expected, got)
 			}
@@ -149,7 +162,9 @@ func TestMessangerBase_Topic(t *testing.T) {
 	}
 }
 func TestMessangerBase_ServeHTTP(t *testing.T) {
-	mb := NewMessangerBase("test-id", "topic1", "topic2")
+	mb, err := NewMessangerBase("test-id", "topic1")
+	require.NoError(t, err)
+
 	mb.subs["topic1"] = func(msg *Msg) error { return nil }
 	mb.Published = 5
 
@@ -174,7 +189,7 @@ func TestMessangerBase_ServeHTTP(t *testing.T) {
 
 	var response struct {
 		ID        string
-		Topics    []string
+		Topic     string
 		Subs      []string
 		Published int
 	}
@@ -187,9 +202,9 @@ func TestMessangerBase_ServeHTTP(t *testing.T) {
 		t.Errorf("expected ID 'test-id', got '%s'", response.ID)
 	}
 
-	expectedTopics := []string{"topic1", "topic2"}
-	if !reflect.DeepEqual(response.Topics, expectedTopics) {
-		t.Errorf("expected topics %v, got %v", expectedTopics, response.Topics)
+	expectedTopics := "topic1"
+	if !reflect.DeepEqual(response.Topic, expectedTopics) {
+		t.Errorf("expected topics %v, got %v", expectedTopics, response.Topic)
 	}
 
 	expectedSubs := []string{"topic1"}
@@ -218,7 +233,7 @@ func TestNewMessanger(t *testing.T) {
 			name:     "Create MQTT messanger",
 			id:       "mqtt",
 			topics:   []string{"topic1", "topic2"},
-			expected: "mqtt",
+			expected: "error",
 		},
 		{
 			name:     "Invalid messanger ID",
@@ -230,20 +245,24 @@ func TestNewMessanger(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMessanger(tt.id, tt.topics...)
-			if m != nil && m.ID() != tt.expected {
-				t.Errorf("expected messanger ID '%s', got '%s'", tt.expected, m.ID())
+			m, err := NewMessanger(tt.id, tt.topics...)
+			if tt.expected == "error" {
+				assert.Error(t, err)
+				return
+			} else {
+				assert.NoError(t, err)
 			}
-			if m == nil && tt.expected != "" {
-				t.Errorf("expected non-nil messanger for ID '%s', got nil", tt.expected)
-			}
+
+			assert.NotNil(t, m)
+			assert.Equal(t, tt.id, m.ID())
 		})
 	}
 }
 
 func TestGetMessanger(t *testing.T) {
 	// Ensure singleton behavior
-	m1 := NewMessanger("local", "topic1")
+	m1, err := NewMessanger("local", "topic1")
+	assert.NoError(t, err)
 	m2 := GetMessanger()
 
 	if m1 != m2 {
@@ -252,7 +271,8 @@ func TestGetMessanger(t *testing.T) {
 }
 
 func TestMessangerBaseError(t *testing.T) {
-	mb := NewMessangerBase("test-id")
+	mb, err := NewMessangerBase("test-id")
+	assert.NoError(t, err)
 	if err := mb.Error(); err != nil {
 		t.Errorf("Expected nil error, got %v", err)
 	}
