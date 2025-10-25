@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/rustyeddy/otto/messanger"
 )
+
+// TimerLooper interface for devices that support periodic operations
+type TimerLooper interface {
+	TimerLoop(duration time.Duration, done chan any, readFunc func())
+}
 
 // ManagedDevice wraps any device and adds messaging capabilities
 type ManagedDevice struct {
@@ -90,7 +96,7 @@ func (md *ManagedDevice) PubData(data interface{}) {
 
 // ReadPub reads the device value and publishes it
 func (md *ManagedDevice) ReadPub() {
-	// This is a generic implementation - specific device types can override
+	// Try different Get method signatures
 	if getter, ok := md.Device.(interface{ Get() (int, error) }); ok {
 		val, err := getter.Get()
 		if err != nil {
@@ -98,8 +104,22 @@ func (md *ManagedDevice) ReadPub() {
 			return
 		}
 		md.PubData(val)
+	} else if getter, ok := md.Device.(interface{ Get() (float64, error) }); ok {
+		val, err := getter.Get()
+		if err != nil {
+			slog.Error("Failed to read device value", "device", md.Name, "error", err)
+			return
+		}
+		md.PubData(val)
+	} else if getter, ok := md.Device.(interface{ Get() (any, error) }); ok {
+		val, err := getter.Get()
+		if err != nil {
+			slog.Error("Failed to read device value", "device", md.Name, "error", err)
+			return
+		}
+		md.PubData(val)
 	} else {
-		slog.Warn("Device does not support Get() method", "device", md.Name)
+		slog.Debug("Device does not support Get() method", "device", md.Name)
 	}
 }
 
@@ -110,5 +130,33 @@ func (md *ManagedDevice) EventLoop(done chan any) {
 		eventLooper.EventLoop(done, md.ReadPub)
 	} else {
 		slog.Warn("Device does not support EventLoop", "device", md.Name)
+	}
+}
+
+// StartTimerLoop starts a timer loop for periodic device readings
+func (md *ManagedDevice) StartTimerLoop(duration time.Duration, done chan any) {
+	// First check if device implements TimerLooper interface
+	if timerLooper, ok := md.Device.(TimerLooper); ok {
+		go timerLooper.TimerLoop(duration, done, md.ReadPub)
+		return
+	}
+
+	// Otherwise, provide a generic timer loop implementation
+	go md.genericTimerLoop(duration, done)
+}
+
+// genericTimerLoop provides a standard timer loop for any device
+func (md *ManagedDevice) genericTimerLoop(duration time.Duration, done chan any) {
+	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			md.ReadPub()
+		case <-done:
+			slog.Debug("Timer loop stopped", "device", md.Name)
+			return
+		}
 	}
 }
