@@ -288,29 +288,29 @@ func (st *Station) Stop() {
 
 // AddDevice will do what it says by placing the device with a given
 // name in the stations device manager. This library is basically a
-// key value store, anything supporting the Name Interface:
-// i.e. Name() string.
-//func (s *Station) AddDevice(d device.Name) {
-//	if d == nil {
-//		return
-//	}
-//	name := d.Name()
+// key value store, anything supporting the ID Interface:
+// i.e. ID() string.
+func (s *Station) AddDevice(d interface{ ID() string }) {
+	if d == nil {
+		return
+	}
+	name := d.ID()
 
-// store generically
-//	s.devicesMu.Lock()
-//	if s.devices == nil {
-//		s.devices = make(map[string]any)
-//	}
-//	s.devices[name] = d
-//	devCount := len(s.devices)
-//	s.devicesMu.Unlock()
+	// store generically
+	s.devicesMu.Lock()
+	if s.devices == nil {
+		s.devices = make(map[string]any)
+	}
+	s.devices[name] = d
+	devCount := len(s.devices)
+	s.devicesMu.Unlock()
 
-// Update device metrics
-//	if s.Metrics != nil {
-//		s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
-//	}
-// TODO: Track active vs total
-//}
+	// Update device metrics
+	if s.Metrics != nil {
+		s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
+	}
+	// TODO: Track active vs total
+}
 
 // GetDevice returns the device (anythig supporting the Name (Name()) interface)
 func (s *Station) GetDevice(name string) any {

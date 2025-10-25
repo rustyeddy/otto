@@ -129,6 +129,7 @@ package otto
 import (
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/rustyeddy/otto/server"
@@ -154,9 +155,11 @@ type OttO struct {
 	*server.Server
 	messanger.Messanger
 
-	Mock bool
-	hub  bool // maybe hub should be a different struct?
-	done chan any
+	Mock       bool
+	MQTTBroker string // MQTT broker URL, defaults to test.mosquitto.org
+	UseLocal   bool   // Force use of local messaging
+	hub        bool   // maybe hub should be a different struct?
+	done       chan any
 }
 
 // global variables and structures
@@ -186,9 +189,37 @@ func (o *OttO) Init() {
 	var err error
 	if o.Messanger == nil {
 		topic := messanger.GetTopics().Data("station")
-		o.Messanger, err = messanger.NewMessangerMQTT("otto", topic)
+
+		// Try to create appropriate messanger based on configuration
+		if o.UseLocal {
+			slog.Info("Using local messaging (no MQTT)")
+			o.Messanger, err = messanger.NewMessangerLocal("otto", topic)
+		} else {
+			// Set default MQTT broker if not specified
+			if o.MQTTBroker == "" {
+				o.MQTTBroker = "test.mosquitto.org"
+			}
+
+			// Set the MQTT_BROKER environment variable for the messanger
+			os.Setenv("MQTT_BROKER", o.MQTTBroker)
+
+			slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
+			o.Messanger, err = messanger.NewMessangerMQTT("otto", topic)
+
+			if err != nil {
+				slog.Warn("MQTT connection failed, falling back to local messaging", "error", err, "broker", o.MQTTBroker)
+				o.Messanger, err = messanger.NewMessangerLocal("otto", topic)
+				if err != nil {
+					slog.Error("Failed to create local messenger", "error", err)
+					return
+				}
+			} else {
+				slog.Info("MQTT connection successful", "broker", o.MQTTBroker)
+			}
+		}
+
 		if err != nil {
-			slog.Error("Failed to create MQTT messenger", "error", err)
+			slog.Error("Failed to create messenger", "error", err)
 			return
 		}
 
@@ -238,4 +269,25 @@ func (o *OttO) Stop() {
 	if o.Messanger != nil {
 		o.Messanger.Close()
 	}
+}
+
+// AddManagedDevice creates a managed device wrapper and adds it to the station
+func (o *OttO) AddManagedDevice(name string, device any, topic string) *ManagedDevice {
+	md := NewManagedDevice(name, device, topic, o.Messanger)
+	if o.Station != nil {
+		o.Station.AddDevice(md)
+	}
+	return md
+}
+
+// GetManagedDevice retrieves a managed device by name
+func (o *OttO) GetManagedDevice(name string) *ManagedDevice {
+	if o.Station == nil {
+		return nil
+	}
+	device := o.Station.GetDevice(name)
+	if md, ok := device.(*ManagedDevice); ok {
+		return md
+	}
+	return nil
 }
