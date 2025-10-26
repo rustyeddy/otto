@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log/slog"
@@ -392,5 +393,335 @@ func BenchmarkInitLogger(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		InitLogger("info", testLogFile)
+	}
+}
+
+// Tests for new LogConfig functionality
+func TestLogConfig_OutputToStdout(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "info",
+		Output: LogOutputStdout,
+		Format: LogFormatText,
+	}
+
+	_, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	// This should not panic or error
+	slog.Info("test stdout message")
+}
+
+func TestLogConfig_OutputToStderr(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "warn",
+		Output: LogOutputStderr,
+		Format: LogFormatText,
+	}
+
+	_, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	// This should not panic or error
+	slog.Warn("test stderr message")
+}
+
+func TestLogConfig_OutputToFile(t *testing.T) {
+	tempDir := setupLogTest(t)
+	defer teardownLogTest(t, tempDir)
+
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	testLogFile := filepath.Join(tempDir, "config-test.log")
+
+	config := LogConfig{
+		Level:    "debug",
+		Output:   LogOutputFile,
+		Format:   LogFormatText,
+		FilePath: testLogFile,
+	}
+
+	_, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	// Write some log messages
+	slog.Debug("debug message")
+	slog.Info("info message")
+	slog.Warn("warn message")
+
+	// Verify content was written to file
+	content, err := os.ReadFile(testLogFile)
+	if err != nil {
+		t.Fatalf("Failed to read log file: %v", err)
+	}
+
+	contentStr := string(content)
+	if !strings.Contains(contentStr, "debug message") {
+		t.Errorf("Expected log file to contain 'debug message', got: %s", contentStr)
+	}
+	if !strings.Contains(contentStr, "info message") {
+		t.Errorf("Expected log file to contain 'info message', got: %s", contentStr)
+	}
+	if !strings.Contains(contentStr, "warn message") {
+		t.Errorf("Expected log file to contain 'warn message', got: %s", contentStr)
+	}
+}
+
+func TestLogConfig_OutputToString(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "info",
+		Output: LogOutputString,
+		Format: LogFormatText,
+	}
+
+	buffer, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	if buffer == nil {
+		t.Fatal("Expected buffer to be returned for string output")
+	}
+
+	// Write log messages
+	slog.Info("test string message")
+	slog.Warn("warning string message")
+
+	// Check buffer content
+	content := buffer.String()
+	if !strings.Contains(content, "test string message") {
+		t.Errorf("Expected buffer to contain 'test string message', got: %s", content)
+	}
+	if !strings.Contains(content, "warning string message") {
+		t.Errorf("Expected buffer to contain 'warning string message', got: %s", content)
+	}
+}
+
+func TestLogConfig_OutputToStringWithProvidedBuffer(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	providedBuffer := &bytes.Buffer{}
+	config := LogConfig{
+		Level:  "debug",
+		Output: LogOutputString,
+		Format: LogFormatText,
+		Buffer: providedBuffer,
+	}
+
+	returnedBuffer, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	if returnedBuffer != providedBuffer {
+		t.Error("Expected returned buffer to be the same as provided buffer")
+	}
+
+	// Write log messages
+	slog.Debug("debug in custom buffer")
+
+	// Check buffer content
+	content := providedBuffer.String()
+	if !strings.Contains(content, "debug in custom buffer") {
+		t.Errorf("Expected buffer to contain 'debug in custom buffer', got: %s", content)
+	}
+}
+
+func TestLogConfig_JSONFormat(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "info",
+		Output: LogOutputString,
+		Format: LogFormatJSON,
+	}
+
+	buffer, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	// Write log messages
+	slog.Info("json test message", "key1", "value1", "key2", 42)
+
+	// Check that output is valid JSON
+	content := buffer.String()
+	if !strings.Contains(content, `"msg":"json test message"`) {
+		t.Errorf("Expected JSON format with msg field, got: %s", content)
+	}
+	if !strings.Contains(content, `"key1":"value1"`) {
+		t.Errorf("Expected JSON format with key1 field, got: %s", content)
+	}
+	if !strings.Contains(content, `"key2":42`) {
+		t.Errorf("Expected JSON format with key2 field, got: %s", content)
+	}
+	// Check for JSON structure indicators
+	if !strings.Contains(content, "{") || !strings.Contains(content, "}") {
+		t.Errorf("Expected JSON format with braces, got: %s", content)
+	}
+}
+
+func TestLogConfig_TextFormat(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "info",
+		Output: LogOutputString,
+		Format: LogFormatText,
+	}
+
+	buffer, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+	}
+
+	// Write log messages
+	slog.Info("text test message", "field1", "value1")
+
+	// Check that output is in text format (not JSON)
+	content := buffer.String()
+	if !strings.Contains(content, "text test message") {
+		t.Errorf("Expected text format with message, got: %s", content)
+	}
+	// Text format should have key=value pairs
+	if !strings.Contains(content, "field1=value1") {
+		t.Errorf("Expected text format with field1=value1, got: %s", content)
+	}
+}
+
+func TestLogConfig_DifferentLevels(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	tests := []struct {
+		name      string
+		level     string
+		logFunc   func(string)
+		shouldLog bool
+	}{
+		{"debug logs at debug level", "debug", func(msg string) { slog.Debug(msg) }, true},
+		{"info logs at debug level", "debug", func(msg string) { slog.Info(msg) }, true},
+		{"debug does not log at info level", "info", func(msg string) { slog.Debug(msg) }, false},
+		{"info logs at info level", "info", func(msg string) { slog.Info(msg) }, true},
+		{"warn logs at warn level", "warn", func(msg string) { slog.Warn(msg) }, true},
+		{"info does not log at warn level", "warn", func(msg string) { slog.Info(msg) }, false},
+		{"error logs at error level", "error", func(msg string) { slog.Error(msg) }, true},
+		{"warn does not log at error level", "error", func(msg string) { slog.Warn(msg) }, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := LogConfig{
+				Level:  tt.level,
+				Output: LogOutputString,
+				Format: LogFormatText,
+			}
+
+			buffer, err := InitLoggerWithConfig(config)
+			if err != nil {
+				t.Fatalf("InitLoggerWithConfig failed: %v", err)
+			}
+
+			testMsg := "test message for " + tt.name
+			tt.logFunc(testMsg)
+
+			content := buffer.String()
+			contains := strings.Contains(content, testMsg)
+
+			if tt.shouldLog && !contains {
+				t.Errorf("Expected message to be logged, but it wasn't. Content: %s", content)
+			}
+			if !tt.shouldLog && contains {
+				t.Errorf("Expected message NOT to be logged, but it was. Content: %s", content)
+			}
+		})
+	}
+}
+
+func TestLogConfig_InvalidFilePathError(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:    "info",
+		Output:   LogOutputFile,
+		Format:   LogFormatText,
+		FilePath: "/non/existent/directory/test.log",
+	}
+
+	_, err := InitLoggerWithConfig(config)
+	if err == nil {
+		t.Error("Expected error for invalid file path, got nil")
+	}
+}
+
+func TestLogConfig_DefaultOutput(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "info",
+		Output: LogOutput("invalid"),
+		Format: LogFormatText,
+	}
+
+	// Should default to stdout and not error
+	_, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig should not fail with invalid output type: %v", err)
+	}
+}
+
+func TestLogConfig_DefaultFormat(t *testing.T) {
+	// Store original default logger to restore later
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	config := LogConfig{
+		Level:  "info",
+		Output: LogOutputString,
+		Format: LogFormat("invalid"),
+	}
+
+	buffer, err := InitLoggerWithConfig(config)
+	if err != nil {
+		t.Fatalf("InitLoggerWithConfig should not fail with invalid format: %v", err)
+	}
+
+	// Should default to text format
+	slog.Info("test default format")
+	content := buffer.String()
+
+	// Text format uses key=value pairs
+	if !strings.Contains(content, "test default format") {
+		t.Errorf("Expected text format output, got: %s", content)
 	}
 }
