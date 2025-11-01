@@ -117,7 +117,7 @@ func (m *MQTT) Connect() error {
 // MsgHandle f
 func (m *MQTT) Subscribe(topic string, f MsgHandler) error {
 	if m.Client == nil {
-		slog.Error("MQTT Client is not connected to a broker")
+		slog.Warn("MQTT client is not connected to a broker: ", "broker", m.Broker)
 		return fmt.Errorf("MQTT Client is not connected to broker: %s", m.Broker)
 	}
 

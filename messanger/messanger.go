@@ -63,22 +63,19 @@ type MessageHandler interface {
 type Messanger interface {
 	ID() string
 	Subscribe(topic string, handler MsgHandler) error
-	SetTopic(topic string)
-	Topic() string
 
 	// Publish methods should return an error when something goes wrong.
 	Pub(topic string, msg any) error
 	PubMsg(msg *Msg) error
-	PubData(data any) error
 
 	Error() error
 	Close()
 }
 
-func NewMessanger(id string, topic string) (Messanger, error) {
+func NewMessanger(id string) (Messanger, error) {
 	var err error
 
-	messanger, err = NewMessangerLocal(id, topic)
+	messanger, err = NewMessangerLocal(id)
 	if err != nil {
 		slog.Error("Failed to create local messanger, trying MQTT", "error", err)
 		return nil, err
@@ -101,19 +98,17 @@ func GetMessanger() Messanger {
 
 // MessangerBase
 type MessangerBase struct {
-	id    string
-	topic string
-	subs  map[string]MsgHandler
+	id   string
+	subs map[string]MsgHandler
 	error
 
 	Published int
 }
 
-func NewMessangerBase(id string, topic string) (*MessangerBase, error) {
+func NewMessangerBase(id string) (*MessangerBase, error) {
 	mb := &MessangerBase{
-		id:    id,
-		topic: topic,
-		subs:  make(map[string]MsgHandler),
+		id:   id,
+		subs: make(map[string]MsgHandler),
 	}
 	return mb, nil
 
@@ -121,14 +116,6 @@ func NewMessangerBase(id string, topic string) (*MessangerBase, error) {
 
 func (mb *MessangerBase) ID() string {
 	return mb.id
-}
-
-func (mb *MessangerBase) Topic() string {
-	return mb.topic
-}
-
-func (mb *MessangerBase) SetTopic(topic string) {
-	mb.topic = topic
 }
 
 func (mb *MessangerBase) Error() error {
@@ -161,25 +148,6 @@ func (mb *MessangerBase) PubMsg(msg *Msg) error {
 	return nil
 }
 
-// PubData publishes data to the messanger's default topic.
-// It handles various data types by converting them to a byte array before publishing.
-// If no topic is set, it returns an error.
-func (mb *MessangerBase) PubData(data any) error {
-	if mb.topic == "" {
-		return fmt.Errorf("no topic set")
-	}
-
-	// Convert data to bytes
-	bytes, err := Bytes(data)
-	if err != nil {
-		return fmt.Errorf("failed to convert data to bytes: %w", err)
-	}
-
-	// Create and publish message
-	msg := NewMsg(mb.topic, bytes, mb.id)
-	return mb.PubMsg(msg)
-}
-
 // Close is implemented to satisfy the messanger interface.
 // Base implementation does nothing - specific messanger implementations
 // should override this method to handle cleanup (e.g., closing connections).
@@ -198,13 +166,11 @@ func (m MessangerBase) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	mbase := struct {
 		ID        string
-		Topic     string
 		Subs      []string
 		Published int
 	}{
 		ID:        m.id,
 		Subs:      subs,
-		Topic:     m.topic,
 		Published: m.Published,
 	}
 

@@ -172,7 +172,9 @@ func (st *Station) SayHello() {
 			"id":   st.ID,
 			"ts":   time.Now().UTC(),
 		}
-		if err := st.Messanger.PubData(payload); err != nil {
+		// Use explicit topic for hello messages
+		topic := messanger.GetTopics().Data("hello")
+		if err := st.Messanger.Pub(topic, payload); err != nil {
 			// record the error for metrics / diagnostics
 			st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
 		}

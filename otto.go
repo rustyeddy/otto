@@ -188,12 +188,10 @@ func (o *OttO) Init() {
 
 	var err error
 	if o.Messanger == nil {
-		topic := messanger.GetTopics().Data("station")
-
 		// Try to create appropriate messanger based on configuration
 		if o.UseLocal {
 			slog.Info("Using local messaging (no MQTT)")
-			o.Messanger, err = messanger.NewMessangerLocal("otto", topic)
+			o.Messanger, err = messanger.NewMessangerLocal("otto")
 		} else {
 			// Set default MQTT broker if not specified
 			if o.MQTTBroker == "" {
@@ -204,11 +202,11 @@ func (o *OttO) Init() {
 			o.MQTTBroker = os.Getenv("MQTT_BROKER")
 
 			slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
-			o.Messanger, err = messanger.NewMessangerMQTT("otto", o.MQTTBroker, topic)
+			o.Messanger, err = messanger.NewMessangerMQTT("otto", o.MQTTBroker)
 
 			if err != nil {
 				slog.Warn("MQTT connection failed, falling back to local messaging", "error", err, "broker", o.MQTTBroker)
-				o.Messanger, err = messanger.NewMessangerLocal("otto", topic)
+				o.Messanger, err = messanger.NewMessangerLocal("otto")
 				if err != nil {
 					slog.Error("Failed to create local messenger", "error", err)
 					return

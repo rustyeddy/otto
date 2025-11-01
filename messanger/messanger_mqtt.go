@@ -13,13 +13,12 @@ type MessangerMQTT struct {
 	sync.Mutex `json:"-"`
 }
 
-// NewMessanger with the given ID and a variable number of topics that
-// it will subscribe to.
-func NewMessangerMQTT(id string, broker string, topic string) (*MessangerMQTT, error) {
+// NewMessangerMQTT creates a new MQTT messanger instance.
+func NewMessangerMQTT(id string, broker string) (*MessangerMQTT, error) {
 	m := &MessangerMQTT{
-		MQTT: NewMQTT(id, broker, topic),
+		MQTT: NewMQTT(id, broker, ""),
 	}
-	mb, err := NewMessangerBase(id, topic)
+	mb, err := NewMessangerBase(id)
 	if err == nil {
 		m.MessangerBase = mb
 	}
@@ -66,37 +65,6 @@ func (m *MessangerMQTT) PubMsg(msg *Msg) error {
 	// Count it via base
 	m.Published++
 	return nil
-}
-
-// Publish given data to this messangers topic
-func (m *MessangerMQTT) PubData(data any) error {
-	if len(m.topic) < 1 || m.topic == "" {
-		return fmt.Errorf("Device.Publish failed: no Topic for messanger %s", m.MessangerBase.id)
-	}
-	var buf []byte
-
-	switch d := data.(type) {
-	case []byte:
-		buf = d
-
-	case string:
-		buf = []byte(d)
-
-	case int:
-		str := fmt.Sprintf("%d", d)
-		buf = []byte(str)
-
-	case float64:
-		str := fmt.Sprintf("%5.2f", d)
-		buf = []byte(str)
-
-	default:
-		slog.Error("Unknown Type: ", "topic", m.Topic(), "type", fmt.Sprintf("%T", data))
-		return fmt.Errorf("unsupported data type: %T", data)
-	}
-
-	msg := NewMsg(m.topic, buf, m.MessangerBase.id)
-	return m.PubMsg(msg)
 }
 
 func (m *MessangerMQTT) Error() error {

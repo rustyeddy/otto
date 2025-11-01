@@ -489,7 +489,7 @@ func TestMQTT_IsConnectedEdgeCases(t *testing.T) {
 
 func TestMessangerMQTT_NewAndID(t *testing.T) {
 	// Test MessangerMQTT creation and ID method (currently 0% coverage)
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "topic1")
+	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
 	assert.NoError(t, err)
 
 	if mqttMessanger == nil {
@@ -512,7 +512,7 @@ func TestMessangerMQTT_NewAndID(t *testing.T) {
 func TestMessangerMQTT_Subscribe(t *testing.T) {
 	// Test Subscribe method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "test/topic")
+	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
 	assert.NoError(t, err)
 	mqttMessanger.MQTT.Client = mock
 
@@ -551,7 +551,7 @@ func TestMessangerMQTT_Subscribe(t *testing.T) {
 func TestMessangerMQTT_Pub(t *testing.T) {
 	// Test Pub method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "test/topic")
+	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
 	assert.NoError(t, err)
 	mqttMessanger.MQTT.Client = mock
 
@@ -578,7 +578,7 @@ func TestMessangerMQTT_Pub(t *testing.T) {
 func TestMessangerMQTT_PubMsg(t *testing.T) {
 	// Test PubMsg method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "test/topic")
+	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
 	assert.NoError(t, err)
 	mqttMessanger.MQTT.Client = mock
 
@@ -599,83 +599,10 @@ func TestMessangerMQTT_PubMsg(t *testing.T) {
 	}
 }
 
-func TestMessangerMQTT_PubData(t *testing.T) {
-	// Test PubData method (currently 0% coverage)
-	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "test/topic")
-	assert.NoError(t, err)
-	mqttMessanger.MQTT.Client = mock
-	mqttMessanger.SetTopic("test/topic")
-
-	// Test string data
-	mqttMessanger.PubData("hello")
-
-	// Test int data
-	mqttMessanger.PubData(42)
-
-	// Test float64 data
-	mqttMessanger.PubData(3.14)
-
-	// Test byte slice data
-	mqttMessanger.PubData([]byte("bytes"))
-
-	// Verify all publications
-	pubs := mock.GetPublications()
-	if len(pubs) != 4 {
-		t.Fatalf("expected 4 publications, got %d", len(pubs))
-	}
-
-	// All should be to the same topic
-	for i, pub := range pubs {
-		if pub.Topic != "test/topic" {
-			t.Errorf("publication %d: expected topic 'test/topic', got %s", i, pub.Topic)
-		}
-	}
-}
-
-func TestMessangerMQTT_PubDataNoTopic(t *testing.T) {
-	// Test PubData with no topic set (should log error and return)
-	mock := NewMockClient()
-
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "")
-	assert.NoError(t, err)
-	mqttMessanger.MQTT.Client = mock
-	// Don't set topic - using empty string in constructor
-
-	mqttMessanger.PubData("test data")
-
-	// Should not publish anything
-	pubs := mock.GetPublications()
-	if len(pubs) != 0 {
-		t.Errorf("expected 0 publications when no topic set, got %d", len(pubs))
-	}
-}
-
-func TestMessangerMQTT_PubDataUnknownType(t *testing.T) {
-	// Test PubData with unknown type (should log error)
-	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "test/topic")
-	assert.NoError(t, err)
-	mqttMessanger.MQTT.Client = mock
-	mqttMessanger.SetTopic("test/topic")
-
-	// Test with unsupported type
-	type customType struct {
-		value string
-	}
-	mqttMessanger.PubData(customType{value: "test"})
-
-	// Should not publish anything for unknown type
-	pubs := mock.GetPublications()
-	if len(pubs) != 0 {
-		t.Errorf("expected 0 publications for unknown type, got %d", len(pubs))
-	}
-}
-
 func TestMessangerMQTT_Error(t *testing.T) {
 	// Test Error method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost", "test/topic")
+	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
 	assert.NoError(t, err)
 	mqttMessanger.MQTT.Client = mock
 
