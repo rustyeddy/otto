@@ -24,3 +24,4 @@ gpio/gpio
 station/station
 otto.log
 debug*
+*.code-workspace

@@ -201,10 +201,10 @@ func (o *OttO) Init() {
 			}
 
 			// Set the MQTT_BROKER environment variable for the messanger
-			os.Setenv("MQTT_BROKER", o.MQTTBroker)
+			o.MQTTBroker = os.Getenv("MQTT_BROKER")
 
 			slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
-			o.Messanger, err = messanger.NewMessangerMQTT("otto", topic)
+			o.Messanger, err = messanger.NewMessangerMQTT("otto", o.MQTTBroker, topic)
 
 			if err != nil {
 				slog.Warn("MQTT connection failed, falling back to local messaging", "error", err, "broker", o.MQTTBroker)
@@ -246,16 +246,12 @@ func (o *OttO) Init() {
 	}
 }
 
-func (o *OttO) Start() error {
+func (o *OttO) Start() {
 	go o.Server.Start(o.done)
 
 	if o.StationManager != nil {
-		o.StationManager.Start()
+		go o.StationManager.Start()
 	}
-
-	<-o.done
-	o.Stop()
-	return nil
 }
 
 func (o *OttO) Stop() {

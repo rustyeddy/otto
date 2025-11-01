@@ -119,36 +119,36 @@ func TestMessanger_Close(t *testing.T) {
 		t.Errorf("expected messanger to be closed, but it wasn't")
 	}
 }
-func TestMessangerBase_Topic(t *testing.T) {
+func TestMessangerBaseTopic(t *testing.T) {
 	tests := []struct {
 		name      string
-		topics    []string
+		topic     string
 		expected  string
 		expectErr bool
 	}{
 		{
 			name:      "No topics",
-			topics:    []string{},
+			topic:     "",
 			expected:  "",
 			expectErr: false,
 		},
 		{
 			name:      "Single topic",
-			topics:    []string{"topic1"},
+			topic:     "topic1",
 			expected:  "topic1",
 			expectErr: false,
 		},
 		{
-			name:      "Multiple topics",
-			topics:    []string{"topic1", "topic2"},
+			name:      "Single topic",
+			topic:     "topic1",
 			expected:  "topic1",
-			expectErr: true,
+			expectErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mb, err := NewMessangerBase("test-id", tt.topics...)
+			mb, err := NewMessangerBase("test-id", tt.topic)
 			if tt.expectErr {
 				assert.Error(t, err)
 				return
@@ -220,41 +220,35 @@ func TestNewMessanger(t *testing.T) {
 	tests := []struct {
 		name     string
 		id       string
-		topics   []string
+		topic    string
 		expected string
 	}{
 		{
 			name:     "Create local messanger",
 			id:       "local",
-			topics:   []string{"topic1"},
+			topic:    "topic1",
 			expected: "local",
 		},
 		{
-			name:     "Create MQTT messanger",
+			name:     "Create messanger with mqtt id",
 			id:       "mqtt",
-			topics:   []string{"topic1", "topic2"},
-			expected: "error",
+			topic:    "topic1",
+			expected: "mqtt",
 		},
 		{
-			name:     "Invalid messanger ID",
+			name:     "Create messanger with custom id",
 			id:       "unknown",
-			topics:   []string{"topic1"},
-			expected: "",
+			topic:    "topic1",
+			expected: "unknown",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := NewMessanger(tt.id, tt.topics...)
-			if tt.expected == "error" {
-				assert.Error(t, err)
-				return
-			} else {
-				assert.NoError(t, err)
-			}
-
+			m, err := NewMessanger(tt.id, tt.topic)
+			assert.NoError(t, err)
 			assert.NotNil(t, m)
-			assert.Equal(t, tt.id, m.ID())
+			assert.Equal(t, tt.expected, m.ID())
 		})
 	}
 }
@@ -271,7 +265,7 @@ func TestGetMessanger(t *testing.T) {
 }
 
 func TestMessangerBaseError(t *testing.T) {
-	mb, err := NewMessangerBase("test-id")
+	mb, err := NewMessangerBase("test-id", "test-topic")
 	assert.NoError(t, err)
 	if err := mb.Error(); err != nil {
 		t.Errorf("Expected nil error, got %v", err)

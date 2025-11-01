@@ -25,7 +25,7 @@ type MQTT struct {
 }
 
 // NewMQTT creates a new instance of the MQTT client type.
-func NewMQTT(id string, topics ...string) *MQTT {
+func NewMQTT(id string, broker string, topics string) *MQTT {
 	mqtt := &MQTT{
 		id:     id,
 		Broker: "localhost",

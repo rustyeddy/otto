@@ -73,7 +73,7 @@ func TestMessangerLocalSubscribe(t *testing.T) {
 
 func TestMessangerLocalPub(t *testing.T) {
 	resetNodes()
-	m, err := NewMessangerLocal("test-id")
+	m, err := NewMessangerLocal("otto", "test-id")
 	assert.NoError(t, err)
 
 	tests := []struct {
@@ -107,7 +107,7 @@ func TestMessangerLocalPub(t *testing.T) {
 
 func TestMessangerLocalPubMsg(t *testing.T) {
 	resetNodes()
-	m, err := NewMessangerLocal("test-id")
+	m, err := NewMessangerLocal("otto-test", "test-id")
 	assert.NoError(t, err)
 
 	handlerCalled := false
@@ -168,7 +168,7 @@ func TestMessangerLocalPubData(t *testing.T) {
 // a way to accurately identify the subscriber that needs to be removed.
 func TestMessangerLocalClose(t *testing.T) {
 	// Setup
-	// m := NewMessangerLocal("test-id", "test/topic")
+	// m := NewMessangerLocal("otto-test", "test-id", "test/topic")
 
 	// // Create some subscriptions and publish some messages
 	// handlerCalled := false
@@ -202,7 +202,7 @@ func TestMessengerLocalPubDataWithNoTopic(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger without setting topic
-	messenger, err := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("otto-test", "test-device")
 	assert.NoError(t, err)
 
 	// Try to publish data - should log error and return early
@@ -219,7 +219,7 @@ func TestMessengerLocalPubDataWithInvalidData(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger with topic
-	messenger, err := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("otto-test", "test-device")
 	assert.NoError(t, err)
 
 	messenger.SetTopic("test/topic")
@@ -240,7 +240,7 @@ func TestMessengerLocalPubDataWithInvalidData(t *testing.T) {
 // 	defer resetNodes()
 
 // 	// Create local messenger
-// 	messenger := NewMessangerLocal("test-device")
+// 	messenger := NewMessangerLocal("otto-test", "test-device")
 
 // 	// Create data that can't be serialized (unsupported type)
 // 	type customStruct struct {
@@ -268,7 +268,7 @@ func TestMessengerLocalPubMsgWithNoSubscribers(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger
-	messenger, err := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("otto-test", "test-device")
 	assert.NoError(t, err)
 
 	// Create message for topic with no subscribers
@@ -289,7 +289,7 @@ func TestMessengerLocalPubCountsPublications(t *testing.T) {
 	defer resetNodes()
 
 	// Create local messenger
-	messenger, err := NewMessangerLocal("test-device")
+	messenger, err := NewMessangerLocal("otto-test", "test-device")
 	assert.NoError(t, err)
 
 	// Verify initial count
@@ -321,7 +321,7 @@ func TestMessengerLocalPubDataWithValidTopic(t *testing.T) {
 	messageReceived := false
 
 	// Create subscriber to receive messages
-	subscriber, err := NewMessangerLocal("subscriber")
+	subscriber, err := NewMessangerLocal("otto-test", "subscriber")
 	assert.NoError(t, err)
 
 	subscriber.Subscribe("test/data", func(msg *Msg) error {
@@ -341,7 +341,7 @@ func TestMessengerLocalPubDataWithValidTopic(t *testing.T) {
 	})
 
 	// Create publisher with topic
-	publisher, err := NewMessangerLocal("publisher")
+	publisher, err := NewMessangerLocal("otto-test", "publisher")
 	assert.NoError(t, err)
 	publisher.SetTopic("test/data")
 

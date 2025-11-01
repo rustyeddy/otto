@@ -15,11 +15,11 @@ type MessangerMQTT struct {
 
 // NewMessanger with the given ID and a variable number of topics that
 // it will subscribe to.
-func NewMessangerMQTT(id string, topic ...string) (*MessangerMQTT, error) {
+func NewMessangerMQTT(id string, broker string, topic string) (*MessangerMQTT, error) {
 	m := &MessangerMQTT{
-		MQTT: NewMQTT(id, topic...),
+		MQTT: NewMQTT(id, broker, topic),
 	}
-	mb, err := NewMessangerBase(id, topic...)
+	mb, err := NewMessangerBase(id, topic)
 	if err == nil {
 		m.MessangerBase = mb
 	}
