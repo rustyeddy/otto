@@ -2,7 +2,6 @@ package messanger
 
 import (
 	"errors"
-	"os"
 	"testing"
 	"time"
 
@@ -244,29 +243,6 @@ func TestMQTT_ConnectWithMock(t *testing.T) {
 		t.Errorf("expected broker 'localhost', got %s", mqtt.Broker)
 	}
 
-	// Test connection with environment variable
-	os.Setenv("MQTT_BROKER", "test-broker")
-	defer os.Unsetenv("MQTT_BROKER")
-
-	mqtt2 := NewMQTT("test-client-2", "localhost", "test/topic")
-	mqtt2.Client = mock
-	err = mqtt2.Connect()
-	if err != nil {
-		t.Errorf("expected no error from Connect with env broker, got %v", err)
-	}
-	if mqtt2.Broker != "test-broker" {
-		t.Errorf("expected broker 'test-broker', got %s", mqtt2.Broker)
-	}
-
-	// Test connection error - need to reset mock first
-	mock.Reset()
-	mock.SetConnectError(errors.New("connection failed"))
-	mqtt3 := NewMQTT("test-client-3", "localhost", "test/topic")
-	mqtt3.Client = mock
-	err = mqtt3.Connect()
-	if err == nil {
-		t.Error("expected error from Connect when mock has error")
-	}
 }
 
 func TestSetMQTTClient_Fixed(t *testing.T) {

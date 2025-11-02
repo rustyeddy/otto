@@ -29,6 +29,24 @@ func (m *MessangerMQTT) ID() string {
 	return m.MessangerBase.ID()
 }
 
+// Connect to MQTT broker, if successful subscribe to
+// any existing subscriptions
+func (m *MessangerMQTT) Connect() error {
+	err := m.MQTT.Connect()
+	if err != nil {
+		return err
+	}
+
+	for topic, handler := range m.subs {
+		err = m.MQTT.Subscribe(topic, handler)
+		if err != nil {
+			slog.Error("MQTT failed to subscribe", "topic", topic, "error", err)
+		}
+	}
+
+	return err
+}
+
 // Subscribe will literally subscribe to the provide MQTT topic with
 // the specified message handler.
 func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error {

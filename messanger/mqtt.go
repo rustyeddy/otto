@@ -28,7 +28,7 @@ type MQTT struct {
 func NewMQTT(id string, broker string, topics string) *MQTT {
 	mqtt := &MQTT{
 		id:     id,
-		Broker: "localhost",
+		Broker: broker,
 	}
 	return mqtt
 }
@@ -85,12 +85,13 @@ func (m *MQTT) Connect() error {
 		gomqtt.ERROR = log.Default()
 	}
 
-	broker := os.Getenv("MQTT_BROKER")
-	if broker != "" {
-		m.Broker = broker
-	} else {
+	if m.Broker == "" {
+		m.Broker = os.Getenv("MQTT_BROKER")
+	}
+	if m.Broker == "" {
 		m.Broker = "localhost"
 	}
+
 	url := "tcp://" + m.Broker + ":1883"
 	opts := gomqtt.NewClientOptions()
 	opts.AddBroker(url)
