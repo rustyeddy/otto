@@ -27,6 +27,11 @@ func (m *MessangerLocal) ID() string {
 	return m.MessangerBase.ID()
 }
 
+// Connect to satisfy Messanger interface this is a no-op
+func (m *MessangerLocal) Connect() error {
+	return nil
+}
+
 // Subscribe stores subscription handlers locally (base implementation already handles it).
 func (m *MessangerLocal) Subscribe(topic string, handler MsgHandler) error {
 	root.insert(topic, handler)

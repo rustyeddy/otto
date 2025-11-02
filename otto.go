@@ -186,66 +186,65 @@ func (o *OttO) Init() {
 	}
 	o.done = make(chan any)
 
+	if o.StationManager != nil || o.Station != nil || o.Messanger != nil {
+		str := fmt.Sprintf("OttO Init has been called twice, one of these is not nil\n") +
+			fmt.Sprintf("\tStationManager (%p)\n", o.StationManager) +
+			fmt.Sprintf("\tStation (%p)\n", o.Station) +
+			fmt.Sprintf("\tServer (%p)\n", o.Server) +
+			fmt.Sprintf("\tMessanger (%p)\n", o.Messanger)
+		panic(str)
+	}
+
 	var err error
-	if o.Messanger == nil {
-		// Try to create appropriate messanger based on configuration
-		if o.UseLocal {
-			slog.Info("Using local messaging (no MQTT)")
+	o.StationManager = station.GetStationManager()
+	o.Server = server.GetServer()
+	o.Station, err = o.StationManager.Add(o.Name)
+	if err != nil {
+		slog.Error("Unable to create station")
+		return
+	}
+	// Initialzie the local station
+	o.Station.Init()
+
+	// Try to create appropriate messanger based on configuration
+	if o.UseLocal {
+		slog.Info("Using local messaging (no MQTT)")
+		o.Messanger, err = messanger.NewMessangerLocal("otto")
+	} else {
+
+		// Set the MQTT_BROKER environment variable for the messanger
+		o.MQTTBroker = os.Getenv("MQTT_BROKER")
+		if o.MQTTBroker == "" {
+			o.MQTTBroker = "test.mosquitto.org"
+		}
+
+		slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
+		o.Messanger, err = messanger.NewMessangerMQTT("otto", o.MQTTBroker)
+
+		if err != nil {
+			slog.Warn("MQTT connection failed, falling back to local messaging", "error", err, "broker", o.MQTTBroker)
 			o.Messanger, err = messanger.NewMessangerLocal("otto")
-		} else {
-			// Set default MQTT broker if not specified
-			if o.MQTTBroker == "" {
-				o.MQTTBroker = "test.mosquitto.org"
-			}
-
-			// Set the MQTT_BROKER environment variable for the messanger
-			o.MQTTBroker = os.Getenv("MQTT_BROKER")
-
-			slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
-			o.Messanger, err = messanger.NewMessangerMQTT("otto", o.MQTTBroker)
-
 			if err != nil {
-				slog.Warn("MQTT connection failed, falling back to local messaging", "error", err, "broker", o.MQTTBroker)
-				o.Messanger, err = messanger.NewMessangerLocal("otto")
-				if err != nil {
-					slog.Error("Failed to create local messenger", "error", err)
-					return
-				}
-			} else {
-				slog.Info("MQTT connection successful", "broker", o.MQTTBroker)
+				slog.Error("Failed to create local messenger", "error", err)
+				return
 			}
+		} else {
+			slog.Info("MQTT connection successful", "broker", o.MQTTBroker)
 		}
-
-		if err != nil {
-			slog.Error("Failed to create messenger", "error", err)
-			return
-		}
-
-		ms := messanger.GetMsgSaver()
-		ms.Saving = true
 	}
+	ms := messanger.GetMsgSaver()
+	ms.Saving = true
 
-	if o.StationManager == nil {
-		o.StationManager = station.GetStationManager()
-	}
-
-	if o.Station == nil {
-		o.Station, err = o.StationManager.Add(o.Name)
-		if err != nil {
-			slog.Error("Unable to create station")
-			return
-		}
-		// Initialzie the local station
-		o.Station.Init()
-	}
-
-	if o.Server == nil {
-		o.Server = server.GetServer()
-	}
 }
 
 func (o *OttO) Start() {
-	go o.Server.Start(o.done)
+	if o.Messanger != nil {
+		go o.Messanger.Connect()
+	}
+
+	if o.Server != nil {
+		go o.Server.Start(o.done)
+	}
 
 	if o.StationManager != nil {
 		go o.StationManager.Start()

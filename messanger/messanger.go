@@ -62,6 +62,7 @@ type MessageHandler interface {
 // Messanger is the interface that all messangers must implement
 type Messanger interface {
 	ID() string
+	Connect() error
 	Subscribe(topic string, handler MsgHandler) error
 
 	// Publish methods should return an error when something goes wrong.
