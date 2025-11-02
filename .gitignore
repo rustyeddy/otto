@@ -18,6 +18,7 @@ iote
 examples/examples
 examples/heater/heater
 examples/mock/mock
+examples/logging_demo
 otto/otto
 mock/mock
 gpio/gpio

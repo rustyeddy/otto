@@ -6,6 +6,9 @@ all: test $(SUBDIRS)
 init:
 	git update --init 
 
+vet:
+	go vet
+
 test:
 	rm -f cover.out
 	go test -coverprofile=cover.out -cover ./...
@@ -20,9 +23,5 @@ coverage: test
 html: test
 	rm -f coverage.html
 	go tool cover -html=cover.out -o coverage.html
-
-# go test -coverprofile=./cover.out ./...
-# go tool cover -func=cover.out
-# go tool cover -html=cover.out
 
 .PHONY: all test build $(SUBDIRS)
