@@ -26,11 +26,6 @@ type StationMetrics struct {
 	LastError  time.Time `json:"last_error"`
 	ErrorRate  float64   `json:"error_rate"` // errors per minute
 
-	// Device metrics
-	DeviceCount      int    `json:"device_count"`
-	ActiveDevices    int    `json:"active_devices"`
-	DeviceErrorCount uint64 `json:"device_error_count"`
-
 	// Network metrics
 	NetworkInterfaceCount int `json:"network_interface_count"`
 	IPAddressCount        int `json:"ip_address_count"`
@@ -166,16 +161,6 @@ func (m *StationMetrics) RecordHealthCheck(healthy bool) {
 	}
 }
 
-// UpdateDeviceMetrics updates device-related metrics
-func (m *StationMetrics) UpdateDeviceMetrics(deviceCount, activeDevices int, deviceErrors uint64) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.DeviceCount = deviceCount
-	m.ActiveDevices = activeDevices
-	m.DeviceErrorCount = deviceErrors
-}
-
 // UpdateNetworkMetrics updates network-related metrics
 func (m *StationMetrics) UpdateNetworkMetrics(interfaceCount, ipCount int) {
 	m.mu.Lock()
@@ -208,9 +193,6 @@ func (m *StationMetrics) GetMetrics() StationMetrics {
 		ErrorCount:            m.ErrorCount,
 		LastError:             m.LastError,
 		ErrorRate:             m.ErrorRate,
-		DeviceCount:           m.DeviceCount,
-		ActiveDevices:         m.ActiveDevices,
-		DeviceErrorCount:      m.DeviceErrorCount,
 		NetworkInterfaceCount: m.NetworkInterfaceCount,
 		IPAddressCount:        m.IPAddressCount,
 		StartTime:             m.StartTime,

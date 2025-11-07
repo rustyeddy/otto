@@ -24,6 +24,7 @@ type Station struct {
 	Local      bool          `json:"local"`
 	Ifaces     []*Iface      `json:"iface"`
 
+	*DeviceManager
 	messanger.Messanger `json:"-"`
 
 	errq   chan error
@@ -38,10 +39,6 @@ type Station struct {
 
 	// Add metrics
 	Metrics *StationMetrics `json:"metrics"`
-
-	// Internal generic device store for tests and loose coupling
-	devicesMu sync.RWMutex `json:"-"`
-	devices   map[string]any
 }
 
 type Iface struct {
@@ -72,7 +69,7 @@ func newStation(id string) (*Station, error) {
 		errq:       make(chan error, 10),
 		done:       make(chan bool, 1),
 		Metrics:    NewStationMetrics(),
-		devices:    make(map[string]any),
+		DeviceManager: NewDeviceManager(),
 	}
 
 	// Use the workspace-wide topic name from utils for station topics
@@ -286,39 +283,6 @@ func (st *Station) Stop() {
 	if st.Messanger != nil {
 		st.Messanger.Close()
 	}
-}
-
-// AddDevice will do what it says by placing the device with a given
-// name in the stations device manager. This library is basically a
-// key value store, anything supporting the ID Interface:
-// i.e. ID() string.
-func (s *Station) AddDevice(d interface{ ID() string }) {
-	if d == nil {
-		return
-	}
-	name := d.ID()
-
-	// store generically
-	s.devicesMu.Lock()
-	if s.devices == nil {
-		s.devices = make(map[string]any)
-	}
-	s.devices[name] = d
-	devCount := len(s.devices)
-	s.devicesMu.Unlock()
-
-	// Update device metrics
-	if s.Metrics != nil {
-		s.Metrics.UpdateDeviceMetrics(devCount, devCount, s.Metrics.DeviceErrorCount)
-	}
-	// TODO: Track active vs total
-}
-
-// GetDevice returns the device (anythig supporting the Name (Name()) interface)
-func (s *Station) GetDevice(name string) any {
-	s.devicesMu.RLock()
-	defer s.devicesMu.RUnlock()
-	return s.devices[name]
 }
 
 // Create an endpoint for this device to be queried.

@@ -1,4 +1,4 @@
-package otto
+package station
 
 import (
 	"encoding/json"
@@ -61,7 +61,9 @@ func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
 	})
 
 	md.Messanger.Subscribe(topic, handler)
-} // PubData publishes data for this device
+}
+
+// PubData publishes data for this device
 func (md *ManagedDevice) PubData(data interface{}) {
 	if md.Messanger == nil {
 		slog.Warn("No messanger available for device", "device", md.Name)
