@@ -8,8 +8,7 @@ import (
 
 func TestMQTTSubscribeAndConnect(t *testing.T) {
 
-	m, err := NewMessangerMQTT("testid", "localhost")
-	assert.NoError(t, err)
+	m := NewMessangerMQTT("testid", "mock")
 	assert.NotNil(t, m)
 
 	var sub1, sub2, sub3 []byte

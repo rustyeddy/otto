@@ -12,8 +12,7 @@ import (
 )
 
 func TestMessangerBaseServeHTTP(t *testing.T) {
-	mb, err := NewMessangerBase("test-id")
-	require.NoError(t, err)
+	mb := NewMessangerBase("test-id")
 
 	topic := "topic1"
 	mb.subs[topic] = func(msg *Msg) error { return nil }
@@ -78,8 +77,7 @@ func TestNewMessanger(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := NewMessanger(tt.id)
-			assert.NoError(t, err)
+			m := NewMessanger(tt.id)
 			assert.NotNil(t, m)
 			assert.Equal(t, tt.expected, m.ID())
 		})
@@ -88,8 +86,7 @@ func TestNewMessanger(t *testing.T) {
 
 func TestGetMessanger(t *testing.T) {
 	// Ensure singleton behavior
-	m1, err := NewMessanger("local")
-	assert.NoError(t, err)
+	m1 := NewMessanger("local")
 	m2 := GetMessanger()
 
 	if m1 != m2 {
@@ -98,8 +95,7 @@ func TestGetMessanger(t *testing.T) {
 }
 
 func TestMessangerBaseError(t *testing.T) {
-	mb, err := NewMessangerBase("test-id")
-	assert.NoError(t, err)
+	mb  := NewMessangerBase("test-id")
 	if err := mb.Error(); err != nil {
 		t.Errorf("Expected nil error, got %v", err)
 	}

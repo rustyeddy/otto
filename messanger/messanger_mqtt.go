@@ -14,15 +14,16 @@ type MessangerMQTT struct {
 }
 
 // NewMessangerMQTT creates a new MQTT messanger instance.
-func NewMessangerMQTT(id string, broker string) (*MessangerMQTT, error) {
-	m := &MessangerMQTT{
-		MQTT: NewMQTT(id, broker, ""),
+func NewMessangerMQTT(id string, broker string) (*MessangerMQTT) {
+	m := NewMQTT(id, broker, "")
+	if broker == "mock" {
+		m.SetMQTTClient(NewMockClient())
 	}
-	mb, err := NewMessangerBase(id)
-	if err == nil {
-		m.MessangerBase = mb
+	mqtt := &MessangerMQTT{
+		MQTT: m,
+		MessangerBase: NewMessangerBase(id),
 	}
-	return m, err
+	return mqtt
 }
 
 func (m *MessangerMQTT) ID() string {

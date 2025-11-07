@@ -30,7 +30,7 @@ func NewDeviceManager() *DeviceManager {
 // name in the stations device manager. This library is basically a
 // key value store, anything supporting the ID Interface:
 // i.e. ID() string.
-func (dm *DeviceManager) AddDevice(d interface{ ID() string }) {
+func (dm *DeviceManager) Register(d interface{ ID() string }) {
 	if d == nil {
 		return
 	}
@@ -44,20 +44,30 @@ func (dm *DeviceManager) AddDevice(d interface{ ID() string }) {
 
 	// Update device metrics
 	if dm.Metrics != nil {
-		dm.Metrics.UpdateDeviceMetrics(devCount, devCount, dm.Metrics.DeviceErrorCount)
+		dm.Metrics.UpdateMetrics(devCount, devCount, dm.Metrics.DeviceErrorCount)
 	}
 	// TODO: Track active vs total
 }
 
+func (dm *DeviceManager) Remove(id string) {
+	d := dm.Get(id)
+	if d == nil {
+		return
+	}
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+	delete(dm.devices, id)
+}
+
 // GetDevice returns the device (anythig supporting the Name (Name()) interface)
-func (dm *DeviceManager) GetDevice(name string) any {
+func (dm *DeviceManager) Get(name string) any {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 	return dm.devices[name]
 }
 
 // UpdateDeviceMetrics updates device-related metrics
-func (dm *DeviceMetrics) UpdateDeviceMetrics(deviceCount, activeDevices int, deviceErrors uint64) {
+func (dm *DeviceMetrics) UpdateMetrics(deviceCount, activeDevices int, deviceErrors uint64) {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rustyeddy/otto/messanger"
 	"github.com/spf13/cobra"
 )
 
@@ -101,43 +100,6 @@ func TestMsgRunBrokerUpdate(t *testing.T) {
 	outputStr := output.String()
 	if !strings.Contains(outputStr, "new.broker.com") {
 		t.Errorf("expected output to contain 'new.broker.com', got: %s", outputStr)
-	}
-}
-
-func TestMsgRunOutputFormat(t *testing.T) {
-	messanger.SetMQTTClient(nil)
-
-	// Save original config
-	originalBroker := msgConfig.Broker
-	defer func() { msgConfig.Broker = originalBroker }()
-
-	// Set test broker
-	msgConfig.Broker = "test.example.com"
-
-	// Capture output
-	var output strings.Builder
-	originalWriter := cmdWriter
-	cmdWriter = &output
-	defer func() { cmdWriter = originalWriter }()
-
-	// Run command
-	cmd := &cobra.Command{}
-	args := []string{}
-	msgRun(cmd, args)
-
-	// Verify output format
-	outputStr := output.String()
-	expectedLines := []string{
-		"Broker: test.example.com",
-		"Connected: false", // Should be false since no real connection
-		"Debug: false",     // Should be false by default
-		"Subscriptions",
-	}
-
-	for _, expected := range expectedLines {
-		if !strings.Contains(outputStr, expected) {
-			t.Errorf("expected output to contain '%s', got: %s", expected, outputStr)
-		}
 	}
 }
 

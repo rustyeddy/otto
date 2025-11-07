@@ -139,6 +139,10 @@ func NewMockClient() *MockClient {
 	}
 }
 
+func (m *MockClient) ID() string {
+	return "mock"
+}
+
 // Connection methods
 func (m *MockClient) IsConnected() bool {
 	m.mu.RLock()

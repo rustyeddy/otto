@@ -73,20 +73,13 @@ type Messanger interface {
 	Close()
 }
 
-func NewMessanger(id string) (Messanger, error) {
-	var err error
-
-	messanger, err = NewMessangerLocal(id)
-	if err != nil {
-		slog.Error("Failed to create local messanger, trying MQTT", "error", err)
-		return nil, err
-	}
-
+func NewMessanger(id string) (Messanger) {
+	messanger = NewMessangerLocal(id)
 	if messanger != nil && messanger.ID() != id {
 		slog.Warn("Messanger already initialized with a different ID",
 			"existing", messanger.ID(), "requested", id)
 	}
-	return messanger, err
+	return messanger
 }
 
 // GetMessangerInstance returns the singleton instance of MessangerBase.
@@ -106,12 +99,12 @@ type MessangerBase struct {
 	Published int
 }
 
-func NewMessangerBase(id string) (*MessangerBase, error) {
+func NewMessangerBase(id string) (*MessangerBase) {
 	mb := &MessangerBase{
 		id:   id,
 		subs: make(map[string]MsgHandler),
 	}
-	return mb, nil
+	return mb
 
 }
 

@@ -209,7 +209,7 @@ func (o *OttO) Init() {
 	// Try to create appropriate messanger based on configuration
 	if o.UseLocal {
 		slog.Info("Using local messaging (no MQTT)")
-		o.Messanger, err = messanger.NewMessangerLocal("otto")
+		o.Messanger = messanger.NewMessangerLocal("otto")
 	} else {
 
 		// Set the MQTT_BROKER environment variable for the messanger
@@ -219,18 +219,7 @@ func (o *OttO) Init() {
 		}
 
 		slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
-		o.Messanger, err = messanger.NewMessangerMQTT("otto", o.MQTTBroker)
-
-		if err != nil {
-			slog.Warn("MQTT connection failed, falling back to local messaging", "error", err, "broker", o.MQTTBroker)
-			o.Messanger, err = messanger.NewMessangerLocal("otto")
-			if err != nil {
-				slog.Error("Failed to create local messenger", "error", err)
-				return
-			}
-		} else {
-			slog.Info("MQTT connection successful", "broker", o.MQTTBroker)
-		}
+		o.Messanger = messanger.NewMessangerMQTT("otto", o.MQTTBroker)
 	}
 	ms := messanger.GetMsgSaver()
 	ms.Saving = true
@@ -268,7 +257,7 @@ func (o *OttO) Stop() {
 func (o *OttO) AddManagedDevice(name string, device any, topic string) *station.ManagedDevice {
 	md := station.NewManagedDevice(name, device, topic, o.Messanger)
 	if o.Station != nil {
-		o.Station.AddDevice(md)
+		o.Station.Register(md)
 	}
 	return md
 }
@@ -278,7 +267,7 @@ func (o *OttO) GetManagedDevice(name string) *station.ManagedDevice {
 	if o.Station == nil {
 		return nil
 	}
-	device := o.Station.GetDevice(name)
+	device := o.Station.Get(name)
 	if md, ok := device.(*station.ManagedDevice); ok {
 		return md
 	}

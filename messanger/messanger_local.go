@@ -14,13 +14,12 @@ type MessangerLocal struct {
 }
 
 // NewMessangerLocal creates a new local messanger instance.
-func NewMessangerLocal(id string) (*MessangerLocal, error) {
-	m := &MessangerLocal{}
-	mb, err := NewMessangerBase(id)
-	if err == nil {
-		m.MessangerBase = mb
+func NewMessangerLocal(id string) (*MessangerLocal) {
+	m := &MessangerLocal{
+		MessangerBase: NewMessangerBase(id),
 	}
-	return m, err
+
+	return m
 }
 
 func (m *MessangerLocal) ID() string {

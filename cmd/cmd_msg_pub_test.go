@@ -10,8 +10,7 @@ import (
 
 func TestRunMQTTPub(t *testing.T) {
 	// Mock the messanger.GetMQTT and its Publish method
-	mqtt := messanger.GetMQTT()
-	messanger.SetMQTTClient(messanger.NewMockClient())
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Define test cases
 	tests := []struct {
@@ -24,7 +23,6 @@ func TestRunMQTTPub(t *testing.T) {
 		{"NoArgs", []string{}, true},
 	}
 
-	messanger.SetMQTTClient(messanger.NewMockClient())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := &cobra.Command{}

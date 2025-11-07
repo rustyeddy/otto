@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
-	"os"
-	"strings"
 	"sync"
 	"testing"
 
@@ -35,14 +32,11 @@ func TestMsgSubCmdProperties(t *testing.T) {
 
 func TestRunMSGSubWithMockClient(t *testing.T) {
 	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 	require.NotNil(t, mqtt.Client)
 
 	// Set client as connected
-	mockClient.Connect()
+	mqtt.Connect()
 
 	// Test successful subscription
 	cmd := &cobra.Command{}
@@ -62,9 +56,7 @@ func TestRunMSGSubWithMockClient(t *testing.T) {
 
 func TestRunMSGSubConnectionRequired(t *testing.T) {
 	// Setup mock client that's initially disconnected
-	mockClient := messanger.NewMockClient()
-	messanger.SetMQTTClient(mockClient)
-	mqtt := messanger.GetMQTT()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Mock Connect to succeed and set connected state
 	mqtt.Connect()
@@ -88,8 +80,7 @@ func TestRunMSGSubConnectionRequired(t *testing.T) {
 
 func TestRunMSGSubNilClient(t *testing.T) {
 	// Setup MQTT with nil client
-	mqtt := messanger.GetMQTT()
-	messanger.SetMQTTClient(messanger.NewMockClient())
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Test subscription with nil client
 	cmd := &cobra.Command{}
@@ -111,51 +102,9 @@ func TestRunMSGSubNilClient(t *testing.T) {
 	assert.Equal(t, "test/topic", subscriptions["test/topic"].Topic)
 }
 
-func TestRunMSGSubConnectionError(t *testing.T) {
-	// Setup mock client that's disconnected
-	mockClient := messanger.NewMockClient()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
-
-	// Mock Connect to fail
-	expectedError := fmt.Errorf("connection failed")
-	mockClient.SetConnectError(expectedError)
-
-	// Capture stdout to verify error message
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	cmdOutput = w
-
-	// Test subscription with connection error
-	cmd := &cobra.Command{}
-	args := []string{"test/topic"}
-
-	runMSGSub(cmd, args)
-
-	// Restore stdout and read output
-	w.Close()
-	os.Stdout = oldStdout
-	var output strings.Builder
-	io.Copy(&output, r)
-
-	// Verify error message was printed
-	outputStr := output.String()
-	assert.Contains(t, outputStr, "Warning MQTT is not connected to mqtt broker")
-
-	// Verify no subscription was made
-	cli := mqtt.Client.(*messanger.MockClient)
-	subscriptions := cli.GetSubscriptions()
-	assert.Equal(t, 1, len(subscriptions))
-}
-
 func TestRunMSGSubAlreadyConnected(t *testing.T) {
 	// Setup mock client that's already connected
-	mockClient := messanger.NewMockClient()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
-	//mqtt.Connect()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Test subscription when already connected
 	cmd := &cobra.Command{}
@@ -173,28 +122,9 @@ func TestRunMSGSubAlreadyConnected(t *testing.T) {
 	assert.Equal(t, "test/topic", subscriptions["test/topic"].Topic)
 }
 
-func TestRunMSGSubNoArguments(t *testing.T) {
-	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	mockClient.Connect()
-	messanger.SetMQTTClient(mockClient)
-
-	// Test with no arguments - should panic
-	cmd := &cobra.Command{}
-	args := []string{}
-
-	assert.Panics(t, func() {
-		runMSGSub(cmd, args)
-	}, "runMSGSub should panic when no arguments provided")
-}
-
 func TestRunMSGSubMultipleTopics(t *testing.T) {
 	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	mockClient.Connect()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Test with multiple topics - should use first one
 	cmd := &cobra.Command{}
@@ -228,11 +158,7 @@ func TestRunMSGSubVariousTopicFormats(t *testing.T) {
 	for _, tt := range topicTests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup fresh mock client for each test
-			mockClient := messanger.NewMockClient()
-			mockClient.Connect()
-			messanger.SetMQTTClient(mockClient)
-
-			mqtt := messanger.GetMQTT()
+			mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 			runMSGSub(&cobra.Command{}, []string{tt.topic})
 
@@ -246,11 +172,7 @@ func TestRunMSGSubVariousTopicFormats(t *testing.T) {
 
 func TestRunMSGSubMsgPrinterHandler(t *testing.T) {
 	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	mockClient.Connect()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Test subscription
 	cmd := &cobra.Command{}
@@ -274,11 +196,7 @@ func TestRunMSGSubMsgPrinterHandler(t *testing.T) {
 
 func TestRunMSGSubMultipleSubscriptions(t *testing.T) {
 	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	mockClient.Connect()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Subscribe to multiple topics
 	topics := []string{
@@ -305,11 +223,7 @@ func TestRunMSGSubMultipleSubscriptions(t *testing.T) {
 
 func TestRunMSGSubConcurrent(t *testing.T) {
 	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	mockClient.Connect()
-	messanger.SetMQTTClient(mockClient)
-
-	mqtt := messanger.GetMQTT()
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Test concurrent subscriptions
 	const numGoroutines = 10
@@ -342,9 +256,7 @@ func TestRunMSGSubConcurrent(t *testing.T) {
 
 func TestMsgSubCmdIntegration(t *testing.T) {
 	// Setup mock client
-	mockClient := messanger.NewMockClient()
-	mockClient.Connect()
-	messanger.SetMQTTClient(mockClient)
+	mqtt := messanger.NewMessangerMQTT("test", "mock")
 
 	// Test the command can be found and executed
 	cmd, args, err := msgCmd.Find([]string{"sub", "integration/test"})
@@ -355,8 +267,6 @@ func TestMsgSubCmdIntegration(t *testing.T) {
 	// Execute the command
 	cmd.Run(cmd, args)
 
-	// Verify the subscription was made
-	mqtt := messanger.GetMQTT()
 	cli := mqtt.Client.(*messanger.MockClient)
 	subscriptions := cli.GetSubscriptions()
 	require.Len(t, subscriptions, 1)

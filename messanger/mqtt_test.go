@@ -245,23 +245,6 @@ func TestMQTT_ConnectWithMock(t *testing.T) {
 
 }
 
-func TestSetMQTTClient_Fixed(t *testing.T) {
-	// Test that SetMQTTClient works with global state properly
-	mock := NewMockClient()
-
-	// SetMQTTClient should work even when global mqtt is nil
-	mqttClient := SetMQTTClient(mock)
-	if mqttClient == nil {
-		t.Fatal("SetMQTTClient returned nil")
-	}
-	if mqttClient.Client != mock {
-		t.Error("SetMQTTClient did not set the mock client")
-	}
-	if mqttClient.ID() != "default" {
-		t.Errorf("expected default ID 'default', got %s", mqttClient.ID())
-	}
-}
-
 func TestGetMQTT_Fixed(t *testing.T) {
 	// Reset global state
 	mqtt = nil
@@ -465,9 +448,7 @@ func TestMQTT_IsConnectedEdgeCases(t *testing.T) {
 
 func TestMessangerMQTT_NewAndID(t *testing.T) {
 	// Test MessangerMQTT creation and ID method (currently 0% coverage)
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
-	assert.NoError(t, err)
-
+	mqttMessanger := NewMessangerMQTT("mqtt-test", "localhost")
 	if mqttMessanger == nil {
 		t.Fatal("NewMessangerMQTT returned nil")
 	}
@@ -488,8 +469,7 @@ func TestMessangerMQTT_NewAndID(t *testing.T) {
 func TestMessangerMQTT_Subscribe(t *testing.T) {
 	// Test Subscribe method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
-	assert.NoError(t, err)
+	mqttMessanger := NewMessangerMQTT("mqtt-test", "localhost")
 	mqttMessanger.MQTT.Client = mock
 
 	var receivedMsg *Msg
@@ -498,7 +478,7 @@ func TestMessangerMQTT_Subscribe(t *testing.T) {
 		return nil
 	}
 
-	err = mqttMessanger.Subscribe("test/topic", handler)
+	err := mqttMessanger.Subscribe("test/topic", handler)
 	if err != nil {
 		t.Errorf("expected no error from Subscribe, got %v", err)
 	}
@@ -527,8 +507,7 @@ func TestMessangerMQTT_Subscribe(t *testing.T) {
 func TestMessangerMQTT_Pub(t *testing.T) {
 	// Test Pub method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
-	assert.NoError(t, err)
+	mqttMessanger := NewMessangerMQTT("mqtt-test", "localhost")
 	mqttMessanger.MQTT.Client = mock
 
 	mqttMessanger.Pub("test/topic", "test message")
@@ -554,8 +533,7 @@ func TestMessangerMQTT_Pub(t *testing.T) {
 func TestMessangerMQTT_PubMsg(t *testing.T) {
 	// Test PubMsg method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
-	assert.NoError(t, err)
+	mqttMessanger := NewMessangerMQTT("mqtt-test", "localhost")
 	mqttMessanger.MQTT.Client = mock
 
 	msg := NewMsg("test/topic", []byte("test data"), "test-source")
@@ -578,8 +556,7 @@ func TestMessangerMQTT_PubMsg(t *testing.T) {
 func TestMessangerMQTT_Error(t *testing.T) {
 	// Test Error method (currently 0% coverage)
 	mock := NewMockClient()
-	mqttMessanger, err := NewMessangerMQTT("mqtt-test", "localhost")
-	assert.NoError(t, err)
+	mqttMessanger := NewMessangerMQTT("mqtt-test", "localhost")
 	mqttMessanger.MQTT.Client = mock
 
 	// Initially no error
@@ -612,7 +589,7 @@ func TestMsgPrinter_MsgHandler(t *testing.T) {
 	printer.MsgHandler(msg)
 }
 
-func TestMockClient_UtilityFunctions(t *testing.T) {
+func TestMockClientUtilityFunctions(t *testing.T) {
 	// Test uncovered mock utility functions
 	mock := NewMockClient()
 

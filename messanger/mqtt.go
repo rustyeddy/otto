@@ -26,7 +26,7 @@ type MQTT struct {
 
 // NewMQTT creates a new instance of the MQTT client type.
 func NewMQTT(id string, broker string, topics string) *MQTT {
-	mqtt := &MQTT{
+	mqtt = &MQTT{
 		id:     id,
 		Broker: broker,
 	}
@@ -36,15 +36,9 @@ func NewMQTT(id string, broker string, topics string) *MQTT {
 // SetMQTTClient allows a mock client to be used rather than an
 // actual MQTT client to allow for Mocking MQTT connections if
 // desired
-func SetMQTTClient(c gomqtt.Client) *MQTT {
-	if mqtt == nil {
-		mqtt = &MQTT{
-			id:     "default",
-			Broker: "localhost",
-		}
-	}
-	mqtt.Client = c
-	return mqtt
+func (m *MQTT) SetMQTTClient(c gomqtt.Client) *MQTT {
+	m.Client = c
+	return m
 }
 
 // GetMQTT returns the singleton instance of the MQTT client, the
