@@ -59,16 +59,16 @@ func (m *MessangerMQTT) Subscribe(topic string, handler MsgHandler) error {
 // Now returns an error to indicate publish failures.
 func (m *MessangerMQTT) Pub(topic string, value any) error {
 	m.Published++
+
 	// If underlying Publish has an error return, prefer to return that.
 	// Many MQTT publish helper implementations return nothing; keep compatibility
 	// by ignoring a return if none exists. If the underlying Publish returns an error,
 	// attempt to return it (best-effort).
-	if m.MQTT != nil {
-		// If underlying Publish has an error signature, call and return it.
-		_ = m.MQTT.Publish(topic, value)
-	} else {
-		// best-effort: do nothing
+	if m.MQTT == nil {
+		return nil
 	}
+		// If underlying Publish has an error signature, call and return it.
+	_ = m.MQTT.Publish(topic, value)
 	return nil
 }
 

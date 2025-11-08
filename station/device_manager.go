@@ -30,7 +30,7 @@ func NewDeviceManager() *DeviceManager {
 // name in the stations device manager. This library is basically a
 // key value store, anything supporting the ID Interface:
 // i.e. ID() string.
-func (dm *DeviceManager) Register(d interface{ ID() string }) {
+func (dm *DeviceManager) Register(d *ManagedDevice) {
 	if d == nil {
 		return
 	}

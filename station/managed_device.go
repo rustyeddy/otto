@@ -19,19 +19,15 @@ type ManagedDevice struct {
 	Name   string
 	Device any // The underlying device (from devices package)
 	Topic  string
-
-	messanger.Messanger
 }
 
 // NewManagedDevice creates a new managed device with messaging capabilities
-func NewManagedDevice(name string, device any, topic string, msgr messanger.Messanger) *ManagedDevice {
+func NewManagedDevice(name string, device any, topic string) *ManagedDevice {
 	md := &ManagedDevice{
 		Name:      name,
 		Device:    device,
 		Topic:     topic,
-		Messanger: msgr,
 	}
-
 	return md
 }
 
@@ -42,12 +38,13 @@ func (md *ManagedDevice) ID() string {
 
 // Subscribe sets up a subscription for this device
 func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
-	if md.Messanger == nil {
+	messanger := messanger.GetMessanger()
+	if messanger == nil {
 		slog.Warn("No messanger available for device", "device", md.Name)
 		return
 	}
 
-	handler := messanger.MsgHandler(func(msg *messanger.Msg) error {
+	handler := func(msg *messanger.Msg) error {
 		// Parse the message and call the callback
 		var val bool
 		dataStr := string(msg.Data)
@@ -58,14 +55,15 @@ func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
 		}
 		callback(val)
 		return nil
-	})
+	}
 
-	md.Messanger.Subscribe(topic, handler)
+	messanger.Subscribe(topic, handler)
 }
 
 // PubData publishes data for this device
 func (md *ManagedDevice) PubData(data interface{}) {
-	if md.Messanger == nil {
+	messanger := messanger.GetMessanger()
+	if messanger == nil {
 		slog.Warn("No messanger available for device", "device", md.Name)
 		return
 	}
@@ -93,7 +91,7 @@ func (md *ManagedDevice) PubData(data interface{}) {
 		payload = string(jsonData)
 	}
 
-	md.Messanger.Pub(md.Topic, payload)
+	messanger.Pub(md.Topic, payload)
 }
 
 // ReadPub reads the device value and publishes it
