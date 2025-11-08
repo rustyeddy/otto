@@ -127,6 +127,7 @@ turning a relay on or off.
 package otto
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -160,6 +161,7 @@ type OttO struct {
 	UseLocal   bool   // Force use of local messaging
 	hub        bool   // maybe hub should be a different struct?
 	done       chan any
+	brokerShutdown func(context.Context) error // graceful shutdown for embedded broker
 }
 
 // global variables and structures
@@ -187,7 +189,7 @@ func (o *OttO) Init() {
 	o.done = make(chan any)
 
 	if o.StationManager != nil || o.Station != nil || o.Messanger != nil {
-		str := fmt.Sprintf("OttO Init has been called twice, one of these is not nil\n") +
+		str := "OttO Init has been called twice, one of these is not nil\n" +
 			fmt.Sprintf("\tStationManager (%p)\n", o.StationManager) +
 			fmt.Sprintf("\tStation (%p)\n", o.Station) +
 			fmt.Sprintf("\tServer (%p)\n", o.Server) +
@@ -206,7 +208,15 @@ func (o *OttO) Init() {
 	// Initialzie the local station
 	o.Station.Init()
 
-	// Try to create appropriate messanger based on configuration
+	// Start embedded MQTT broker (optional) and store shutdown func.
+	if true {
+		if shutdown, err := messanger.StartBroker(context.Background()); err != nil {
+			slog.Error("Failed to start embedded MQTT broker", "error", err)
+		} else {
+			o.brokerShutdown = shutdown
+		}
+	}
+
 	if o.UseLocal {
 		slog.Info("Using local messaging (no MQTT)")
 		o.Messanger = messanger.NewMessangerLocal("otto")
@@ -251,6 +261,10 @@ func (o *OttO) Stop() {
 	if o.Messanger != nil {
 		o.Messanger.Close()
 	}
+
+	if o.brokerShutdown != nil {
+		_ = o.brokerShutdown(context.Background())
+	}
 }
 
 // AddManagedDevice creates a managed device wrapper and adds it to the station
@@ -273,4 +287,3 @@ func (o *OttO) GetManagedDevice(name string) *station.ManagedDevice {
 	}
 	return nil
 }
-
