@@ -255,7 +255,7 @@ func (o *OttO) Stop() {
 
 // AddManagedDevice creates a managed device wrapper and adds it to the station
 func (o *OttO) AddManagedDevice(name string, device any, topic string) *station.ManagedDevice {
-	md := station.NewManagedDevice(name, device, topic, o.Messanger)
+	md := station.NewManagedDevice(name, device, topic)
 	if o.Station != nil {
 		o.Station.Register(md)
 	}

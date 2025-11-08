@@ -38,13 +38,13 @@ func (md *ManagedDevice) ID() string {
 
 // Subscribe sets up a subscription for this device
 func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
-	messanger := messanger.GetMessanger()
-	if messanger == nil {
+	msgr := messanger.GetMessanger()
+	if msgr == nil {
 		slog.Warn("No messanger available for device", "device", md.Name)
 		return
 	}
 
-	handler := func(msg *messanger.Msg) error {
+	handler := messanger.MsgHandler(func(msg *messanger.Msg) error {
 		// Parse the message and call the callback
 		var val bool
 		dataStr := string(msg.Data)
@@ -55,15 +55,15 @@ func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
 		}
 		callback(val)
 		return nil
-	}
+	})
 
-	messanger.Subscribe(topic, handler)
+	msgr.Subscribe(topic, handler)
 }
 
 // PubData publishes data for this device
 func (md *ManagedDevice) PubData(data interface{}) {
-	messanger := messanger.GetMessanger()
-	if messanger == nil {
+	msgr := messanger.GetMessanger()
+	if msgr == nil {
 		slog.Warn("No messanger available for device", "device", md.Name)
 		return
 	}
@@ -91,7 +91,7 @@ func (md *ManagedDevice) PubData(data interface{}) {
 		payload = string(jsonData)
 	}
 
-	messanger.Pub(md.Topic, payload)
+	msgr.Pub(md.Topic, payload)
 }
 
 // ReadPub reads the device value and publishes it
