@@ -14,7 +14,7 @@ type MessangerLocal struct {
 }
 
 // NewMessangerLocal creates a new local messanger instance.
-func NewMessangerLocal(id string) (*MessangerLocal) {
+func NewMessangerLocal(id string) *MessangerLocal {
 	m := &MessangerLocal{
 		MessangerBase: NewMessangerBase(id),
 	}
@@ -43,10 +43,10 @@ func (m *MessangerLocal) Pub(topic string, value any) error {
 	m.Published++
 
 	if topic == "" {
-		return fmt.Errorf("No topic")
+		return fmt.Errorf("no topic")
 	}
 	if len(m.subs) == 0 {
-		return fmt.Errorf("No subscribers")
+		return fmt.Errorf("no subscribers")
 	}
 
 	b, err := Bytes(value)
