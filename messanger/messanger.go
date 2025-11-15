@@ -56,7 +56,7 @@ var (
 type MsgHandler func(msg *Msg) error
 
 type MessageHandler interface {
-	HandleMsg() func(msg *Msg) error
+	HandleMsg(msg *Msg) error
 }
 
 // Messanger is the interface that all messangers must implement
@@ -73,7 +73,7 @@ type Messanger interface {
 	Close()
 }
 
-func NewMessanger(id string) (Messanger) {
+func NewMessanger(id string) Messanger {
 	messanger = NewMessangerLocal(id)
 	if messanger != nil && messanger.ID() != id {
 		slog.Warn("Messanger already initialized with a different ID",
@@ -99,7 +99,7 @@ type MessangerBase struct {
 	Published int
 }
 
-func NewMessangerBase(id string) (*MessangerBase) {
+func NewMessangerBase(id string) *MessangerBase {
 	mb := &MessangerBase{
 		id:   id,
 		subs: make(map[string]MsgHandler),

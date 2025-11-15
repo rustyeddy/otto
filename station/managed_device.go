@@ -9,6 +9,10 @@ import (
 	"github.com/rustyeddy/otto/messanger"
 )
 
+type Device interface {
+	Name() string
+}
+
 // TimerLooper interface for devices that support periodic operations
 type TimerLooper interface {
 	TimerLoop(duration time.Duration, done chan any, readFunc func())
@@ -24,9 +28,9 @@ type ManagedDevice struct {
 // NewManagedDevice creates a new managed device with messaging capabilities
 func NewManagedDevice(name string, device any, topic string) *ManagedDevice {
 	md := &ManagedDevice{
-		Name:      name,
-		Device:    device,
-		Topic:     topic,
+		Name:   name,
+		Device: device,
+		Topic:  topic,
 	}
 	return md
 }

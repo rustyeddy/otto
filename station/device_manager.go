@@ -4,19 +4,24 @@ import (
 	"sync"
 )
 
+var (
+	deviceManager *DeviceManager
+	once          sync.Once
+)
+
 type DeviceManager struct {
 	// Internal generic device store for tests and loose coupling
-	devices   map[string]any
-	Metrics		*DeviceMetrics
-	mu sync.RWMutex `json:"-"`
+	devices map[string]any
+	Metrics *DeviceMetrics
+	mu      sync.RWMutex `json:"-"`
 }
 
 type DeviceMetrics struct {
 	// Device metrics
-	DeviceCount      int    `json:"device_count"`
-	ActiveDevices    int    `json:"active_devices"`
-	DeviceErrorCount uint64 `json:"device_error_count"`
-	mu sync.RWMutex `json:"-"`
+	DeviceCount      int          `json:"device_count"`
+	ActiveDevices    int          `json:"active_devices"`
+	DeviceErrorCount uint64       `json:"device_error_count"`
+	mu               sync.RWMutex `json:"-"`
 }
 
 func NewDeviceManager() *DeviceManager {
@@ -24,6 +29,19 @@ func NewDeviceManager() *DeviceManager {
 		devices: make(map[string]any),
 		Metrics: &DeviceMetrics{},
 	}
+}
+
+func GetDeviceManager() *DeviceManager {
+	once.Do(func() {
+		deviceManager = NewDeviceManager()
+	})
+	return deviceManager
+}
+
+func (dm *DeviceManager) Add(d Device) *ManagedDevice {
+	md := NewManagedDevice(d.Name(), d, d.Name())
+	dm.Register(md)
+	return md
 }
 
 // AddDevice will do what it says by placing the device with a given
@@ -75,4 +93,3 @@ func (dm *DeviceMetrics) UpdateMetrics(deviceCount, activeDevices int, deviceErr
 	dm.ActiveDevices = activeDevices
 	dm.DeviceErrorCount = deviceErrors
 }
-

@@ -115,6 +115,16 @@ func (msg *Msg) Byte() []byte {
 	return msg.Data
 }
 
+func (msg *Msg) Bool() bool {
+	str := string(msg.Data)
+	switch str {
+	case "true", "1", "on", "yes":
+		return true
+	default:
+		return false
+	}
+}
+
 // String returns the string formatted version of Msg.Data
 func (msg *Msg) String() string {
 	return string(msg.Data)
