@@ -39,6 +39,7 @@
 package messanger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -50,6 +51,14 @@ var (
 	messanger     Messanger
 	messangerLock sync.Mutex
 )
+
+type MessangerConfig struct {
+	Broker string
+}
+
+var messangerConfig = MessangerConfig{
+	Broker: "localhost",
+}
 
 // Subscriber is an interface that defines a struct needs to have the
 // Callback(topic string, data []byte) function defined.
@@ -73,13 +82,26 @@ type Messanger interface {
 	Close()
 }
 
-func NewMessanger(id string) Messanger {
-	messanger = NewMessangerLocal(id)
-	if messanger != nil && messanger.ID() != id {
-		slog.Warn("Messanger already initialized with a different ID",
-			"existing", messanger.ID(), "requested", id)
+func NewMessanger(id string) (m Messanger) {
+	switch id {
+	case "none":
+		m = NewMessangerLocal(id)
+	case "mqtt":
+		m = NewMessangerMQTT(id, messangerConfig.Broker)
+	case "local":
+		_, err := StartMQTTBroker(context.Background())
+		if err != nil {
+			slog.Error("Failed to start embedded MQTT broker", "error", err)
+			return nil
+		}
+		m = NewMessangerMQTT(id, messangerConfig.Broker)
+
+	default:
+		slog.Error("Unknown messanger ID", "id", id)
+		return nil
 	}
-	return messanger
+	messanger = m
+	return m
 }
 
 // GetMessangerInstance returns the singleton instance of MessangerBase.

@@ -10,7 +10,7 @@ import (
 
 // StartBroker starts an embedded MQTT broker and returns a shutdown func.
 // Minimal config: in-memory (no persistence), TCP listener on :1883.
-func StartBroker(ctx context.Context) (func(context.Context) error, error) {
+func StartMQTTBroker(ctx context.Context) (func(context.Context) error, error) {
 	// Create broker with default options (in-memory state).
 	srv := mqttserver.New(nil)
 
@@ -56,5 +56,3 @@ func StartBroker(ctx context.Context) (func(context.Context) error, error) {
 	}
 	return shutdown, nil
 }
-
-

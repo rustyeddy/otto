@@ -26,3 +26,4 @@ station/station
 otto.log
 debug*
 *.code-workspace
+*.log
