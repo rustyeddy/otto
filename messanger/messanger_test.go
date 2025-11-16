@@ -100,7 +100,7 @@ func TestGetMessanger(t *testing.T) {
 }
 
 func TestMessangerBaseError(t *testing.T) {
-	mb  := NewMessangerBase("test-id")
+	mb := NewMessangerBase("test-id")
 	if err := mb.Error(); err != nil {
 		t.Errorf("Expected nil error, got %v", err)
 	}
