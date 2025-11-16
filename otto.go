@@ -156,11 +156,11 @@ type OttO struct {
 	*server.Server
 	messanger.Messanger
 
-	Mock       bool
-	MQTTBroker string // MQTT broker URL, defaults to test.mosquitto.org
-	UseLocal   bool   // Force use of local messaging
-	hub        bool   // maybe hub should be a different struct?
-	done       chan any
+	Mock           bool
+	MQTTBroker     string // MQTT broker URL, defaults to test.mosquitto.org
+	UseLocal       bool   // Force use of local messaging
+	hub            bool   // maybe hub should be a different struct?
+	done           chan any
 	brokerShutdown func(context.Context) error // graceful shutdown for embedded broker
 }
 
@@ -210,7 +210,7 @@ func (o *OttO) Init() {
 
 	// Start embedded MQTT broker (optional) and store shutdown func.
 	if true {
-		if shutdown, err := messanger.StartBroker(context.Background()); err != nil {
+		if shutdown, err := messanger.StartMQTTBroker(context.Background()); err != nil {
 			slog.Error("Failed to start embedded MQTT broker", "error", err)
 		} else {
 			o.brokerShutdown = shutdown
@@ -225,11 +225,19 @@ func (o *OttO) Init() {
 		// Set the MQTT_BROKER environment variable for the messanger
 		o.MQTTBroker = os.Getenv("MQTT_BROKER")
 		if o.MQTTBroker == "" {
-			o.MQTTBroker = "test.mosquitto.org"
+			o.MQTTBroker = "localhost"
 		}
 
-		slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker)
-		o.Messanger = messanger.NewMessangerMQTT("otto", o.MQTTBroker)
+		// Get MQTT credentials from environment or use defaults for embedded broker
+		mqttUser := os.Getenv("MQTT_USER")
+		mqttPass := os.Getenv("MQTT_PASS")
+		if mqttUser == "" && o.MQTTBroker == "localhost" {
+			mqttUser = "otto"
+			mqttPass = "otto123"
+		}
+
+		slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker, "user", mqttUser)
+		o.Messanger = messanger.NewMessangerMQTTWithAuth("otto", o.MQTTBroker, mqttUser, mqttPass)
 	}
 	ms := messanger.GetMsgSaver()
 	ms.Saving = true

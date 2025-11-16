@@ -50,16 +50,17 @@ func TestMessangerBaseServeHTTP(t *testing.T) {
 
 func TestNewMessanger(t *testing.T) {
 	tests := []struct {
-		name     string
-		id       string
-		topic    string
-		expected string
+		name      string
+		id        string
+		topic     string
+		expected  string
+		expectNil bool
 	}{
 		{
-			name:     "Create local messanger",
-			id:       "local",
+			name:     "Create none messanger",
+			id:       "none",
 			topic:    "topic1",
-			expected: "local",
+			expected: "none",
 		},
 		{
 			name:     "Create messanger with mqtt id",
@@ -68,25 +69,29 @@ func TestNewMessanger(t *testing.T) {
 			expected: "mqtt",
 		},
 		{
-			name:     "Create messanger with custom id",
-			id:       "unknown",
-			topic:    "topic1",
-			expected: "unknown",
+			name:      "Create messanger with unknown id returns nil",
+			id:        "unknown",
+			topic:     "topic1",
+			expectNil: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewMessanger(tt.id)
-			assert.NotNil(t, m)
-			assert.Equal(t, tt.expected, m.ID())
+			if tt.expectNil {
+				assert.Nil(t, m)
+			} else {
+				assert.NotNil(t, m)
+				assert.Equal(t, tt.expected, m.ID())
+			}
 		})
 	}
 }
 
 func TestGetMessanger(t *testing.T) {
-	// Ensure singleton behavior
-	m1 := NewMessanger("local")
+	// Ensure singleton behavior - use 'none' to avoid broker conflicts
+	m1 := NewMessanger("none")
 	m2 := GetMessanger()
 
 	if m1 != m2 {

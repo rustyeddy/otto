@@ -16,9 +16,11 @@ var (
 // MQTT is a wrapper around the Paho MQTT Go package
 // Wraps the Broker, ID and Debug variables.
 type MQTT struct {
-	id     string `json:"id"`
-	Broker string `json:"broker"`
-	Debug  bool   `json:"debug"`
+	id       string `json:"id"`
+	Broker   string `json:"broker"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Debug    bool   `json:"debug"`
 
 	error         `json:"error"`
 	gomqtt.Client `json:"-"`
@@ -27,8 +29,10 @@ type MQTT struct {
 // NewMQTT creates a new instance of the MQTT client type.
 func NewMQTT(id string, broker string, topics string) *MQTT {
 	mqtt = &MQTT{
-		id:     id,
-		Broker: broker,
+		id:       id,
+		Broker:   broker,
+		Username: "otto",
+		Password: "otto123",
 	}
 	return mqtt
 }
@@ -91,6 +95,14 @@ func (m *MQTT) Connect() error {
 	opts.AddBroker(url)
 	opts.SetClientID(m.id)
 	opts.SetCleanSession(true)
+
+	// Set username and password if provided
+	if m.Username != "" {
+		opts.SetUsername(m.Username)
+	}
+	if m.Password != "" {
+		opts.SetPassword(m.Password)
+	}
 
 	// If we are testing m.Client will point to the mock client otherwise
 	// in real life a new real client will be created

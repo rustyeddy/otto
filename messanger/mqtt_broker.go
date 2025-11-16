@@ -5,6 +5,7 @@ import (
 	"log"
 
 	mqttserver "github.com/mochi-mqtt/server/v2"
+	"github.com/mochi-mqtt/server/v2/hooks/auth"
 	"github.com/mochi-mqtt/server/v2/listeners"
 )
 
@@ -13,6 +14,27 @@ import (
 func StartMQTTBroker(ctx context.Context) (func(context.Context) error, error) {
 	// Create broker with default options (in-memory state).
 	srv := mqttserver.New(nil)
+
+	// Add authentication hook with username/password
+	err := srv.AddHook(new(auth.Hook), &auth.Options{
+		Ledger: &auth.Ledger{
+			Auth: auth.AuthRules{
+				{
+					Username: "otto",
+					Password: "otto123",
+					Allow:    true,
+				},
+				{
+					Username: "admin",
+					Password: "admin",
+					Allow:    true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	// TCP listener (native MQTT)
 	cfg := listeners.Config{

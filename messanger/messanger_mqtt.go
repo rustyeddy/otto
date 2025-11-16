@@ -14,13 +14,20 @@ type MessangerMQTT struct {
 }
 
 // NewMessangerMQTT creates a new MQTT messanger instance.
-func NewMessangerMQTT(id string, broker string) (*MessangerMQTT) {
+func NewMessangerMQTT(id string, broker string) *MessangerMQTT {
+	return NewMessangerMQTTWithAuth(id, broker, "", "")
+}
+
+// NewMessangerMQTTWithAuth creates a new MQTT messanger instance with authentication.
+func NewMessangerMQTTWithAuth(id string, broker string, username string, password string) *MessangerMQTT {
 	m := NewMQTT(id, broker, "")
+	m.Username = username
+	m.Password = password
 	if broker == "mock" {
 		m.SetMQTTClient(NewMockClient())
 	}
 	mqtt := &MessangerMQTT{
-		MQTT: m,
+		MQTT:          m,
 		MessangerBase: NewMessangerBase(id),
 	}
 	return mqtt
@@ -67,7 +74,7 @@ func (m *MessangerMQTT) Pub(topic string, value any) error {
 	if m.MQTT == nil {
 		return nil
 	}
-		// If underlying Publish has an error signature, call and return it.
+	// If underlying Publish has an error signature, call and return it.
 	_ = m.MQTT.Publish(topic, value)
 	return nil
 }
