@@ -63,12 +63,12 @@ func newStation(id string) (*Station, error) {
 	}
 
 	st := &Station{
-		ID:         id,
-		Expiration: 3 * time.Minute,
-		Duration:   1 * time.Minute,
-		errq:       make(chan error, 10),
-		done:       make(chan bool, 1),
-		Metrics:    NewStationMetrics(),
+		ID:            id,
+		Expiration:    3 * time.Minute,
+		Duration:      1 * time.Minute,
+		errq:          make(chan error, 10),
+		done:          make(chan bool, 1),
+		Metrics:       NewStationMetrics(),
 		DeviceManager: NewDeviceManager(),
 	}
 
