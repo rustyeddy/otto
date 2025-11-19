@@ -20,6 +20,8 @@ examples/heater/heater
 examples/mock/mock
 examples/logging_demo
 otto/otto
+otto
+cmd/otto/otto
 mock/mock
 gpio/gpio
 station/station

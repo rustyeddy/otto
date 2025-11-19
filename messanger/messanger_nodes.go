@@ -1,7 +1,7 @@
 package messanger
 
 import (
-	"strings"	
+	"strings"
 )
 
 type node struct {
@@ -63,7 +63,6 @@ func (n *node) insert(topic string, mh MsgHandler) {
 func (n *node) remove(topic string, handler MsgHandler) {
 	println("TODO add node remove command")
 	return
-
 
 	// // Need to remove the child node and all parent nodes provided
 	// // they have no other subscribers

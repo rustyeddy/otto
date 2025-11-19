@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux x86_64
+          - goos: linux
+            goarch: amd64
+            output: otto-linux-amd64
+          # Linux ARM (Raspberry Pi)
+          - goos: linux
+            goarch: arm
+            goarm: 7
+            output: otto-linux-arm7
+          # Linux ARM64 (Raspberry Pi 4+)
+          - goos: linux
+            goarch: arm64
+            output: otto-linux-arm64
+          # macOS x86_64
+          - goos: darwin
+            goarch: amd64
+            output: otto-darwin-amd64
+          # macOS ARM (Apple Silicon)
+          - goos: darwin
+            goarch: arm64
+            output: otto-darwin-arm64
+          # Windows x86_64
+          - goos: windows
+            goarch: amd64
+            output: otto-windows-amd64.exe
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Build ${{ matrix.output }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          go build -o ${{ matrix.output }} \
+            -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" \
+            ./cmd/otto
+      
+      - name: Create checksum
+        run: |
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            sha256sum ${{ matrix.output }} > ${{ matrix.output }}.sha256
+          else
+            shasum -a 256 ${{ matrix.output }} > ${{ matrix.output }}.sha256
+          fi
+      
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ matrix.output }}
+            ${{ matrix.output }}.sha256
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
