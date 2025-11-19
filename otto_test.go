@@ -28,6 +28,10 @@ func TestOttOInit(t *testing.T) {
 	if o.Server == nil {
 		t.Error("Expected Server to be initialized")
 	}
+
+	if o.brokerShutdown == nil {
+		t.Error("Expected brokerShutdown function to be initialized")
+	}
 }
 
 // func TestOttOStartAndStop(t *testing.T) {
