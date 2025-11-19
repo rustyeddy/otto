@@ -10,15 +10,28 @@ import (
 	"github.com/rustyeddy/otto/utils"
 )
 
-// Topics maintains the list of topics used by otto and the
-// applications. It maintains the topic format and a count for each
-// time the topic is used.
+// Topics manages topic formatting and usage tracking for the Otto messaging system.
+// It provides helper methods for creating properly formatted topics and tracks
+// how many times each topic has been used.
+//
+// Otto uses a standardized topic format: "ss/[c|d]/station/sensor"
+// Where:
+//   - "ss" is the namespace prefix (Smart Station)
+//   - "c" indicates control topics (commands to devices)
+//   - "d" indicates data topics (sensor readings, telemetry)
+//   - station is the station/device identifier
+//   - sensor is the sensor/actuator/command name
+//
+// Example topics:
+//   - "ss/c/station1/led" - Control topic to turn LED on/off
+//   - "ss/d/station1/temp" - Data topic for temperature readings
 type Topics struct {
-	TopicFmt string
-	Topicmap map[string]int
+	TopicFmt string         // Format string for topic generation (e.g., "ss/%s/%s/%s")
+	Topicmap map[string]int // Map of topic to usage count
 }
 
 var (
+	// topics is the singleton Topics instance for the application
 	topics *Topics
 )
 
@@ -29,7 +42,23 @@ func init() {
 	}
 }
 
-// validate topic
+// ValidateTopic checks if a topic string follows Otto's topic format conventions.
+// A valid Otto topic must have:
+//   - At least 4 segments separated by '/'
+//   - First segment must be "ss" (namespace)
+//   - Second segment must be "c" (control) or "d" (data)
+//   - Third segment (station ID) must not be empty
+//   - Fourth segment (sensor/command) must not be empty
+//
+// Parameters:
+//   - topic: The topic string to validate (e.g., "ss/c/station1/temp")
+//
+// Returns true if the topic is valid, false otherwise.
+//
+// Example:
+//
+//	valid := ValidateTopic("ss/c/station1/temp")  // Returns true
+//	valid := ValidateTopic("invalid/topic")       // Returns false
 func ValidateTopic(topic string) bool {
 	path := strings.Split(topic, "/")
 	if len(path) < 4 {
@@ -53,27 +82,76 @@ func ValidateTopic(topic string) bool {
 	return true
 }
 
-// GetTopics will return the Topics structure, one per application.
+// GetTopics returns the singleton Topics instance for the application.
+// This provides access to topic formatting and usage tracking.
+//
+// Returns a pointer to the Topics instance.
+//
+// Example:
+//
+//	topics := GetTopics()
+//	controlTopic := topics.Control("led")
 func GetTopics() *Topics {
 	return topics
 }
 
-// Control will return a control topic e.g. ss/c/station/foo
+// Control generates a control topic for the current station.
+// Control topics are used to send commands to devices (e.g., turn on LED, set speed).
+// The format is: "ss/c/{station}/{topic}"
+//
+// This method also increments the usage counter for the generated topic.
+//
+// Parameters:
+//   - topic: The command or actuator name (e.g., "led", "motor", "relay")
+//
+// Returns the fully formatted control topic string.
+//
+// Example:
+//
+//	topics := GetTopics()
+//	ledTopic := topics.Control("led")  // Returns "ss/c/mystation/led"
 func (t *Topics) Control(topic string) string {
 	top := fmt.Sprintf(t.TopicFmt, "c", utils.StationName(), topic)
 	t.Topicmap[top]++
 	return top
 }
 
-// Control will return a data topic e.g. ss/d/station/foo
+// Data generates a data topic for the current station.
+// Data topics are used to publish sensor readings and telemetry.
+// The format is: "ss/d/{station}/{topic}"
+//
+// This method also increments the usage counter for the generated topic.
+//
+// Parameters:
+//   - topic: The sensor or data stream name (e.g., "temp", "humidity", "motion")
+//
+// Returns the fully formatted data topic string.
+//
+// Example:
+//
+//	topics := GetTopics()
+//	tempTopic := topics.Data("temp")  // Returns "ss/d/mystation/temp"
 func (t *Topics) Data(topic string) string {
 	top := fmt.Sprintf(t.TopicFmt, "d", utils.StationName(), topic)
 	t.Topicmap[top]++
 	return top
 }
 
-// ServeHTTP is a JSON endpoint that returns all the topics used by
-// this station.
+// ServeHTTP implements http.Handler to provide a REST API endpoint for
+// inspecting topic usage. Returns JSON containing the topic format and
+// a map of all topics used by this station with their usage counts.
+//
+// Response format:
+//
+//	{
+//	  "TopicFmt": "ss/%s/%s/%s",
+//	  "Topicmap": {
+//	    "ss/c/station1/led": 5,
+//	    "ss/d/station1/temp": 120
+//	  }
+//	}
+//
+// This is useful for monitoring which topics are being used and how frequently.
 func (t Topics) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
