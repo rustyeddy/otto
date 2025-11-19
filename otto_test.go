@@ -32,6 +32,36 @@ func TestOttOInit(t *testing.T) {
 	if o.brokerShutdown == nil {
 		t.Error("Expected brokerShutdown function to be initialized")
 	}
+
+	// Clean up by stopping OttO (handle done channel in goroutine)
+	go func() {
+		<-o.Done()
+	}()
+	o.Stop()
+}
+
+func TestOttOBrokerShutdown(t *testing.T) {
+	o := &OttO{Name: "TestOttOShutdown"}
+	o.Init()
+
+	if o.brokerShutdown == nil {
+		t.Fatal("Expected brokerShutdown function to be initialized")
+	}
+
+	// Test that calling Stop doesn't panic and properly shuts down the broker
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Stop() panicked: %v", r)
+		}
+	}()
+
+	// Start a goroutine to receive from done channel
+	go func() {
+		<-o.Done()
+	}()
+
+	o.Stop()
+	t.Log("Successfully called Stop with broker shutdown")
 }
 
 // func TestOttOStartAndStop(t *testing.T) {
