@@ -89,20 +89,22 @@ func (m *MQTT) Connect() error {
 	if m.Broker == "" {
 		m.Broker = "localhost"
 	}
+	// Set username and password if provided
+	if m.Username == "" {
+		m.Username = "otto"
+	}
+	if m.Password == "" {
+		m.Password = "otto123"
+	}
 
 	url := "tcp://" + m.Broker + ":1883"
 	opts := gomqtt.NewClientOptions()
 	opts.AddBroker(url)
 	opts.SetClientID(m.id)
 	opts.SetCleanSession(true)
-
-	// Set username and password if provided
-	if m.Username != "" {
-		opts.SetUsername(m.Username)
-	}
-	if m.Password != "" {
-		opts.SetPassword(m.Password)
-	}
+	opts.SetUsername(m.Username)
+	opts.SetPassword(m.Password)
+	opts.SetCleanSession(true)
 
 	// If we are testing m.Client will point to the mock client otherwise
 	// in real life a new real client will be created
