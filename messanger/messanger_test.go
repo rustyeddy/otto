@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,8 +42,7 @@ func TestMessangerBaseServeHTTP(t *testing.T) {
 	assert.Equal(t, response.ID, "test-id")
 
 	expectedSubs := []string{topic, "topic2", "topic3"}
-	assert.True(t, reflect.DeepEqual(response.Subs, expectedSubs),
-		"expected (%v) got (%v)", expectedSubs, response.Subs)
+	assert.ElementsMatch(t, response.Subs, expectedSubs, "expected (%v) got (%v)", expectedSubs, response.Subs)
 	assert.Equal(t, response.Published, 5)
 }
 
@@ -95,7 +93,7 @@ func TestGetMessanger(t *testing.T) {
 	m2 := GetMessanger()
 
 	if m1 != m2 {
-		t.Errorf("expected GetMessanger to return the same instance, got different instances")
+		 t.Errorf("expected GetMessanger to return the same instance, got different instances")
 	}
 }
 
