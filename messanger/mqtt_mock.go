@@ -1,8 +1,33 @@
-// mqtt_mock.go
-// Mock implementation of the paho.mqtt.golang Client interface for testing.
-// Provides comprehensive mocking of MQTT operations including connection,
-// publishing, subscribing, and message handling.
-
+// mqtt_mock.go provides a comprehensive mock implementation of the Eclipse Paho
+// MQTT client interface for testing purposes.
+//
+// The mock client simulates MQTT broker behavior without requiring an actual
+// network connection or broker. This enables:
+//   - Fast, isolated unit tests
+//   - Deterministic test behavior
+//   - Testing error conditions and edge cases
+//   - CI/CD environments without external dependencies
+//
+// Key Features:
+//   - Track all published messages for assertions
+//   - Simulate connection, subscription, and publish operations
+//   - Inject errors to test error handling
+//   - Manually trigger message delivery to handlers
+//   - Thread-safe for concurrent test scenarios
+//
+// Example:
+//
+//	mock := NewMockClient()
+//	mqtt := NewMQTT("test", "mock", "")
+//	mqtt.SetMQTTClient(mock)
+//
+//	// Subscribe and trigger message
+//	mqtt.Subscribe("test/topic", handler)
+//	mock.SimulateMessage("test/topic", []byte("test data"))
+//
+//	// Verify publications
+//	pubs := mock.GetPublications()
+//	assert.Equal(t, 1, len(pubs))
 package messanger
 
 import (
@@ -13,17 +38,28 @@ import (
 	gomqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-// MockToken implements gomqtt.Token interface
+// MockToken implements the gomqtt.Token interface for testing.
+// It represents the result of an asynchronous MQTT operation (connect, publish, subscribe).
+// The token tracks whether the operation completed and any error that occurred.
 type MockToken struct {
-	err    error
-	waited bool
-	mu     sync.Mutex
+	err    error      // Error from the operation, if any
+	waited bool       // Whether Wait() has been called
+	mu     sync.Mutex // Protects concurrent access
 }
 
+// NewMockToken creates a new mock token with the specified error state.
+// Pass nil for a successful operation token.
+//
+// Parameters:
+//   - err: The error to return, or nil for success
+//
+// Returns a pointer to the mock token.
 func NewMockToken(err error) *MockToken {
 	return &MockToken{err: err}
 }
 
+// Wait blocks until the operation completes (immediately for mock).
+// Returns true if the operation succeeded, false if it failed.
 func (t *MockToken) Wait() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -31,6 +67,13 @@ func (t *MockToken) Wait() bool {
 	return t.err == nil
 }
 
+// WaitTimeout waits for the operation to complete with a timeout.
+// For the mock, this behaves the same as Wait() and returns immediately.
+//
+// Parameters:
+//   - timeout: Maximum time to wait (ignored in mock)
+//
+// Returns true if the operation succeeded, false if it failed.
 func (t *MockToken) WaitTimeout(timeout time.Duration) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -38,29 +81,42 @@ func (t *MockToken) WaitTimeout(timeout time.Duration) bool {
 	return t.err == nil
 }
 
+// Error returns the error from the operation, if any.
+// Returns nil if the operation succeeded.
 func (t *MockToken) Error() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.err
 }
 
+// Done returns a channel that is closed when the operation completes.
+// For the mock, the channel is already closed (operation is instant).
 func (t *MockToken) Done() <-chan struct{} {
 	done := make(chan struct{})
 	close(done)
 	return done
 }
 
-// MockMessage implements gomqtt.Message interface
+// MockMessage implements the gomqtt.Message interface for testing.
+// It represents an MQTT message received by a subscriber.
 type MockMessage struct {
-	topic     string
-	payload   []byte
-	qos       byte
-	retained  bool
-	duplicate bool
-	messageID uint16
-	acked     bool
+	topic     string // The topic the message was published to
+	payload   []byte // The message payload
+	qos       byte   // Quality of Service level (0, 1, or 2)
+	retained  bool   // Whether the message was retained by the broker
+	duplicate bool   // Whether this is a duplicate delivery
+	messageID uint16 // Unique message identifier
+	acked     bool   // Whether the message has been acknowledged
 }
 
+// NewMockMessage creates a new mock MQTT message for testing.
+// The message is created with QoS 0 and not retained.
+//
+// Parameters:
+//   - topic: The topic the message is published to
+//   - payload: The message payload as bytes
+//
+// Returns a pointer to the mock message.
 func NewMockMessage(topic string, payload []byte) *MockMessage {
 	return &MockMessage{
 		topic:   topic,
@@ -69,68 +125,112 @@ func NewMockMessage(topic string, payload []byte) *MockMessage {
 	}
 }
 
-func (m *MockMessage) Duplicate() bool   { return m.duplicate }
-func (m *MockMessage) Qos() byte         { return m.qos }
-func (m *MockMessage) Retained() bool    { return m.retained }
-func (m *MockMessage) Topic() string     { return m.topic }
-func (m *MockMessage) MessageID() uint16 { return m.messageID }
-func (m *MockMessage) Payload() []byte   { return m.payload }
-func (m *MockMessage) Ack()              { m.acked = true }
+// Duplicate returns whether this is a duplicate message delivery.
+func (m *MockMessage) Duplicate() bool { return m.duplicate }
 
-// MockClientOptionsReader is a simple stub for ClientOptionsReader
+// Qos returns the Quality of Service level for this message.
+func (m *MockMessage) Qos() byte { return m.qos }
+
+// Retained returns whether this message was retained by the broker.
+func (m *MockMessage) Retained() bool { return m.retained }
+
+// Topic returns the topic this message was published to.
+func (m *MockMessage) Topic() string { return m.topic }
+
+// MessageID returns the unique identifier for this message.
+func (m *MockMessage) MessageID() uint16 { return m.messageID }
+
+// Payload returns the message payload as bytes.
+func (m *MockMessage) Payload() []byte { return m.payload }
+
+// Ack marks the message as acknowledged.
+func (m *MockMessage) Ack() { m.acked = true }
+
+// MockClientOptionsReader is a simple stub implementation of the
+// gomqtt.ClientOptionsReader interface for testing.
 type MockClientOptionsReader struct {
-	clientID string
+	clientID string // The client ID
 }
 
+// ClientID returns the client identifier.
 func (m *MockClientOptionsReader) ClientID() string { return m.clientID }
 
-// Publication represents a published message for testing
+// Publication represents a message that was published through the mock client.
+// Tests can inspect publications to verify that code published the right messages.
 type Publication struct {
-	Topic    string
-	Payload  interface{}
-	QoS      byte
-	Retained bool
+	Topic    string      // The topic published to
+	Payload  interface{} // The message payload
+	QoS      byte        // Quality of Service level
+	Retained bool        // Whether the message should be retained
 }
 
-// Subscription represents a subscription for testing
+// Subscription represents a topic subscription made through the mock client.
+// Tests can inspect subscriptions to verify that code subscribed correctly.
 type Subscription struct {
-	Topic   string
-	QoS     byte
-	Handler gomqtt.MessageHandler
+	Topic   string                // The topic pattern subscribed to
+	QoS     byte                  // Quality of Service level
+	Handler gomqtt.MessageHandler // The callback function for messages
 }
 
-// MockClient implements gomqtt.Client interface
-// Provides comprehensive mocking capabilities for MQTT operations
+// MockClient implements the complete gomqtt.Client interface for testing.
+// It simulates an MQTT client without requiring a real broker connection.
+//
+// The mock tracks all operations (connect, publish, subscribe) and allows
+// tests to:
+//   - Verify publications via GetPublications()
+//   - Verify subscriptions via GetSubscriptions()
+//   - Inject errors via SetConnectError(), SetPublishError(), etc.
+//   - Simulate incoming messages via SimulateMessage()
+//   - Control connection state
+//
+// Thread Safety: All methods are protected by an RWMutex for concurrent access.
+//
+// Example:
+//
+//	mock := NewMockClient()
+//	mock.Connect()  // Always succeeds unless SetConnectError() was called
+//	mock.Publish("test/topic", 0, false, "payload")
+//	pubs := mock.GetPublications()
+//	assert.Equal(t, 1, len(pubs))
 type MockClient struct {
-	mu         sync.RWMutex
-	connected  bool
-	connecting bool
-	options    *MockClientOptionsReader
+	mu         sync.RWMutex             // Protects all fields
+	connected  bool                     // Current connection state
+	connecting bool                     // Whether connection is in progress
+	options    *MockClientOptionsReader // Client options
 
-	// Error simulation
-	connectErr     error
-	publishErr     error
-	subscribeErr   error
-	unsubscribeErr error
+	// Error simulation - inject errors for testing error handling
+	connectErr     error // Error to return from Connect()
+	publishErr     error // Error to return from Publish()
+	subscribeErr   error // Error to return from Subscribe()
+	unsubscribeErr error // Error to return from Unsubscribe()
 
-	// Call tracking
-	publications  []Publication
-	subscriptions map[string]Subscription
-	routes        map[string]gomqtt.MessageHandler
+	// Call tracking - records all operations for test assertions
+	publications  []Publication                    // All published messages
+	subscriptions map[string]Subscription          // Active subscriptions by topic
+	routes        map[string]gomqtt.MessageHandler // Message routes
 
 	// Connection tracking
-	disconnectCalled  bool
-	disconnectQuiesce uint
+	disconnectCalled  bool // Whether Disconnect() was called
+	disconnectQuiesce uint // Quiesce time passed to Disconnect()
 
 	// Callbacks
-	onConnectHandler      gomqtt.OnConnectHandler
-	connectionLostHandler gomqtt.ConnectionLostHandler
+	onConnectHandler      gomqtt.OnConnectHandler      // Called on connection
+	connectionLostHandler gomqtt.ConnectionLostHandler // Called on disconnection
 
-	LastTopic   string
-	LastMessage string
+	LastTopic   string // Last topic published to (deprecated)
+	LastMessage string // Last message published (deprecated)
 }
 
-// NewMockClient creates a new mock MQTT client
+// NewMockClient creates and initializes a new mock MQTT client.
+// The client starts in a disconnected state with no subscriptions.
+//
+// Returns a pointer to the mock client.
+//
+// Example:
+//
+//	mock := NewMockClient()
+//	mqtt := NewMQTT("test", "mock", "")
+//	mqtt.SetMQTTClient(mock)
 func NewMockClient() *MockClient {
 	return &MockClient{
 		options:       &MockClientOptionsReader{},
@@ -139,6 +239,8 @@ func NewMockClient() *MockClient {
 	}
 }
 
+// ID returns the identifier for this mock client.
+// Always returns "mock" to distinguish it from real clients.
 func (m *MockClient) ID() string {
 	return "mock"
 }

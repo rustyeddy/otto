@@ -9,8 +9,49 @@ import (
 	"github.com/mochi-mqtt/server/v2/listeners"
 )
 
-// StartBroker starts an embedded MQTT broker and returns a shutdown func.
-// Minimal config: in-memory (no persistence), TCP listener on :1883.
+// StartMQTTBroker starts an embedded MQTT broker for local or embedded deployments.
+// This eliminates the need for an external broker like Mosquitto or EMQX.
+//
+// The broker is configured with:
+//   - In-memory state (no persistence to disk)
+//   - TCP listener on port 1883 (standard MQTT)
+//   - Authentication with two users: "otto"/"otto123" and "admin"/"admin"
+//   - Clean session support
+//   - Background operation (non-blocking)
+//
+// The broker automatically shuts down when:
+//  1. The provided context is cancelled/done
+//  2. The returned shutdown function is called
+//
+// This is useful for:
+//   - Single-device IoT applications
+//   - Testing without external dependencies
+//   - Development environments
+//   - Embedded systems where an external broker isn't practical
+//
+// Parameters:
+//   - ctx: Context for managing broker lifecycle; broker stops when ctx.Done()
+//
+// Returns:
+//   - A shutdown function that can be called to stop the broker gracefully
+//   - An error if broker initialization fails (e.g., port already in use)
+//
+// Example:
+//
+//	ctx := context.Background()
+//	shutdown, err := StartMQTTBroker(ctx)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	defer shutdown(context.Background())
+//
+//	// Now create MQTT clients that connect to localhost:1883
+//	client := NewMessangerMQTT("client1", "localhost")
+//	client.Connect()
+//
+// Optional Features (commented out):
+//   - WebSocket listener on port 1882 for browser clients
+//   - HTTP health check endpoint on port 8081 for monitoring
 func StartMQTTBroker(ctx context.Context) (func(context.Context) error, error) {
 	// Create broker with default options (in-memory state).
 	srv := mqttserver.New(nil)
