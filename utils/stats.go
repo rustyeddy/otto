@@ -4,7 +4,7 @@ import "runtime"
 
 type Stats struct {
 	Goroutines int
-	CPUs int
+	CPUs       int
 	runtime.MemStats
 	GoVersion string
 }
@@ -15,9 +15,9 @@ func GetStats() *Stats {
 
 	s := &Stats{
 		Goroutines: runtime.NumGoroutine(),
-		CPUs: runtime.NumCPU(),
-		MemStats: m,
-		GoVersion: runtime.Version(),
+		CPUs:       runtime.NumCPU(),
+		MemStats:   m,
+		GoVersion:  runtime.Version(),
 	}
 
 	return s

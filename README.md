@@ -152,13 +152,35 @@ handled on it's own. The data structure will be:
 
 # Build
 
-1. Install Go 
-2. go get ./...
-3. cd ss; go build 
+## Download Pre-built Binaries
 
-That should leave the execuable 'sensors' in the 'sensors' directory as so:
+The easiest way to get started is to download a pre-built binary for your platform from the [Releases page](https://github.com/rustyeddy/otto/releases).
 
-> ./station/sensors/sensors
+Available platforms:
+- Linux x86_64
+- Linux ARM (Raspberry Pi)
+- Linux ARM64 (Raspberry Pi 4+)
+- macOS (Intel and Apple Silicon)
+- Windows
+
+## Build from Source
+
+1. Install Go 1.23 or later
+2. Clone the repository: `git clone https://github.com/rustyeddy/otto`
+3. Build: `cd otto && make build`
+
+This will create the `otto` binary in the current directory.
+
+### Build Commands
+
+```bash
+make build      # Build otto binary
+make test       # Run tests
+make fmt        # Format code
+make ci         # Run full CI checks (fmt, vet, test, build)
+```
+
+See [CI/CD Documentation](docs/ci-cd.md) for more details on building for specific platforms.
 
 ## Deploy
 

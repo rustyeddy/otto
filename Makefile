@@ -1,13 +1,21 @@
 # SUBDIRS := data mesh messanger otto server station utils
 PIENV	= env GOOS=linux GOARCH=arm GOARM=7
+BINARY_NAME=otto
+VERSION?=0.1.0
 
-all: test $(SUBDIRS)
+all: test build
 
 init:
 	git update --init 
 
+fmt:
+	go fmt ./...
+
 vet:
-	go vet
+	go vet ./...
+
+build:
+	go build -o ${BINARY_NAME} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
 
 test:
 	rm -f cover.out
@@ -24,4 +32,10 @@ html: test
 	rm -f coverage.html
 	go tool cover -html=cover.out -o coverage.html
 
-.PHONY: all test build $(SUBDIRS)
+clean:
+	rm -f ${BINARY_NAME}
+	rm -f cover.out coverage.html
+
+ci: fmt vet test build
+
+.PHONY: all test build fmt vet clean ci $(SUBDIRS)
