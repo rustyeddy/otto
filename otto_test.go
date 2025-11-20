@@ -2,6 +2,9 @@ package otto
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOttOInit(t *testing.T) {
@@ -9,25 +12,35 @@ func TestOttOInit(t *testing.T) {
 
 	o.Init()
 
-	if o.done == nil {
-		t.Error("Expected done channel to be initialized")
-	}
+	assert.NotNil(t, o.done, "Expected done channel to be initialized")
+	assert.NotNil(t, o.Messanger, "Expected Messanger to be initialized")
+	assert.NotNil(t, o.StationManager, "Expected StationManager to be initialized")
+	assert.NotNil(t, o.Station, "Expected Station to be initialized")
+	assert.NotNil(t, o.Server, "Expected Server to be initialized")
+	assert.NotNil(t, o.brokerShutdown, "Expected brokerShutdown function to be initialized")
 
-	if o.Messanger == nil {
-		t.Error("Expected Messanger to be initialized")
-	}
+	// Clean up by stopping OttO (handle done channel in goroutine)
+	go func() {
+		<-o.Done()
+	}()
+	o.Stop()
+}
 
-	if o.StationManager == nil {
-		t.Error("Expected StationManager to be initialized")
-	}
+func TestOttOBrokerShutdown(t *testing.T) {
+	o := &OttO{Name: "TestOttOShutdown"}
+	o.Init()
 
-	if o.Station == nil {
-		t.Error("Expected Station to be initialized")
-	}
+	require.NotNil(t, o.brokerShutdown, "Expected brokerShutdown function to be initialized")
 
-	if o.Server == nil {
-		t.Error("Expected Server to be initialized")
-	}
+	// Test that calling Stop doesn't panic and properly shuts down the broker
+	assert.NotPanics(t, func() {
+		// Start a goroutine to receive from done channel
+		go func() {
+			<-o.Done()
+		}()
+
+		o.Stop()
+	}, "Stop() should not panic")
 }
 
 // func TestOttOStartAndStop(t *testing.T) {
