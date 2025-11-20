@@ -93,7 +93,7 @@ func TestGetMessanger(t *testing.T) {
 	m2 := GetMessanger()
 
 	if m1 != m2 {
-		 t.Errorf("expected GetMessanger to return the same instance, got different instances")
+		t.Errorf("expected GetMessanger to return the same instance, got different instances")
 	}
 }
 
