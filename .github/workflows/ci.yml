@@ -1,0 +1,104 @@
+name: CI/CD Pipeline
+run-name: ${{ github.actor }} triggered CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Format check
+        run: |
+          make fmt
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Code is not formatted. Please run 'make fmt'"
+            git diff
+            exit 1
+          fi
+      
+      - name: Run tests
+        run: make test
+      
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: cover.out
+          retention-days: 5
+
+  build:
+    name: Build Binaries
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux x86_64
+          - goos: linux
+            goarch: amd64
+            output: otto-linux-amd64
+          # Linux ARM (Raspberry Pi)
+          - goos: linux
+            goarch: arm
+            goarm: 7
+            output: otto-linux-arm7
+          # Linux ARM64 (Raspberry Pi 4, newer models)
+          - goos: linux
+            goarch: arm64
+            output: otto-linux-arm64
+          # macOS x86_64
+          - goos: darwin
+            goarch: amd64
+            output: otto-darwin-amd64
+          # macOS ARM (Apple Silicon)
+          - goos: darwin
+            goarch: arm64
+            output: otto-darwin-arm64
+          # Windows x86_64
+          - goos: windows
+            goarch: amd64
+            output: otto-windows-amd64.exe
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Build ${{ matrix.output }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          VERSION="${GITHUB_REF_NAME}-${GITHUB_SHA::7}"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+          go build -o ${{ matrix.output }} \
+            -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" \
+            ./cmd/otto
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
+          retention-days: 30
