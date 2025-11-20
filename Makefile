@@ -9,7 +9,7 @@ init:
 	git update --init 
 
 fmt:
-	go fmt ./...
+	gofmt -s -w .
 
 vet:
 	go vet ./...
