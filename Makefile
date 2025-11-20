@@ -6,6 +6,9 @@ all: test $(SUBDIRS)
 init:
 	git update --init 
 
+fmt:
+	gofmt -s -w .
+
 vet:
 	go vet
 

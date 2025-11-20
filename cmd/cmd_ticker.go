@@ -19,7 +19,7 @@ var (
 func tickerRun(cmd *cobra.Command, args []string) {
 	tickers := utils.GetTickers()
 	tstr := ""
-	for n, _ := range tickers {
+	for n := range tickers {
 		tstr += " " + n
 	}
 	fmt.Fprintf(cmdOutput, "%s\n", tstr)
