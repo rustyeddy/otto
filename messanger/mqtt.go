@@ -69,8 +69,8 @@ func NewMQTT(id string, broker string, topics string) *MQTT {
 	mqtt = &MQTT{
 		id:       id,
 		Broker:   broker,
-		Username: "otto",
-		Password: "otto123",
+		Username: "",
+		Password: "",
 	}
 	return mqtt
 }

@@ -52,6 +52,10 @@ import (
 // Optional Features (commented out):
 //   - WebSocket listener on port 1882 for browser clients
 //   - HTTP health check endpoint on port 8081 for monitoring
+var (
+	shutdown func(context.Context) error
+)
+
 func StartMQTTBroker(ctx context.Context) (func(context.Context) error, error) {
 	// Create broker with default options (in-memory state).
 	srv := mqttserver.New(nil)
@@ -114,8 +118,15 @@ func StartMQTTBroker(ctx context.Context) (func(context.Context) error, error) {
 	}()
 
 	// Return a shutdown function you can call from your app.
-	shutdown := func(_ context.Context) error {
+	shutdown = func(_ context.Context) error {
 		return srv.Close()
 	}
 	return shutdown, nil
+}
+
+func StopMQTTBroker(ctx context.Context) error {
+	if shutdown != nil {
+		return shutdown(ctx)
+	}
+	return nil
 }

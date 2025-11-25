@@ -130,7 +130,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/rustyeddy/otto/messanger"
 	"github.com/rustyeddy/otto/server"
@@ -156,12 +155,11 @@ type OttO struct {
 	*server.Server
 	messanger.Messanger
 
-	Mock           bool
-	MQTTBroker     string // MQTT broker URL, defaults to test.mosquitto.org
-	UseLocal       bool   // Force use of local messaging
-	hub            bool   // maybe hub should be a different struct?
-	done           chan any
-	brokerShutdown func(context.Context) error // graceful shutdown for embedded broker
+	Mock       bool
+	MQTTBroker string // MQTT broker URL, defaults to test.mosquitto.org
+	UseLocal   bool   // Force use of local messaging
+	hub        bool   // maybe hub should be a different struct?
+	done       chan any
 }
 
 // global variables and structures
@@ -207,41 +205,7 @@ func (o *OttO) Init() {
 	}
 	// Initialzie the local station
 	o.Station.Init()
-
-	// Start embedded MQTT broker (optional) and store shutdown func.
-	if true {
-		if shutdown, err := messanger.StartMQTTBroker(context.Background()); err != nil {
-			slog.Error("Failed to start embedded MQTT broker", "error", err)
-		} else {
-			o.brokerShutdown = shutdown
-		}
-	}
-
-	if o.UseLocal {
-		slog.Info("Using local messaging (no MQTT)")
-		o.Messanger = messanger.NewMessangerLocal("otto")
-	} else {
-
-		// Set the MQTT_BROKER environment variable for the messanger
-		o.MQTTBroker = os.Getenv("MQTT_BROKER")
-		if o.MQTTBroker == "" {
-			o.MQTTBroker = "localhost"
-		}
-
-		// Get MQTT credentials from environment or use defaults for embedded broker
-		mqttUser := os.Getenv("MQTT_USER")
-		mqttPass := os.Getenv("MQTT_PASS")
-		if mqttUser == "" && o.MQTTBroker == "localhost" {
-			mqttUser = "otto"
-			mqttPass = "otto123"
-		}
-
-		slog.Info("Attempting MQTT connection", "broker", o.MQTTBroker, "user", mqttUser)
-		o.Messanger = messanger.NewMessangerMQTTWithAuth("otto", o.MQTTBroker, mqttUser, mqttPass)
-	}
-	ms := messanger.GetMsgSaver()
-	ms.Saving = true
-
+	o.Messanger = messanger.GetMessanger()
 }
 
 func (o *OttO) Start() {
@@ -268,10 +232,7 @@ func (o *OttO) Stop() {
 
 	if o.Messanger != nil {
 		o.Messanger.Close()
-	}
-
-	if o.brokerShutdown != nil {
-		_ = o.brokerShutdown(context.Background())
+		messanger.StopMQTTBroker(context.Background())
 	}
 }
 
