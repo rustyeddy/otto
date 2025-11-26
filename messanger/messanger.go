@@ -35,6 +35,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -192,7 +193,14 @@ func GetMessanger() Messanger {
 		shutdown, err = StartMQTTBroker(context.Background())
 		if err != nil {
 			slog.Error("Failed to start embedded MQTT broker", "error", err)
-			return nil
+
+			// A hack if bind address is in use, skip out and just
+			// use the client to bind to the already running broker
+			if !strings.Contains(err.Error(), "bind: address already in use") {
+				return nil
+			}
+
+			slog.Info("Assuming broker is already running, connecting to existing broker")
 		}
 		fallthrough
 
