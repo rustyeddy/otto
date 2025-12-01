@@ -184,12 +184,12 @@ func GetMessanger() Messanger {
 		pass = os.Getenv("MQTT_PASSWORD")
 	}
 
-	var err error
 	switch broker {
 	case "none":
 		msgr = NewMessangerLocal(broker)
 
 	case "otto":
+		var err error
 		shutdown, err = StartMQTTBroker(context.Background())
 		if err != nil {
 			slog.Error("Failed to start embedded MQTT broker", "error", err)
