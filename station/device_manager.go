@@ -11,7 +11,7 @@ var (
 
 type DeviceManager struct {
 	// Internal generic device store for tests and loose coupling
-	devices map[string]any
+	devices map[string]*ManagedDevice
 	Metrics *DeviceMetrics
 	mu      sync.RWMutex `json:"-"`
 }
@@ -26,7 +26,7 @@ type DeviceMetrics struct {
 
 func NewDeviceManager() *DeviceManager {
 	return &DeviceManager{
-		devices: make(map[string]any),
+		devices: make(map[string]*ManagedDevice),
 		Metrics: &DeviceMetrics{},
 	}
 }
@@ -78,10 +78,22 @@ func (dm *DeviceManager) Remove(id string) {
 }
 
 // GetDevice returns the device (anythig supporting the Name (Name()) interface)
-func (dm *DeviceManager) Get(name string) any {
+func (dm *DeviceManager) Get(name string) *ManagedDevice {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
-	return dm.devices[name]
+	md, ok := dm.devices[name]
+	if !ok {
+		return nil
+	}
+	return md
+}
+
+func (dm *DeviceManager) GetDevice(name string) any {
+	md := dm.Get(name)
+	if md == nil {
+		return nil
+	}
+	return md.Device
 }
 
 // UpdateDeviceMetrics updates device-related metrics

@@ -251,8 +251,5 @@ func (o *OttO) GetManagedDevice(name string) *station.ManagedDevice {
 		return nil
 	}
 	device := o.Station.Get(name)
-	if md, ok := device.(*station.ManagedDevice); ok {
-		return md
-	}
-	return nil
+	return device
 }
