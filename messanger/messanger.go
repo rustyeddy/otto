@@ -15,8 +15,8 @@
 //
 // Example Usage:
 //
-//	// Create a local messanger
-//	msg := messanger.NewMessanger("local")
+//	// Create a local in-process messanger
+//	msg := messanger.NewMessanger("none")
 //
 //	// Subscribe to a topic
 //	msg.Subscribe("ss/c/station/+", func(m *messanger.Msg) error {
