@@ -298,6 +298,17 @@ func (mb *MessangerBase) PubMsg(msg *Msg) error {
 	return nil
 }
 
+func (mb *MessangerBase) Pub(topic string, data any) error {
+
+	b, err := Bytes(data)
+	if err != nil {
+		slog.Error("messanger failed to convert bytes", "error", err)
+		return err
+	}
+	msg := NewMsg(topic, b, "otto")
+	return mb.PubMsg(msg)
+}
+
 // Close cleanly shuts down the messanger.
 // This base implementation is a no-op that just logs the close operation.
 //

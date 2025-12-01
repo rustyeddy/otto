@@ -182,31 +182,3 @@ func (m *MessangerLocal) Close() {
 	}
 	slog.Debug("MessangerLocal.Close", "id", m.ID())
 }
-
-// toBytesUnchecked is an internal helper that converts common types to []byte.
-// It attempts to use the package's Bytes() function first, falling back to
-// basic type assertions if that fails.
-//
-// This is a best-effort conversion used internally by the local messanger.
-//
-// Supported types: []byte, string, and any other type (converted via fmt.Sprintf)
-//
-// Parameters:
-//   - v: The value to convert to bytes
-//
-// Returns the byte representation of the value.
-func toBytesUnchecked(v any) []byte {
-	// try using Bytes helper if available in this package
-	if b, err := Bytes(v); err == nil {
-		return b
-	}
-	// best-effort fallback
-	switch x := v.(type) {
-	case []byte:
-		return x
-	case string:
-		return []byte(x)
-	default:
-		return []byte(fmt.Sprintf("%v", v))
-	}
-}
