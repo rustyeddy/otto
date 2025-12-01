@@ -16,8 +16,8 @@ type Data interface {
 // Data is an array of timestamps and values representing the same
 // source of data over a period of time
 type DataPoint struct {
-	value     any       `json:"value"`
-	timestamp time.Time `json:"time-increment"`
+	value     any
+	timestamp time.Time
 }
 
 func NewData(dat any, ts time.Time) Data {

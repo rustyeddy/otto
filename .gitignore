@@ -29,3 +29,4 @@ otto.log
 debug*
 *.code-workspace
 *.log
+coverage.*

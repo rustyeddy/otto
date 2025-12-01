@@ -14,9 +14,6 @@ import (
 	"github.com/rustyeddy/otto/messanger"
 )
 
-type OttOServer interface {
-}
-
 // Server serves up HTTP on Addr (default 0.0.0.0:8011)
 // It takes care of REST API, serving the web app if Appdir
 // does not equal nil and initial Websocket upgrade

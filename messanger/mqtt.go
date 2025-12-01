@@ -41,14 +41,14 @@ var (
 //	}
 //	client.Publish("sensors/temp", "25.5")
 type MQTT struct {
-	id       string `json:"id"`       // Unique client identifier
-	Broker   string `json:"broker"`   // Broker hostname or IP (no protocol/port)
-	Username string `json:"username"` // MQTT authentication username
-	Password string `json:"password"` // MQTT authentication password
-	Debug    bool   `json:"debug"`    // Enable Paho MQTT client debug logging
+	id       string // Unique client identifier
+	Broker   string // Broker hostname or IP (no protocol/port)
+	Username string // MQTT authentication username
+	Password string // MQTT authentication password
+	Debug    bool   // Enable Paho MQTT client debug logging
 
-	error         `json:"error"` // Last error encountered
-	gomqtt.Client `json:"-"`     // Embedded Paho MQTT client
+	error         // Last error encountered
+	gomqtt.Client // Embedded Paho MQTT client
 }
 
 // NewMQTT creates a new MQTT client instance with default credentials.
@@ -69,8 +69,8 @@ func NewMQTT(id string, broker string, topics string) *MQTT {
 	mqtt = &MQTT{
 		id:       id,
 		Broker:   broker,
-		Username: "otto",
-		Password: "otto123",
+		Username: "",
+		Password: "",
 	}
 	return mqtt
 }

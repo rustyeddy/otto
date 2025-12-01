@@ -34,25 +34,26 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
-)
-
-var (
-	// messanger holds the singleton instance of the active Messanger
-	messanger     Messanger
-	messangerLock sync.Mutex
 )
 
 // MessangerConfig holds configuration parameters for messanger initialization.
 // Currently supports broker address configuration for MQTT-based messangers.
-type MessangerConfig struct {
+type Config struct {
 	// Broker is the address of the MQTT broker (hostname or IP)
-	Broker string
+	Broker   string `json:"broker"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-var messangerConfig = MessangerConfig{
-	Broker: "localhost",
-}
+var (
+	// messanger holds the singleton instance of the active Messanger
+	msgr          Messanger
+	messangerLock sync.Mutex
+	config        Config
+)
 
 // MsgHandler is a callback function type for handling incoming messages.
 // Subscribers provide a MsgHandler function that will be invoked when
@@ -112,9 +113,9 @@ type Messanger interface {
 //
 // Supported ID values:
 //   - "none": Creates a local in-process messanger without MQTT
-//   - "mqtt": Creates an MQTT messanger connecting to an external broker
 //   - "local": Starts an embedded MQTT broker and creates an MQTT messanger
-//
+//   - default: Creates an MQTT messanger connecting to an external broker
+
 // The created messanger becomes the global singleton accessible via GetMessanger().
 // If an invalid ID is provided, logs an error and returns nil.
 //
@@ -124,26 +125,24 @@ type Messanger interface {
 //	if msg == nil {
 //	    log.Fatal("Failed to create messanger")
 //	}
-func NewMessanger(id string) (m Messanger) {
-	switch id {
+func NewMessanger(broker string) (m Messanger) {
+
+	switch broker {
 	case "none":
-		m = NewMessangerLocal(id)
-	case "mqtt":
-		m = NewMessangerMQTT(id, messangerConfig.Broker)
-	case "local":
+		msgr = NewMessangerLocal(broker)
+
+	case "otto":
 		_, err := StartMQTTBroker(context.Background())
 		if err != nil {
 			slog.Error("Failed to start embedded MQTT broker", "error", err)
 			return nil
 		}
-		m = NewMessangerMQTT(id, messangerConfig.Broker)
+		msgr = NewMessangerMQTT(broker, broker)
 
 	default:
-		slog.Error("Unknown messanger ID", "id", id)
-		return nil
+		msgr = NewMessangerMQTT(broker, broker)
 	}
-	messanger = m
-	return m
+	return msgr
 }
 
 // GetMessanger returns the singleton Messanger instance created by NewMessanger.
@@ -159,7 +158,60 @@ func NewMessanger(id string) (m Messanger) {
 func GetMessanger() Messanger {
 	messangerLock.Lock()
 	defer messangerLock.Unlock()
-	return messanger
+
+	if msgr != nil {
+		return msgr
+	}
+
+	// Take broker from the config first
+	broker := config.Broker
+	if broker == "" {
+		// if no config look for environment variable
+		broker = os.Getenv("MQTT_BROKER")
+	}
+	if broker == "" {
+		// if no environment variable then default to the built in
+		// broker
+		broker = "otto"
+	}
+
+	user := config.Username
+	if user == "" {
+		user = os.Getenv("MQTT_USERNAME")
+	}
+	pass := config.Password
+	if pass == "" {
+		pass = os.Getenv("MQTT_PASSWORD")
+	}
+
+	switch broker {
+	case "none":
+		msgr = NewMessangerLocal(broker)
+
+	case "otto":
+		var err error
+		shutdown, err = StartMQTTBroker(context.Background())
+		if err != nil {
+			slog.Error("Failed to start embedded MQTT broker", "error", err)
+
+			// A hack if bind address is in use, skip out and just
+			// use the client to bind to the already running broker
+			if !strings.Contains(err.Error(), "bind: address already in use") {
+				return nil
+			}
+
+			slog.Info("Assuming broker is already running, connecting to existing broker")
+		}
+		fallthrough
+
+	default:
+		msgr = NewMessangerMQTTWithAuth("otto", broker, user, pass)
+	}
+
+	ms := GetMsgSaver()
+	ms.Saving = true
+
+	return msgr
 }
 
 // MessangerBase provides a base implementation of the Messanger interface
@@ -244,6 +296,17 @@ func (mb *MessangerBase) PubMsg(msg *Msg) error {
 	// to actually publish the message
 	slog.Debug("MessangerBase.PubMsg", "topic", msg.Topic, "published_count", mb.Published)
 	return nil
+}
+
+func (mb *MessangerBase) Pub(topic string, data any) error {
+
+	b, err := Bytes(data)
+	if err != nil {
+		slog.Error("messanger failed to convert bytes", "error", err)
+		return err
+	}
+	msg := NewMsg(topic, b, "otto")
+	return mb.PubMsg(msg)
 }
 
 // Close cleanly shuts down the messanger.

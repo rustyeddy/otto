@@ -48,11 +48,10 @@ func TestMessangerBaseServeHTTP(t *testing.T) {
 
 func TestNewMessanger(t *testing.T) {
 	tests := []struct {
-		name      string
-		id        string
-		topic     string
-		expected  string
-		expectNil bool
+		name     string
+		id       string
+		topic    string
+		expected string
 	}{
 		{
 			name:     "Create none messanger",
@@ -67,22 +66,18 @@ func TestNewMessanger(t *testing.T) {
 			expected: "mqtt",
 		},
 		{
-			name:      "Create messanger with unknown id returns nil",
-			id:        "unknown",
-			topic:     "topic1",
-			expectNil: true,
+			name:     "Create messanger with unknown id returns nil",
+			id:       "unknown",
+			topic:    "topic1",
+			expected: "unknown",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewMessanger(tt.id)
-			if tt.expectNil {
-				assert.Nil(t, m)
-			} else {
-				assert.NotNil(t, m)
-				assert.Equal(t, tt.expected, m.ID())
-			}
+			assert.NotNil(t, m)
+			assert.Equal(t, tt.expected, m.ID())
 		})
 	}
 }
