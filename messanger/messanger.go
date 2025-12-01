@@ -194,13 +194,13 @@ func GetMessanger() Messanger {
 		if err != nil {
 			slog.Error("Failed to start embedded MQTT broker", "error", err)
 
-			// A hack if bind address is in use, skip out and just
-			// use the client to bind to the already running broker
-			if !strings.Contains(err.Error(), "bind: address already in use") {
+			// If bind address is already in use, assume broker is running and connect as client
+			// For any other error, fail and return nil
+			if strings.Contains(err.Error(), "bind: address already in use") {
+				slog.Info("Assuming broker is already running, connecting to existing broker")
+			} else {
 				return nil
 			}
-
-			slog.Info("Assuming broker is already running, connecting to existing broker")
 		}
 		fallthrough
 
