@@ -28,7 +28,7 @@ type Station struct {
 	messanger.Messanger `json:"-"`
 
 	errq   chan error
-	errors []error `json:"errors"`
+	errors []error `json:"-"`
 
 	time.Duration `json:"duration"`
 	ticker        *time.Ticker `json:"-"`

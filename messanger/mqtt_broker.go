@@ -3,6 +3,8 @@ package messanger
 import (
 	"context"
 	"log"
+	"log/slog"
+	"sync"
 
 	mqttserver "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/hooks/auth"
@@ -111,22 +113,28 @@ func StartMQTTBroker(ctx context.Context) (func(context.Context) error, error) {
 		}
 	}()
 
+	var once sync.Once
+
+	// Return a shutdown function to be called from the app.
+	shutdown = func(_ context.Context) error {
+		slog.Debug("mqtt broker shutdown called")
+		// srv.Close() must be wrapped because it returns an error
+		once.Do(func() { srv.Close() })
+		return nil
+	}
+
 	// Close on context cancellation if provided.
 	go func() {
 		<-ctx.Done()
-		_ = srv.Close()
+		_ = shutdown(ctx)
 	}()
 
-	// Return a shutdown function you can call from your app.
-	shutdown = func(_ context.Context) error {
-		return srv.Close()
-	}
 	return shutdown, nil
 }
 
 func StopMQTTBroker(ctx context.Context) error {
 	if shutdown != nil {
-		return shutdown(ctx)
+		shutdown(ctx)
 	}
 	return nil
 }

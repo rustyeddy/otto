@@ -261,6 +261,7 @@ type MsgPrinter struct{}
 //	printer := &MsgPrinter{}
 //	msg.Subscribe("ss/c/+/temp", printer.MsgHandler)
 func (m *MsgPrinter) MsgHandler(msg *Msg) error {
-	fmt.Printf("%+v\n", msg)
+	str := fmt.Sprintf("%#v", msg)
+	slog.Info("builtin MsgHandler", "msg", str)
 	return nil
 }
