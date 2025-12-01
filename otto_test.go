@@ -16,8 +16,6 @@ func TestOttOInit(t *testing.T) {
 	assert.NotNil(t, o.StationManager, "Expected StationManager to be initialized")
 	assert.NotNil(t, o.Station, "Expected Station to be initialized")
 	assert.NotNil(t, o.Server, "Expected Server to be initialized")
-	// assert.NotNil(t, o.brokerShutdown, "Expected brokerShutdown function to be initialized")
-
 	// Clean up by stopping OttO (handle done channel in goroutine)
 	go func() {
 		<-o.Done()
