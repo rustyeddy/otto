@@ -113,7 +113,7 @@ type Messanger interface {
 //
 // Supported ID values:
 //   - "none": Creates a local in-process messanger without MQTT
-//   - "local": Starts an embedded MQTT broker and creates an MQTT messanger
+//   - "otto": Starts an embedded MQTT broker and creates an MQTT messanger
 //   - default: Creates an MQTT messanger connecting to an external broker
 
 // The created messanger becomes the global singleton accessible via GetMessanger().
@@ -121,7 +121,7 @@ type Messanger interface {
 //
 // Example:
 //
-//	msg := messanger.NewMessanger("local")
+//	msg := messanger.NewMessanger("otto")
 //	if msg == nil {
 //	    log.Fatal("Failed to create messanger")
 //	}
