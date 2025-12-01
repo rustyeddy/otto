@@ -6,9 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/rustyeddy/otto/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func init() {
+	utils.SetStationName("tester")
+}
 
 func TestMessangerBaseServeHTTP(t *testing.T) {
 	mb := NewMessangerBase("test-id")

@@ -199,7 +199,7 @@ func GetMessanger() Messanger {
 			if !strings.Contains(err.Error(), "bind: address already in use") {
 				return nil
 			}
-
+			broker = "localhost"
 			slog.Info("Assuming broker is already running, connecting to existing broker")
 		}
 		fallthrough
@@ -222,9 +222,10 @@ func GetMessanger() Messanger {
 // This type is typically embedded in concrete implementations like MessangerLocal
 // and MessangerMQTT rather than used directly.
 type MessangerBase struct {
-	id    string                // Unique identifier for this messanger instance
-	subs  map[string]MsgHandler // Map of topic to handler functions
-	error                       // Last error encountered, if any
+	id        string                // Unique identifier for this messanger instance
+	baseTopic string                // o/<station>/c/<device>
+	subs      map[string]MsgHandler // Map of topic to handler functions
+	error                           // Last error encountered, if any
 
 	Published int // Count of messages published through this messanger
 }
