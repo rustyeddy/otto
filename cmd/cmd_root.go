@@ -53,5 +53,5 @@ func Execute() {
 }
 
 func ottoRun(cmd *cobra.Command, args []string) {
-	cmd.Usage()
+	serveRun(cmd, args)
 }

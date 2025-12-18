@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -44,15 +43,7 @@ func TestOttoRun(t *testing.T) {
 	cmd := &cobra.Command{}
 	args := []string{}
 
-	// Capture the output of cmd.Usage()
-	var buf bytes.Buffer
-	cmd.SetOut(&buf)
-	cmd.SetErr(&buf)
-
+	// Call ottoRun to ensure it doesn't panic or throw errors
+	// (now calls serveRun instead of showing usage)
 	ottoRun(cmd, args)
-
-	output := buf.String()
-	if output == "" {
-		t.Error("expected usage output, got empty string")
-	}
 }
