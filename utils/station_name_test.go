@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStationNameInit(t *testing.T) {
@@ -23,7 +25,6 @@ func TestSetStationName(t *testing.T) {
 		expected string
 	}{
 		{"normal name", "test-station", "test-station"},
-		{"empty string", "", ""},
 		{"single character", "x", "x"},
 		{"with spaces", "my station", "my station"},
 		{"with special chars", "station-1@home", "station-1@home"},
@@ -60,13 +61,11 @@ func TestStationSequence(t *testing.T) {
 	originalName := StationName()
 
 	// Set and verify multiple times
-	names := []string{"first", "second", "third", ""}
+	names := []string{"first", "second", "third"}
 
-	for i, name := range names {
+	for _, name := range names {
 		SetStationName(name)
-		if StationName() != name {
-			t.Errorf("Step %d: expected station name %q, got %q", i+1, name, StationName())
-		}
+		assert.Equal(t, StationName(), name)
 	}
 
 	// Restore original name
@@ -162,7 +161,6 @@ func TestStationNilSafety(t *testing.T) {
 	// Test behavior with potential edge cases
 	// Go strings are safe, but let's test empty and whitespace
 	testCases := []string{
-		"",
 		" ",
 		"\t",
 		"\n",

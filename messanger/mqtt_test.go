@@ -293,12 +293,8 @@ func TestMockClient_Integration(t *testing.T) {
 	// Test publish
 	mqttInstance.Publish("test/topic", "test message")
 	pubs := mock.GetPublications()
-	if len(pubs) != 1 {
-		t.Fatalf("expected 1 publication, got %d", len(pubs))
-	}
-	if pubs[0].Topic != "test/topic" {
-		t.Errorf("expected topic 'test/topic', got %s", pubs[0].Topic)
-	}
+	assert.Equal(t, len(pubs), 1)
+	assert.Equal(t, pubs[0].Topic, "o/tester/test/topic")
 
 	// Test subscribe with message handling
 	var receivedMsg *Msg
@@ -514,12 +510,9 @@ func TestMessangerMQTT_Pub(t *testing.T) {
 
 	// Verify publish was called
 	pubs := mock.GetPublications()
-	if len(pubs) != 1 {
-		t.Fatalf("expected 1 publication, got %d", len(pubs))
-	}
-	if pubs[0].Topic != "test/topic" {
-		t.Errorf("expected topic 'test/topic', got %s", pubs[0].Topic)
-	}
+	assert.Equal(t, len(pubs), 1, "expected 1 publication, got %d", len(pubs))
+	assert.Equal(t, pubs[0].Topic, "o/tester/test/topic")
+
 	if pubs[0].Payload != "test message" {
 		t.Errorf("expected payload 'test message', got %v", pubs[0].Payload)
 	}
@@ -541,16 +534,9 @@ func TestMessangerMQTT_PubMsg(t *testing.T) {
 
 	// Verify publish was called with correct data
 	pubs := mock.GetPublications()
-	if len(pubs) != 1 {
-		t.Fatalf("expected 1 publication, got %d", len(pubs))
-	}
-	if pubs[0].Topic != "test/topic" {
-		t.Errorf("expected topic 'test/topic', got %s", pubs[0].Topic)
-	}
-	// The payload should be the Data field
-	if string(pubs[0].Payload.([]byte)) != "test data" {
-		t.Errorf("expected payload 'test data', got %v", pubs[0].Payload)
-	}
+	assert.Equal(t, len(pubs), 1)
+	assert.Equal(t, pubs[0].Topic, "o/tester/test/topic")
+	assert.Equal(t, string(pubs[0].Payload.([]byte)), "test data")
 }
 
 func TestMessangerMQTT_Error(t *testing.T) {

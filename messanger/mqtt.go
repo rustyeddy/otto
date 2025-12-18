@@ -7,6 +7,7 @@ import (
 	"os"
 
 	gomqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/rustyeddy/otto/utils"
 )
 
 var (
@@ -289,6 +290,7 @@ func (m *MQTT) Publish(topic string, value any) error {
 		return fmt.Errorf("MQTT Client is not connected to a broker")
 	}
 
+	topic = "o/" + utils.StationName() + "/" + topic
 	if t = m.Client.Publish(topic, byte(0), false, value); t == nil {
 		if false {
 			return fmt.Errorf("MQTT Pub NULL token topic %s - value: %+v", topic, value)
