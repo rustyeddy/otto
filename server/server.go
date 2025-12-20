@@ -79,7 +79,6 @@ func (s *Server) Start(done chan any) {
 	go http.ListenAndServe(s.Addr, s.ServeMux)
 	<-done
 	s.Shutdown(context.Background())
-	return
 }
 
 func (s *Server) Appdir(path, file string) {

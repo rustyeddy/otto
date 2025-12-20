@@ -66,13 +66,14 @@ func pcFromCommands(parent readline.PrefixCompleterInterface, c *cobra.Command) 
 
 func cliLine() bool {
 	line, err := rl.Readline()
-	if err == readline.ErrInterrupt {
+	switch err {
+	case readline.ErrInterrupt:
 		if len(line) == 0 {
 			return false
 		} else {
 			return true
 		}
-	} else if err == io.EOF {
+	case io.EOF:
 		return false
 	}
 
