@@ -198,7 +198,7 @@ func (o *OttO) Init() {
 	var err error
 	o.StationManager = station.GetStationManager()
 	o.Server = server.GetServer()
-    o.Name = "myname"
+	o.Name = "myname"
 	o.Station, err = o.StationManager.Add(o.Name)
 	if err != nil {
 		slog.Error("Unable to create station", "error", err)

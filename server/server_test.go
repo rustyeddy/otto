@@ -65,8 +65,6 @@ func TestServerRegister(t *testing.T) {
 		path := "/test/endpoint"
 		s.Register(path, mockHandler)
 
-		assert.NotNil(t, s.EndPoints, "EndPoints map should be initialized")
-
 		p, ok := s.EndPoints.Load(path)
 		assert.True(t, ok, "Endpoint path should exists")
 		assert.Same(t, mockHandler, p, "Correct handler should be stored")

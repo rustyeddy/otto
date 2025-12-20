@@ -315,7 +315,7 @@ func TestStationManagerCapacity(t *testing.T) {
 			case <-sm.EventQ:
 				eventCount++
 			case <-done:
-				break
+				return
 			}
 		}
 	}()
@@ -337,6 +337,9 @@ func TestStationManagerCapacity(t *testing.T) {
 			t.Errorf("Event queue blocked at event %d", i)
 		}
 	}
+
+	// Give goroutine time to process all events before closing
+	time.Sleep(50 * time.Millisecond)
 	done <- true
 
 	assert.Equal(t, 10, eventCount)

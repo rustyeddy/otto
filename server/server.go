@@ -55,6 +55,12 @@ func (s *Server) Register(p string, h http.Handler) error {
 		return errors.New("Server.Register can not have null path or handler")
 	}
 
+	// Check if already registered to avoid duplicate registration errors
+	_, alreadyRegistered := s.EndPoints.Load(p)
+	if alreadyRegistered {
+		return nil // Already registered, skip
+	}
+
 	// get this to log to a file (or syslog) by default
 	//	slog.Info("HTTP REST API Registered: ", "path", p)
 	s.EndPoints.Store(p, h)
@@ -121,7 +127,7 @@ func (s *Server) EmbedTempl(path string, fsys embed.FS, data any) {
 	})
 }
 
-func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ep := struct {
 		Routes []string
 	}{}
