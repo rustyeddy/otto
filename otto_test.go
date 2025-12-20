@@ -37,34 +37,3 @@ func TestOttOBrokerShutdown(t *testing.T) {
 		o.Stop()
 	}, "Stop() should not panic")
 }
-
-// func TestOttOStartAndStop(t *testing.T) {
-// 	o := &OttO{
-// 		Name:           "TestOttO",
-// 		StationManager: station.GetStationManager(),
-// 		Server:         server.GetServer(),
-// 		Messanger:      messanger.NewMessangerMQTT("otto", messanger.GetTopics().Data("station")),
-// 		done:           make(chan any),
-// 	}
-
-// 	println("1")
-// 	go func() {
-// 		if err := o.Start(); err != nil {
-// 			t.Errorf("Start returned an error: %v", err)
-// 		}
-// 	}()
-// 	println("2")
-// 	o.done <- struct{}{}
-// 	println("3")
-// 	o.Stop()
-// 	println("4")
-
-// 	select {
-// 	case <-o.done:
-// 		println("5")
-// 		t.Log("Stop successfully closed the done channel")
-// 	default:
-// 		println("6")
-// 		t.Error("Expected done channel to be closed after Stop")
-// 	}
-// }

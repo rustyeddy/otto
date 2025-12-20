@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -45,5 +46,7 @@ func TestOttoRun(t *testing.T) {
 
 	// Call ottoRun to ensure it doesn't panic or throw errors
 	// (now calls serveRun instead of showing usage)
-	ottoRun(cmd, args)
+	go ottoRun(cmd, args)
+	time.Sleep(1 * time.Second)
+
 }

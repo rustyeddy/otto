@@ -191,14 +191,12 @@ func TestRunLine(t *testing.T) {
 
 		w.Close()
 		os.Stderr = originalStderr
-
 		output := make([]byte, 1024)
 		r.Read(output)
 		r.Close()
 
 		assert.True(t, result, "RunLine should return true even for invalid commands")
 		assert.Contains(t, string(output), "Error running cmd", "Usage should be displayed")
-
 		// Note: Error handling might write to stdout instead of stderr
 	})
 
