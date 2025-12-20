@@ -90,7 +90,7 @@ func (ws WServe) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case <-wsock.Done:
-			break
+			return
 		}
 	}
 }

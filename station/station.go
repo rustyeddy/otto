@@ -286,7 +286,7 @@ func (st *Station) Stop() {
 }
 
 // Create an endpoint for this device to be queried.
-func (s Station) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Station) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(s)
 }
@@ -314,7 +314,8 @@ func (st *Station) GetMetricsEndpoint() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		m := st.Metrics.GetMetrics()
-		_ = json.NewEncoder(w).Encode(m)
+		// Encode a pointer to avoid passing the struct by value
+		_ = json.NewEncoder(w).Encode(&m)
 	}
 }
 

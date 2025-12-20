@@ -1,9 +1,8 @@
-// serve test
-
 package cmd
 
 import (
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -45,6 +44,11 @@ func TestServeRun(t *testing.T) {
 	cmd := &cobra.Command{}
 	args := []string{}
 
-	// Call serveRun to ensure it doesn't panic or throw errors
-	serveRun(cmd, args)
+	// Start serveRun in a goroutine since it starts servers
+	go serveRun(cmd, args)
+
+	// Give it a moment to start up
+	time.Sleep(100 * time.Millisecond)
+
+	// The test passes if serveRun starts without panicking
 }

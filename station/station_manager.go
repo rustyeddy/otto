@@ -90,7 +90,7 @@ func (sm *StationManager) Start() {
 					st.mu.Lock()
 
 					expires := st.LastHeard.Add(st.Expiration)
-					if expires.Sub(time.Now()) < 0 {
+					if time.Until(expires) < 0 {
 						sm.mu.Lock()
 						slog.Info("Station has timed out", "station", id)
 						sm.Stale[id] = st
