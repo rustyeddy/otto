@@ -198,9 +198,10 @@ func (o *OttO) Init() {
 	var err error
 	o.StationManager = station.GetStationManager()
 	o.Server = server.GetServer()
+    o.Name = "myname"
 	o.Station, err = o.StationManager.Add(o.Name)
 	if err != nil {
-		slog.Error("Unable to create station")
+		slog.Error("Unable to create station", "error", err)
 		return
 	}
 	// Initialzie the local station
@@ -208,6 +209,7 @@ func (o *OttO) Init() {
 	o.Messanger = messanger.GetMessanger()
 }
 
+// Start the OttO process, TODO return a stop channel or context?
 func (o *OttO) Start() {
 	if o.Messanger != nil {
 		go o.Messanger.Connect()

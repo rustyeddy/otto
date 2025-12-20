@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/rustyeddy/otto"
+    "github.com/spf13/cobra"
 )
 
 var serveCmd = &cobra.Command{
@@ -20,5 +21,7 @@ func init() {
 }
 
 func serveRun(cmd *cobra.Command, args []string) {
-	// otto.OttO()
+    o := otto.OttO{}
+    o.Init()
+    o.Start()
 }

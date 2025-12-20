@@ -17,6 +17,9 @@ vet:
 build:
 	go build -o ${BINARY_NAME} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
 
+run: build
+	./otto
+
 test:
 	rm -f cover.out
 	go test -coverprofile=cover.out -cover ./...
@@ -38,4 +41,4 @@ clean:
 
 ci: fmt vet test build
 
-.PHONY: all test build fmt vet clean ci $(SUBDIRS)
+.PHONY: all build clean ci fmt run test vet $(SUBDIRS)
