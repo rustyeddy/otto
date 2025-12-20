@@ -81,7 +81,6 @@ func cliLine() bool {
 }
 
 var RunLine = func(line string) bool {
-	// func RunLine(line string) bool {
 	line = strings.TrimSpace(line)
 	if line == "exit" || line == "quit" {
 		return false
@@ -95,6 +94,7 @@ var RunLine = func(line string) bool {
 	cmd, args, err := rootCmd.Find(args)
 	if err != nil {
 		fmt.Fprintf(cmdOutput, "Error running cmd %q: %s\n", line, err)
+		return true
 	}
 
 	cmd.ParseFlags(args)
