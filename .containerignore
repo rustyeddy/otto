@@ -1,0 +1,38 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Build artifacts
+otto
+*.o
+*.a
+*.so
+*.out
+cover.out
+coverage.html
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+.env
+.env.local
+
+# Documentation (optional, include if needed in image)
+README.md
+docs/
+
+# Testing
+testing/
+*_test.go
+
+# Dependencies cache
+vendor/
+
+# Temporary files
+*.tmp
+.cache/
