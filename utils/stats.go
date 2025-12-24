@@ -35,10 +35,15 @@ func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		stats = GetStats()
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(stats); err != nil {
+	// Encode to bytes first to avoid setting Content-Type header before knowing if encoding succeeds
+	data, err := json.Marshal(stats)
+	if err != nil {
 		slog.Error("Failed to encode stats", "error", err)
 		http.Error(w, "Failed to encode stats", http.StatusInternalServerError)
 		return
 	}
+
+	// Only set Content-Type after successful encoding
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
 }
