@@ -63,15 +63,19 @@ func ottoRun(cmd *cobra.Command, args []string) {
 // GetClient returns an Otto client if remote mode is enabled, nil otherwise.
 // It checks the --server flag first, then the OTTO_SERVER environment variable.
 func GetClient() *client.Client {
-	// Check if serverURL was set via --server flag
-	if serverURL == "" {
-		// Check environment variable
-		serverURL = os.Getenv("OTTO_SERVER")
+	// Start with the value provided via --server flag (if any).
+	effectiveURL := serverURL
+
+	// If no flag was provided, fall back to the environment variable.
+	if effectiveURL == "" {
+		if envURL := os.Getenv("OTTO_SERVER"); envURL != "" {
+			effectiveURL = envURL
+		}
 	}
 
-	// If we have a server URL, create and return a client
-	if serverURL != "" {
-		return client.NewClient(serverURL)
+	// If we have a server URL, create and return a client.
+	if effectiveURL != "" {
+		return client.NewClient(effectiveURL)
 	}
 
 	return nil
