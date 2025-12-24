@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/rustyeddy/otto/client"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -124,8 +123,8 @@ func TestStatsRunRemoteModeConnectionError(t *testing.T) {
 	originalServerURL := serverURL
 	defer func() { serverURL = originalServerURL }()
 
-	// Set serverURL to invalid URL
-	serverURL = "http://localhost:9999"
+	// Set serverURL to invalid URL with non-routable IP address
+	serverURL = "http://192.0.2.1:1"
 
 	cmd := &cobra.Command{}
 	args := []string{}
@@ -219,11 +218,6 @@ func TestStatsRunJSONMarshalPath(t *testing.T) {
 	assert.Contains(t, got, "Goroutines")
 	assert.Contains(t, got, "42")
 	assert.Contains(t, got, "MemStats")
-}
-
-// mockClientGetter is a helper type for testing that allows injecting a custom client
-type mockClientGetter struct {
-	client *client.Client
 }
 
 // TestStatsRunWithMockedClient tests the stats command with a fully mocked client
