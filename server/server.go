@@ -74,6 +74,7 @@ func (s *Server) Start(done chan any) {
 	s.Register("/ping", Ping{})
 	s.Register("/api", s)
 	s.Register("/api/topics", messanger.GetTopics())
+	s.Register("/api/stats", StatsHandler{})
 
 	slog.Info("Starting hub Web and REST server on ", "addr", s.Addr)
 	go http.ListenAndServe(s.Addr, s.ServeMux)

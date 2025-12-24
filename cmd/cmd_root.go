@@ -5,12 +5,15 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/rustyeddy/otto/client"
 	"github.com/spf13/cobra"
 )
 
 var (
-	appdir    string
-	cmdOutput io.Writer
+	appdir     string
+	cmdOutput  io.Writer
+	serverURL  string
+	remoteMode bool
 )
 
 var rootCmd = &cobra.Command{
@@ -24,6 +27,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	cmdOutput = os.Stdout
 	rootCmd.PersistentFlags().StringVar(&appdir, "appdir", "embed", "root of the web app")
+	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "", "Otto server URL (e.g., http://localhost:8011)")
 	rootCmd.SetOut(cmdOutput)
 
 	rootCmd.AddCommand(cliCmd)
@@ -54,4 +58,26 @@ func Execute() {
 
 func ottoRun(cmd *cobra.Command, args []string) {
 	serveRun(cmd, args)
+}
+
+// GetClient returns an Otto client if remote mode is enabled, nil otherwise.
+// It checks the --server flag first, then the OTTO_SERVER environment variable.
+func GetClient() *client.Client {
+	// Check if serverURL was set via --server flag
+	if serverURL == "" {
+		// Check environment variable
+		serverURL = os.Getenv("OTTO_SERVER")
+	}
+
+	// If we have a server URL, create and return a client
+	if serverURL != "" {
+		return client.NewClient(serverURL)
+	}
+
+	return nil
+}
+
+// IsRemoteMode returns true if commands should connect to a remote server
+func IsRemoteMode() bool {
+	return GetClient() != nil
 }
