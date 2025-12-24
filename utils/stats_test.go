@@ -364,8 +364,12 @@ func TestStatsConcurrency(b *testing.T) {
 	}
 }
 
-func TestStatsHandler(t *testing.T) {
-	handler := Stats{}
+// TestStatsHandler_CallsGetStats verifies that when ServeHTTP is called with a nil
+// receiver, it calls GetStats() to populate the response with actual runtime statistics
+// rather than returning zero values from an uninitialized Stats struct.
+func TestStatsHandler_CallsGetStats(t *testing.T) {
+	// Use a nil pointer to ensure GetStats() is called
+	var handler *Stats
 
 	req := httptest.NewRequest("GET", "/api/stats", nil)
 	w := httptest.NewRecorder()
@@ -376,19 +380,22 @@ func TestStatsHandler(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	var stats map[string]interface{}
+	var stats Stats
 	if err := json.NewDecoder(w.Body).Decode(&stats); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	// Check that we have expected fields
-	if _, ok := stats["Goroutines"]; !ok {
-		t.Error("Expected Goroutines field in stats")
+	// Verify that actual runtime stats were returned (not zero values)
+	if stats.Goroutines <= 0 {
+		t.Error("Expected positive number of goroutines, indicating GetStats() was called")
 	}
-	if _, ok := stats["CPUs"]; !ok {
-		t.Error("Expected CPUs field in stats")
+	if stats.CPUs <= 0 {
+		t.Error("Expected positive number of CPUs, indicating GetStats() was called")
 	}
-	if _, ok := stats["GoVersion"]; !ok {
-		t.Error("Expected GoVersion field in stats")
+	if stats.GoVersion == "" {
+		t.Error("Expected non-empty Go version, indicating GetStats() was called")
+	}
+	if stats.MemStats.Sys == 0 {
+		t.Error("Expected non-zero Sys memory, indicating GetStats() was called")
 	}
 }
