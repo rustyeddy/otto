@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Server serves up HTTP on Addr (default 0.0.0.0:8011)
@@ -74,6 +75,7 @@ func (s *Server) Start(done chan any) {
 	s.Register("/ping", Ping{})
 	s.Register("/api", s)
 	s.Register("/api/topics", messanger.GetTopics())
+	s.Register("/api/stats", &utils.Stats{})
 
 	slog.Info("Starting hub Web and REST server on ", "addr", s.Addr)
 	go http.ListenAndServe(s.Addr, s.ServeMux)
