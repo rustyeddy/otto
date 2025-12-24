@@ -36,71 +36,57 @@ func NewClient(serverURL string) *Client {
 	}
 }
 
-// GetStats retrieves runtime statistics from the Otto server.
-// Returns a Stats struct containing goroutine count, CPU info, memory stats, etc.
-//
-// This calls the /api/stats endpoint on the server.
-func (c *Client) GetStats() (map[string]interface{}, error) {
-	resp, err := c.HTTPClient.Get(c.BaseURL + "/api/stats")
+// get is a helper method that performs an HTTP GET request to the specified path
+// and decodes the JSON response into the provided result interface.
+// This reduces code duplication across API methods.
+func (c *Client) get(path string, result interface{}) error {
+	resp, err := c.HTTPClient.Get(c.BaseURL + path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to server: %w", err)
+		return fmt.Errorf("failed to connect to server: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
+		return fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
 	}
 
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return nil
+}
+
+// GetStats retrieves runtime statistics from the Otto server.
+// Returns a Stats struct containing goroutine count, CPU info, memory stats, etc.
+//
+// This calls the /api/stats endpoint on the server.
+func (c *Client) GetStats() (map[string]interface{}, error) {
 	var stats map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	if err := c.get("/api/stats", &stats); err != nil {
+		return nil, err
 	}
-
 	return stats, nil
 }
 
 // GetStations retrieves the list of stations from the Otto server.
 // This calls the /api/stations endpoint on the server.
 func (c *Client) GetStations() ([]map[string]interface{}, error) {
-	resp, err := c.HTTPClient.Get(c.BaseURL + "/api/stations")
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to server: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
-	}
-
 	var stations []map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&stations); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	if err := c.get("/api/stations", &stations); err != nil {
+		return nil, err
 	}
-
 	return stations, nil
 }
 
 // GetTimers retrieves the list of timers from the Otto server.
 // This calls the /api/timers endpoint on the server.
 func (c *Client) GetTimers() (map[string]interface{}, error) {
-	resp, err := c.HTTPClient.Get(c.BaseURL + "/api/timers")
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to server: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
-	}
-
 	var timers map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&timers); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	if err := c.get("/api/timers", &timers); err != nil {
+		return nil, err
 	}
-
 	return timers, nil
 }
 
