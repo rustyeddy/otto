@@ -14,8 +14,6 @@ Otto commands can now operate in two modes:
 The client package provides a REST client for connecting to Otto servers:
 - `Client` struct with methods for API calls
 - `GetStats()` - Retrieve runtime statistics
-- `GetStations()` - List stations
-- `GetTimers()` - List timers
 - `Ping()` - Health check
 
 ### 2. Server REST API (`server/`)
