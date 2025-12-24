@@ -10,10 +10,9 @@ import (
 )
 
 var (
-	appdir     string
-	cmdOutput  io.Writer
-	serverURL  string
-	remoteMode bool
+	appdir    string
+	cmdOutput io.Writer
+	serverURL string
 )
 
 var rootCmd = &cobra.Command{
