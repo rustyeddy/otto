@@ -12,8 +12,7 @@ import (
 // returns a cleanup function to restore them
 func setupTestEnv() (cleanup func()) {
 	oldServerURL := serverURL
-	oldEnv := os.Getenv("OTTO_SERVER")
-	hadEnv := oldEnv != ""
+	oldEnv, hadEnv := os.LookupEnv("OTTO_SERVER")
 
 	return func() {
 		serverURL = oldServerURL
