@@ -45,5 +45,7 @@ func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Only set Content-Type after successful encoding
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		slog.Error("Failed to write stats response", "error", err)
+	}
 }
