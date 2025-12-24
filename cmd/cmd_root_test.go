@@ -8,6 +8,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// setupTestEnv saves the current serverURL and OTTO_SERVER env var,
+// returns a cleanup function to restore them
+func setupTestEnv() (cleanup func()) {
+	oldServerURL := serverURL
+	oldEnv := os.Getenv("OTTO_SERVER")
+	hadEnv := oldEnv != ""
+
+	return func() {
+		serverURL = oldServerURL
+		if hadEnv {
+			os.Setenv("OTTO_SERVER", oldEnv)
+		} else {
+			os.Unsetenv("OTTO_SERVER")
+		}
+	}
+}
+
 func TestGetRootCmd(t *testing.T) {
 	cmd := GetRootCmd()
 	if cmd == nil {
@@ -53,20 +70,11 @@ func TestOttoRun(t *testing.T) {
 }
 
 func TestGetClient_NoServerURL(t *testing.T) {
-	// Save original values and restore after test
-	oldServerURL := serverURL
-	defer func() { serverURL = oldServerURL }()
+	cleanup := setupTestEnv()
+	defer cleanup()
 
-	// Clear environment variable
-	oldEnv := os.Getenv("OTTO_SERVER")
+	// Clear environment variable and flag
 	os.Unsetenv("OTTO_SERVER")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("OTTO_SERVER", oldEnv)
-		}
-	}()
-
-	// Clear serverURL flag
 	serverURL = ""
 
 	client := GetClient()
@@ -76,20 +84,11 @@ func TestGetClient_NoServerURL(t *testing.T) {
 }
 
 func TestGetClient_WithServerFlag(t *testing.T) {
-	// Save original values and restore after test
-	oldServerURL := serverURL
-	defer func() { serverURL = oldServerURL }()
+	cleanup := setupTestEnv()
+	defer cleanup()
 
-	// Clear environment variable
-	oldEnv := os.Getenv("OTTO_SERVER")
+	// Clear environment variable and set flag
 	os.Unsetenv("OTTO_SERVER")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("OTTO_SERVER", oldEnv)
-		}
-	}()
-
-	// Set serverURL flag
 	serverURL = "http://localhost:8011"
 
 	client := GetClient()
@@ -102,22 +101,11 @@ func TestGetClient_WithServerFlag(t *testing.T) {
 }
 
 func TestGetClient_WithEnvVar(t *testing.T) {
-	// Save original values and restore after test
-	oldServerURL := serverURL
-	defer func() { serverURL = oldServerURL }()
+	cleanup := setupTestEnv()
+	defer cleanup()
 
-	// Set environment variable
-	oldEnv := os.Getenv("OTTO_SERVER")
+	// Set environment variable and clear flag
 	os.Setenv("OTTO_SERVER", "http://envserver:9000")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("OTTO_SERVER", oldEnv)
-		} else {
-			os.Unsetenv("OTTO_SERVER")
-		}
-	}()
-
-	// Clear serverURL flag
 	serverURL = ""
 
 	client := GetClient()
@@ -130,22 +118,12 @@ func TestGetClient_WithEnvVar(t *testing.T) {
 }
 
 func TestGetClient_FlagOverridesEnvVar(t *testing.T) {
-	// Save original values and restore after test
-	oldServerURL := serverURL
-	defer func() { serverURL = oldServerURL }()
+	cleanup := setupTestEnv()
+	defer cleanup()
 
 	// Set both flag and environment variable
 	serverURL = "http://flagserver:8011"
-
-	oldEnv := os.Getenv("OTTO_SERVER")
 	os.Setenv("OTTO_SERVER", "http://envserver:9000")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("OTTO_SERVER", oldEnv)
-		} else {
-			os.Unsetenv("OTTO_SERVER")
-		}
-	}()
 
 	client := GetClient()
 	if client == nil {
@@ -157,20 +135,11 @@ func TestGetClient_FlagOverridesEnvVar(t *testing.T) {
 }
 
 func TestIsRemoteMode_WithClient(t *testing.T) {
-	// Save original values and restore after test
-	oldServerURL := serverURL
-	defer func() { serverURL = oldServerURL }()
+	cleanup := setupTestEnv()
+	defer cleanup()
 
-	// Clear environment variable
-	oldEnv := os.Getenv("OTTO_SERVER")
+	// Clear environment variable and set flag
 	os.Unsetenv("OTTO_SERVER")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("OTTO_SERVER", oldEnv)
-		}
-	}()
-
-	// Set serverURL flag
 	serverURL = "http://localhost:8011"
 
 	if !IsRemoteMode() {
@@ -179,20 +148,11 @@ func TestIsRemoteMode_WithClient(t *testing.T) {
 }
 
 func TestIsRemoteMode_WithoutClient(t *testing.T) {
-	// Save original values and restore after test
-	oldServerURL := serverURL
-	defer func() { serverURL = oldServerURL }()
+	cleanup := setupTestEnv()
+	defer cleanup()
 
-	// Clear environment variable
-	oldEnv := os.Getenv("OTTO_SERVER")
+	// Clear environment variable and flag
 	os.Unsetenv("OTTO_SERVER")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("OTTO_SERVER", oldEnv)
-		}
-	}()
-
-	// Clear serverURL flag
 	serverURL = ""
 
 	if IsRemoteMode() {
