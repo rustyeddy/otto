@@ -54,8 +54,14 @@ install: build
 	sudo mkdir -p $(DATA_DIR)
 	sudo cp $(BINARY_NAME) $(BIN_DIR)/$(BINARY_NAME)
 	sudo chmod +x $(BIN_DIR)/$(BINARY_NAME)
-	@echo "Creating otto user if not exists..."
-	@id -u otto &>/dev/null || sudo useradd -r -s /bin/false -d $(INSTALL_DIR) otto
+	@echo "Creating or updating otto user..."
+	if id -u otto >/dev/null 2>&1; then \
+		echo "User otto exists, updating settings..."; \
+		sudo usermod -s /bin/false -d $(INSTALL_DIR) otto; \
+	else \
+		echo "User otto does not exist, creating..."; \
+		sudo useradd -r -s /bin/false -d $(INSTALL_DIR) otto; \
+	fi
 	sudo chown -R otto:otto $(INSTALL_DIR)
 	@echo "Installation complete: $(BIN_DIR)/$(BINARY_NAME)"
 
