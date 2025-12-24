@@ -39,6 +39,7 @@ func init() {
 
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(stationCmd)
+	rootCmd.AddCommand(cliStationsCmd)
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(tickerCmd)
 	rootCmd.AddCommand(versionCmd)

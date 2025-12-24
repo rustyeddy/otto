@@ -76,3 +76,54 @@ func TestGetStats_ServerError(t *testing.T) {
 		t.Fatal("Expected error, got nil")
 	}
 }
+
+func TestGetStations(t *testing.T) {
+	// Create a test server
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/stations" {
+			t.Errorf("Expected path /api/stations, got %s", r.URL.Path)
+		}
+		stationsData := map[string]interface{}{
+			"stations": map[string]interface{}{
+				"station1": map[string]interface{}{
+					"id":       "station1",
+					"hostname": "test-host",
+				},
+			},
+			"stale": map[string]interface{}{},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(stationsData)
+	}))
+	defer ts.Close()
+
+	client := NewClient(ts.URL)
+	stations, err := client.GetStations()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	stationsMap, ok := stations["stations"].(map[string]interface{})
+	if !ok {
+		t.Fatal("Expected stations map in response")
+	}
+
+	if len(stationsMap) != 1 {
+		t.Errorf("Expected 1 station, got %d", len(stationsMap))
+	}
+}
+
+func TestGetStations_ServerError(t *testing.T) {
+	// Create a test server that returns an error
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("internal server error"))
+	}))
+	defer ts.Close()
+
+	client := NewClient(ts.URL)
+	_, err := client.GetStations()
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+}

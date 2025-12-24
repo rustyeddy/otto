@@ -69,6 +69,18 @@ func (c *Client) GetStats() (map[string]interface{}, error) {
 	return stats, nil
 }
 
+// GetStations retrieves a list of all stations from the Otto server.
+// Returns a map containing stations and stale station information.
+//
+// This calls the /api/stations endpoint on the server.
+func (c *Client) GetStations() (map[string]interface{}, error) {
+	var stations map[string]interface{}
+	if err := c.get("/api/stations", &stations); err != nil {
+		return nil, err
+	}
+	return stations, nil
+}
+
 // Ping checks if the Otto server is reachable and responding.
 // Returns nil if the server is healthy, error otherwise.
 func (c *Client) Ping() error {
