@@ -19,6 +19,9 @@ ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/otto/data
 
+# Environment
+Environment="OTTO_LOG_LEVEL=info"
+
 # Logging
 StandardOutput=journal
 StandardError=journal

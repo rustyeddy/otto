@@ -102,7 +102,7 @@ Add your configuration:
 ```ini
 [Service]
 Environment="OTTO_LOG_LEVEL=debug"
-Environment="OTTO_CONFIG_FILE=/etc/otto/config.yaml"
+Environment="OTTO_CONFIG=/etc/otto/config.yaml"
 ```
 
 ### Data Directory
