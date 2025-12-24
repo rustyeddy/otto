@@ -365,6 +365,8 @@ func TestStatsConcurrency(b *testing.T) {
 }
 
 func TestStatsHandler(t *testing.T) {
+	// The Stats{} handler doesn't use its own fields; it calls GetStats()
+	// to get fresh runtime statistics on each request.
 	handler := Stats{}
 
 	req := httptest.NewRequest("GET", "/api/stats", nil)

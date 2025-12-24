@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -49,4 +50,93 @@ func TestOttoRun(t *testing.T) {
 	go ottoRun(cmd, args)
 	time.Sleep(1 * time.Second)
 
+}
+
+func TestGetClient(t *testing.T) {
+	// Save original values
+	oldServerURL := serverURL
+	oldEnvVar := os.Getenv("OTTO_SERVER")
+	defer func() {
+		serverURL = oldServerURL
+		if oldEnvVar != "" {
+			os.Setenv("OTTO_SERVER", oldEnvVar)
+		} else {
+			os.Unsetenv("OTTO_SERVER")
+		}
+	}()
+
+	t.Run("returns nil when no server URL is provided", func(t *testing.T) {
+		serverURL = ""
+		os.Unsetenv("OTTO_SERVER")
+		client := GetClient()
+		if client != nil {
+			t.Error("Expected nil client when no server URL provided")
+		}
+	})
+
+	t.Run("returns client when --server flag is set", func(t *testing.T) {
+		serverURL = "http://localhost:8011"
+		os.Unsetenv("OTTO_SERVER")
+		client := GetClient()
+		if client == nil {
+			t.Fatal("Expected client when server URL is set")
+		}
+		if client.BaseURL != "http://localhost:8011" {
+			t.Errorf("Expected BaseURL to be http://localhost:8011, got %s", client.BaseURL)
+		}
+	})
+
+	t.Run("returns client when OTTO_SERVER env var is set", func(t *testing.T) {
+		serverURL = ""
+		os.Setenv("OTTO_SERVER", "http://remote:8011")
+		client := GetClient()
+		if client == nil {
+			t.Fatal("Expected client when OTTO_SERVER env var is set")
+		}
+		if client.BaseURL != "http://remote:8011" {
+			t.Errorf("Expected BaseURL to be http://remote:8011, got %s", client.BaseURL)
+		}
+	})
+
+	t.Run("prioritizes --server flag over env var", func(t *testing.T) {
+		serverURL = "http://flag:8011"
+		os.Setenv("OTTO_SERVER", "http://env:8011")
+		client := GetClient()
+		if client == nil {
+			t.Fatal("Expected client when both flag and env var are set")
+		}
+		if client.BaseURL != "http://flag:8011" {
+			t.Errorf("Expected BaseURL to be http://flag:8011, got %s", client.BaseURL)
+		}
+	})
+}
+
+func TestIsRemoteMode(t *testing.T) {
+	// Save original values
+	oldServerURL := serverURL
+	oldEnvVar := os.Getenv("OTTO_SERVER")
+	defer func() {
+		serverURL = oldServerURL
+		if oldEnvVar != "" {
+			os.Setenv("OTTO_SERVER", oldEnvVar)
+		} else {
+			os.Unsetenv("OTTO_SERVER")
+		}
+	}()
+
+	t.Run("returns false when no server URL is provided", func(t *testing.T) {
+		serverURL = ""
+		os.Unsetenv("OTTO_SERVER")
+		if IsRemoteMode() {
+			t.Error("Expected IsRemoteMode to return false when no server URL provided")
+		}
+	})
+
+	t.Run("returns true when server URL is provided", func(t *testing.T) {
+		serverURL = "http://localhost:8011"
+		os.Unsetenv("OTTO_SERVER")
+		if !IsRemoteMode() {
+			t.Error("Expected IsRemoteMode to return true when server URL is set")
+		}
+	})
 }

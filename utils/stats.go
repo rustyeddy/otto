@@ -28,12 +28,10 @@ func GetStats() *Stats {
 	return s
 }
 
-// ServeHTTP implements http.Handler to return runtime statistics as JSON
+// ServeHTTP implements http.Handler to return runtime statistics as JSON.
+// It always calls GetStats() to get fresh runtime statistics.
 func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	stats := h
-	if stats == nil {
-		stats = GetStats()
-	}
+	stats := GetStats()
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
