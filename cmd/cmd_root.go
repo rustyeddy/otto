@@ -38,8 +38,7 @@ func init() {
 	msgCmd.AddCommand(msgSubCmd)
 
 	rootCmd.AddCommand(serveCmd)
-	rootCmd.AddCommand(stationCmd)
-	rootCmd.AddCommand(cliStationsCmd)
+	rootCmd.AddCommand(stationsCmd)
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(tickerCmd)
 	rootCmd.AddCommand(versionCmd)

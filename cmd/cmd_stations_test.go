@@ -9,16 +9,34 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestStationCmd(t *testing.T) {
+	// Create a buffer to capture the output
+	output := new(bytes.Buffer)
+	rootCmd.SetOut(output)
+
+	// Add the station command to the root command
+	rootCmd.AddCommand(stationsCmd)
+
+	// Execute the station command
+	// err := stationsCmd.RunE(&cobra.Command{}, []string{})
+	stationsCmd.Run(rootCmd, []string{})
+
+	// Check if the output contains expected content
+	result := output.String()
+	assert.Empty(t, result)
+}
 
 func TestCliStationsCmd(t *testing.T) {
 	// Create a buffer to capture the output
 	output := new(bytes.Buffer)
-	cliStationsCmd.SetOut(output)
+	stationsCmd.SetOut(output)
 	cmdOutput = output
 
 	// Execute the command
-	cliStationsCmd.Run(cliStationsCmd, []string{})
+	stationsCmd.Run(stationsCmd, []string{})
 
 	// Check if the output contains expected result (may be empty in test environment)
 	got := output.String()
@@ -36,7 +54,7 @@ func TestCliStationsRun(t *testing.T) {
 	cmdOutput = output
 
 	// Call the cliStationsRun function
-	cliStationsRun(cmd, args)
+	stationsRun(cmd, args)
 
 	// Output might be empty or "No stations found" in test environment
 	got := output.String()
@@ -80,7 +98,7 @@ func TestCliStationsRun_RemoteMode(t *testing.T) {
 
 	// Run the command
 	cmd := &cobra.Command{}
-	cliStationsRun(cmd, []string{})
+	stationsRun(cmd, []string{})
 
 	// Check output contains JSON response
 	result := output.String()
@@ -113,7 +131,7 @@ func TestCliStationsRun_RemoteMode_Error(t *testing.T) {
 
 	// Run the command
 	cmd := &cobra.Command{}
-	cliStationsRun(cmd, []string{})
+	stationsRun(cmd, []string{})
 
 	// Check output contains error message
 	if !bytes.Contains(output.Bytes(), []byte("Error")) {
@@ -159,7 +177,7 @@ func TestCliStationsRun_RemoteMode_EnvVar(t *testing.T) {
 
 	// Run the command
 	cmd := &cobra.Command{}
-	cliStationsRun(cmd, []string{})
+	stationsRun(cmd, []string{})
 
 	// Verify we got remote stations
 	if !bytes.Contains(output.Bytes(), []byte("station2")) {

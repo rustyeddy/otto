@@ -9,14 +9,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cliStationsCmd = &cobra.Command{
+var stationsCmd = &cobra.Command{
 	Use:   "stations",
-	Short: "Display stations",
-	Long:  `Display stations from local or remote Otto instance`,
-	Run:   cliStationsRun,
+	Short: "Get station information",
+	Long:  `Get a list of stations as well as details of a given station`,
+	Run:   stationsRun,
 }
 
-func cliStationsRun(cmd *cobra.Command, args []string) {
+func stationsRun(cmd *cobra.Command, args []string) {
 	// Check if we should connect to a remote server
 	client := GetClient()
 	if client == nil {
