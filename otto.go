@@ -169,7 +169,7 @@ var (
 )
 
 func init() {
-	Version = "0.0.9"
+	Version = "0.0.12"
 }
 
 func (o *OttO) Done() chan any {
