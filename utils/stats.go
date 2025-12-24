@@ -29,8 +29,11 @@ func GetStats() *Stats {
 }
 
 // ServeHTTP implements http.Handler to return runtime statistics as JSON
-func (h Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	stats := GetStats()
+func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stats := h
+	if stats == nil {
+		stats = GetStats()
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
