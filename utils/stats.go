@@ -35,7 +35,9 @@ func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		stats = GetStats()
 	}
 
-	// Encode to bytes first to avoid setting Content-Type header before knowing if encoding succeeds
+	// Encode to bytes first to avoid setting Content-Type header before knowing if encoding succeeds.
+	// If encoding fails and we've already set Content-Type to "application/json", the error response
+	// would have the wrong content type (error responses from http.Error are plain text).
 	data, err := json.Marshal(stats)
 	if err != nil {
 		slog.Error("Failed to encode stats", "error", err)
@@ -45,6 +47,7 @@ func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Only set Content-Type after successful encoding
 	w.Header().Set("Content-Type", "application/json")
+	// Note: Once headers are written, we cannot send an error response if Write fails
 	if _, err := w.Write(data); err != nil {
 		slog.Error("Failed to write stats response", "error", err)
 	}
