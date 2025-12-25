@@ -186,27 +186,32 @@ func (o *OttO) Init() {
 	}
 	o.done = make(chan any)
 
-	if o.StationManager != nil || o.Station != nil || o.Messanger != nil {
-		str := "OttO Init has been called twice, one of these is not nil\n" +
-			fmt.Sprintf("\tStationManager (%p)\n", o.StationManager) +
-			fmt.Sprintf("\tStation (%p)\n", o.Station) +
-			fmt.Sprintf("\tServer (%p)\n", o.Server) +
-			fmt.Sprintf("\tMessanger (%p)\n", o.Messanger)
-		panic(str)
+	if o.StationManager == nil {
+		o.StationManager = station.GetStationManager()
+	}
+
+	if o.Server == nil {
+		o.Server = server.GetServer()
+	}
+
+	if o.Name == "" {
+		o.Name = "o++o"
 	}
 
 	var err error
-	o.StationManager = station.GetStationManager()
-	o.Server = server.GetServer()
-	o.Name = "myname"
-	o.Station, err = o.StationManager.Add(o.Name)
-	if err != nil {
-		slog.Error("Unable to create station", "error", err)
-		return
+	if o.Station == nil {
+		o.Station, err = o.StationManager.Add(o.Name)
+		if err != nil {
+			slog.Error("Unable to create station", "error", err)
+			return
+		}
+		// Initialzie the local station
+		o.Station.Init()
 	}
-	// Initialzie the local station
-	o.Station.Init()
-	o.Messanger = messanger.GetMessanger()
+
+	if o.Messanger == nil {
+		o.Messanger = messanger.GetMessanger()
+	}
 }
 
 // Start the OttO process, TODO return a stop channel or context?

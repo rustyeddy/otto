@@ -132,8 +132,8 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 		return nil, err
 	}
 	sm.mu.Lock()
+	defer sm.mu.Unlock()
 	sm.Stations[st] = station
-	sm.mu.Unlock()
 	return station, nil
 }
 

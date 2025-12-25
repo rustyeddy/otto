@@ -107,8 +107,8 @@ func (st *Station) Init() {
 
 	// mark last heard now
 	st.mu.Lock()
+	defer st.mu.Unlock()
 	st.LastHeard = time.Now()
-	st.mu.Unlock()
 }
 
 func (st *Station) SaveError(err error) {
