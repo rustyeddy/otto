@@ -26,7 +26,16 @@ func init() {
 	os.Setenv("MQTT_PASS", "otto123")
 }
 
-func TestStartOttO(t *testing.T) {
+func TestMain(m *testing.M) {
+	m.Run()
+}
+
+func TestRunTests(t *testing.T) {
+	t.Run("start", startOttO)
+	t.Run("stop", stopOttO)
+}
+
+func startOttO(t *testing.T) {
 
 	path, err := exec.LookPath("../otto")
 	require.NoError(t, err, "expect to find the executable otto but did not: %s", path)
@@ -50,7 +59,7 @@ func TestStartOttO(t *testing.T) {
 
 }
 
-func TestStopOttO(t *testing.T) {
+func stopOttO(t *testing.T) {
 	ocmd.Cancel()
 
 	stdout := ocmd.Stdout.(*bytes.Buffer)
