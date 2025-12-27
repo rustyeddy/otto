@@ -121,7 +121,7 @@ func (m *Messenger) Connect() error {
 func (m *Messenger) Close() {
 	// remove the handler from the root node
 	var topics []string
-	for t, _ := range m.subscriptions {
+	for t := range m.subscriptions {
 		topics = append(topics, t)
 	}
 	if m.Conn != nil {
