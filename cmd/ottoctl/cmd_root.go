@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	appdir    string
 	cmdOutput io.Writer
 	serverURL string
+	format    string
 )
 
 var rootCmd = &cobra.Command{
@@ -25,8 +25,8 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cmdOutput = os.Stdout
-	rootCmd.PersistentFlags().StringVar(&appdir, "appdir", "embed", "root of the web app")
 	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "http://localhost:8011", "Otto server URL (e.g., http://localhost:8011)")
+	rootCmd.PersistentFlags().StringVar(&format, "format", "json", "choices are <human | json> default json")
 	rootCmd.SetOut(cmdOutput)
 
 	rootCmd.AddCommand(cliCmd)
