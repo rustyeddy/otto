@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -139,7 +139,7 @@ func TestStationManagerUpdate(t *testing.T) {
 
 	t.Run("Update existing station", func(t *testing.T) {
 		// Create a message with station in path
-		msg := messanger.NewMsg("ss/d/update-test/sensor", []byte(`{"temperature": 25.5}`), "TestStationManagerUpdate")
+		msg := messenger.NewMsg("o/d/update-test/sensor", []byte(`{"temperature": 25.5}`), "TestStationManagerUpdate")
 
 		initialTime := station.LastHeard
 		time.Sleep(10 * time.Millisecond) // Ensure time difference
@@ -153,7 +153,7 @@ func TestStationManagerUpdate(t *testing.T) {
 
 	t.Run("Update creates new station", func(t *testing.T) {
 		newStationID := "new-station-from-update"
-		msg := messanger.NewMsg(fmt.Sprintf("ss/d/%s/sensor", newStationID), []byte(`{"humidity": 60}`), "test-update-stations")
+		msg := messenger.NewMsg(fmt.Sprintf("o/d/%s/sensor", newStationID), []byte(`{"humidity": 60}`), "test-update-stations")
 		updatedStation := sm.Update(msg)
 
 		assert.NotNil(t, updatedStation, "Update should create and return new station")
@@ -162,30 +162,30 @@ func TestStationManagerUpdate(t *testing.T) {
 	})
 
 	t.Run("Update with invalid path", func(t *testing.T) {
-		msg := messanger.NewMsg("invalid/path/without/station", []byte(`{"data": "test"}`), "invalid-topic-test")
+		msg := messenger.NewMsg("invalid/path/without/station", []byte(`{"data": "test"}`), "invalid-topic-test")
 		updatedStation := sm.Update(msg)
 		assert.Nil(t, updatedStation, "Update should return nil for invalid path")
 	})
 }
 
-func TestStationManagerCallback(t *testing.T) {
+func TestStationManagerHandleMsg(t *testing.T) {
 	sm := NewStationManager()
 
-	t.Run("Callback updates station", func(t *testing.T) {
-		msg := messanger.NewMsg(messanger.GetTopics().Data("hello"), []byte("test-sm-callback"), "test-callback-updates-station")
-		sm.Callback(msg)
+	t.Run("HandleMsg updates station", func(t *testing.T) {
+		msg := messenger.NewMsg(messenger.GetTopics().Data("hello"), []byte("test-sm-callback"), "test-callback-updates-station")
+		sm.HandleMsg(msg)
 
 		station := sm.Get(utils.StationName())
 		assert.NotNil(t, station, "Station should be created via callback")
 		assert.Equal(t, utils.StationName(), station.ID, "Station should have correct ID")
 	})
 
-	t.Run("Callback with malformed JSON", func(t *testing.T) {
-		msg := messanger.NewMsg("data/malformed-test/hello", []byte(`{invalid json`), "test-invalid-json-and-topic")
+	t.Run("HandleMsg with malformed JSON", func(t *testing.T) {
+		msg := messenger.NewMsg("data/malformed-test/hello", []byte(`{invalid json`), "test-invalid-json-and-topic")
 		// This should not panic
 		assert.NotPanics(t, func() {
-			sm.Callback(msg)
-		}, "Callback should handle malformed JSON gracefully")
+			sm.HandleMsg(msg)
+		}, "HandleMsg should handle malformed JSON gracefully")
 	})
 }
 
@@ -384,16 +384,16 @@ func TestStationManagerEdgeCases(t *testing.T) {
 	})
 
 	t.Run("Update with empty message", func(t *testing.T) {
-		msg := messanger.NewMsg("", []byte{}, "test-empty-data")
+		msg := messenger.NewMsg("", []byte{}, "test-empty-data")
 		station := sm.Update(msg)
 		assert.Nil(t, station, "Update with empty message should return nil")
 	})
 
-	t.Run("Callback with nil data", func(t *testing.T) {
-		msg := messanger.NewMsg(messanger.GetTopics().Data("hello"), nil, "test-nil-data")
+	t.Run("HandleMsg with nil data", func(t *testing.T) {
+		msg := messenger.NewMsg(messenger.GetTopics().Data("hello"), nil, "test-nil-data")
 		assert.NotPanics(t, func() {
-			sm.Callback(msg)
-		}, "Callback should handle nil data gracefully")
+			sm.HandleMsg(msg)
+		}, "HandleMsg should handle nil data gracefully")
 	})
 }
 

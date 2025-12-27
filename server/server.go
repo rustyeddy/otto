@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/utils"
 )
 
@@ -74,7 +74,7 @@ func (s *Server) Register(p string, h http.Handler) error {
 func (s *Server) Start(done chan any) {
 	s.Register("/ping", Ping{})
 	s.Register("/api", s)
-	s.Register("/api/topics", messanger.GetTopics())
+	s.Register("/api/topics", messenger.GetTopics())
 	s.Register("/api/stats", &utils.Stats{})
 
 	slog.Info("Starting hub Web and REST server on ", "addr", s.Addr)

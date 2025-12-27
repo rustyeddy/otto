@@ -40,7 +40,7 @@ func TestNewStation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			station, err := newStation(tt.id)
+			station, err := NewStation(tt.id)
 
 			if tt.wantErr {
 				require.Error(t, err, "Expected error but got none")
@@ -57,7 +57,7 @@ func TestNewStation(t *testing.T) {
 func TestStationInit(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("init-test") // Use test version
+	station, err := NewStation("init-test") // Use test version
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestStationInit(t *testing.T) {
 func TestStationSayHello(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("hello-test") // Use test version
+	station, err := NewStation("hello-test") // Use test version
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestStationSayHello(t *testing.T) {
 func TestStationTicker(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("ticker-test-unique") // Use test version
+	station, err := NewStation("ticker-test-unique") // Use test version
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestStationTicker(t *testing.T) {
 func TestStationHealthCheck(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("health-test")
+	station, err := NewStation("health-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestStationHealthCheck(t *testing.T) {
 func TestStationHTTPHandler(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("http-test")
+	station, err := NewStation("http-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -187,7 +187,7 @@ func TestStationHTTPHandler(t *testing.T) {
 func TestStationMetrics(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("metrics-test")
+	station, err := NewStation("metrics-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -232,7 +232,7 @@ func TestStationConcurrency(t *testing.T) {
 	const numRoutines = 50
 	const operationsPerRoutine = 100
 
-	station, err := newStation("concurrency-test")
+	station, err := NewStation("concurrency-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -281,7 +281,7 @@ func (m *MockDevice) Name() string {
 func TestStationJSON(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("json-test")
+	station, err := NewStation("json-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}
@@ -315,7 +315,7 @@ func TestStationJSON(t *testing.T) {
 func TestStationErrorHandling(t *testing.T) {
 	resetStationManager()
 
-	station, err := newStation("error-test")
+	station, err := NewStation("error-test")
 	if err != nil {
 		t.Fatalf("Failed to create station: %v", err)
 	}

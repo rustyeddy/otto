@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 )
 
 type Device interface {
@@ -42,13 +42,13 @@ func (md *ManagedDevice) ID() string {
 
 // Subscribe sets up a subscription for this device
 func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
-	msgr := messanger.GetMessanger()
+	msgr := messenger.GetMessenger()
 	if msgr == nil {
-		slog.Warn("No messanger available for device", "device", md.Name)
+		slog.Warn("No messenger available for device", "device", md.Name)
 		return
 	}
 
-	handler := messanger.MsgHandler(func(msg *messanger.Msg) error {
+	handler := messenger.MsgHandler(func(msg *messenger.Msg) error {
 		// Parse the message and call the callback
 		var val bool
 		dataStr := string(msg.Data)
@@ -61,14 +61,14 @@ func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
 		return nil
 	})
 
-	msgr.Subscribe(topic, handler)
+	msgr.Sub(topic, handler)
 }
 
 // PubData publishes data for this device
 func (md *ManagedDevice) PubData(data interface{}) {
-	msgr := messanger.GetMessanger()
+	msgr := messenger.GetMessenger()
 	if msgr == nil {
-		slog.Warn("No messanger available for device", "device", md.Name)
+		slog.Warn("No messenger available for device", "device", md.Name)
 		return
 	}
 

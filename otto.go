@@ -130,8 +130,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/server"
 	"github.com/rustyeddy/otto/station"
 )
@@ -142,7 +143,7 @@ type Controller interface {
 	Init()
 	Start() error
 	Stop()
-	MsgHandler(m *messanger.Msg)
+	MsgHandler(m *messenger.Msg)
 }
 
 // OttO is a large wrapper around the Station, Server,
@@ -153,12 +154,10 @@ type OttO struct {
 	*station.Station
 	*station.StationManager
 	*server.Server
-	messanger.Messanger
+	*messenger.Messenger
 
 	Mock       bool
 	MQTTBroker string // MQTT broker URL, defaults to test.mosquitto.org
-	UseLocal   bool   // Force use of local messaging
-	hub        bool   // maybe hub should be a different struct?
 	done       chan any
 }
 
@@ -186,6 +185,17 @@ func (o *OttO) Init() {
 	}
 	o.done = make(chan any)
 
+	if o.Messenger == nil {
+		broker := o.MQTTBroker
+		if broker == "" {
+			broker = os.Getenv("MQTT_BROKER")
+			if broker == "" {
+				broker = "internal"
+			}
+		}
+		o.Messenger = messenger.NewMessenger(broker)
+	}
+
 	if o.StationManager == nil {
 		o.StationManager = station.GetStationManager()
 	}
@@ -208,16 +218,12 @@ func (o *OttO) Init() {
 		// Initialzie the local station
 		o.Station.Init()
 	}
-
-	if o.Messanger == nil {
-		o.Messanger = messanger.GetMessanger()
-	}
 }
 
 // Start the OttO process, TODO return a stop channel or context?
 func (o *OttO) Start() {
-	if o.Messanger != nil {
-		go o.Messanger.Connect()
+	if o.Messenger != nil {
+		go o.Messenger.Connect()
 	}
 
 	if o.Server != nil {
@@ -237,17 +243,20 @@ func (o *OttO) Stop() {
 		slog.Error("Failed to close server", "error", err)
 	}
 
-	if o.Messanger != nil {
-		o.Messanger.Close()
-		messanger.StopMQTTBroker(context.Background())
+	if o.Messenger != nil {
+		o.Messenger.Close()
 	}
+
+	// TODO Check if local broker is running, only if it is
+	// then stop it
+	messenger.StopMQTTBroker(context.Background())
 }
 
 // AddManagedDevice creates a managed device wrapper and adds it to the station
 func (o *OttO) AddManagedDevice(name string, device any, topic string) *station.ManagedDevice {
 	md := station.NewManagedDevice(name, device, topic)
 	if o.Station != nil {
-		o.Station.Register(md)
+		o.Station.Devices.Register(md)
 	}
 	return md
 }
@@ -257,6 +266,6 @@ func (o *OttO) GetManagedDevice(name string) *station.ManagedDevice {
 	if o.Station == nil {
 		return nil
 	}
-	device := o.Station.Get(name)
+	device := o.Station.Devices.Get(name)
 	return device
 }

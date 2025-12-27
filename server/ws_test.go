@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -150,7 +150,7 @@ func TestWebsockGetWriteQ(t *testing.T) {
 
 	t.Run("Write to queue", func(t *testing.T) {
 		wq := ws.GetWriteQ()
-		msg := messanger.NewMsg("test/topic", []byte("test data"), "test-source")
+		msg := messenger.NewMsg("test/topic", []byte("test data"), "test-source")
 
 		go func() {
 			// Test reading from queue
@@ -265,7 +265,7 @@ func TestWebSocketMessageHandling(t *testing.T) {
 		ws.Conn = mockConn.Conn
 
 		// Create a test message
-		msg := messanger.NewMsg("test/topic", []byte(`{"temperature": 25.5}`), "test-source")
+		msg := messenger.NewMsg("test/topic", []byte(`{"temperature": 25.5}`), "test-source")
 
 		// Test the message handling logic (simulate what happens in ServeHTTP select loop)
 		wq := ws.GetWriteQ()
@@ -379,7 +379,7 @@ func TestWebSocketConcurrency(t *testing.T) {
 		const numSenders = 5
 		var wg sync.WaitGroup
 
-		receivedMessages := make([]*messanger.Msg, 0, numMessages)
+		receivedMessages := make([]*messenger.Msg, 0, numMessages)
 		receivedMutex := sync.Mutex{}
 
 		// Start receiver
@@ -404,7 +404,7 @@ func TestWebSocketConcurrency(t *testing.T) {
 				defer wg.Done()
 				messagesPerSender := numMessages / numSenders
 				for j := 0; j < messagesPerSender; j++ {
-					msg := messanger.NewMsg(
+					msg := messenger.NewMsg(
 						fmt.Sprintf("test/sender/%d", senderID),
 						[]byte(fmt.Sprintf(`{"sender": %d, "message": %d}`, senderID, j)),
 						fmt.Sprintf("sender-%d", senderID),
@@ -471,7 +471,7 @@ func TestWebSocketEdgeCases(t *testing.T) {
 		ws := NewWebsock(mockConn)
 
 		// Create message with nil data
-		msg := messanger.NewMsg("test/topic", nil, "test-source")
+		msg := messenger.NewMsg("test/topic", nil, "test-source")
 
 		wq := ws.GetWriteQ()
 		go func() {
@@ -514,7 +514,7 @@ func TestWebSocketEdgeCases(t *testing.T) {
 		}()
 
 		// Create message with empty topic
-		msg := messanger.NewMsg("", []byte("test data"), "test-source")
+		msg := messenger.NewMsg("", []byte("test data"), "test-source")
 		assert.NotPanics(t, func() {
 			wq <- msg
 		})
@@ -544,7 +544,7 @@ func TestWebSocketEdgeCases(t *testing.T) {
 			largeData[i] = byte(i % 256)
 		}
 
-		msg := messanger.NewMsg("test/large", largeData, "test-source")
+		msg := messenger.NewMsg("test/large", largeData, "test-source")
 
 		assert.NotPanics(t, func() {
 			select {
@@ -560,7 +560,7 @@ func TestWebSocketEdgeCases(t *testing.T) {
 
 func TestWebSocketMessageJSON(t *testing.T) {
 	t.Run("Valid JSON message", func(t *testing.T) {
-		msg := messanger.NewMsg("test/topic", []byte(`{"temperature": 25.5, "unit": "celsius"}`), "test-source")
+		msg := messenger.NewMsg("test/topic", []byte(`{"temperature": 25.5, "unit": "celsius"}`), "test-source")
 
 		jbytes, err := msg.JSON()
 		assert.NoError(t, err, "Should be able to convert valid message to JSON")
@@ -579,7 +579,7 @@ func TestWebSocketMessageJSON(t *testing.T) {
 
 	t.Run("Message with binary data", func(t *testing.T) {
 		binaryData := []byte{0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD}
-		msg := messanger.NewMsg("test/binary", binaryData, "test-source")
+		msg := messenger.NewMsg("test/binary", binaryData, "test-source")
 
 		jbytes, err := msg.JSON()
 		assert.NoError(t, err, "Should be able to convert binary message to JSON")
@@ -602,7 +602,7 @@ func BenchmarkWebSocketMessageQueue(b *testing.B) {
 	ws := NewWebsock(mockConn)
 	wq := ws.GetWriteQ()
 
-	msg := messanger.NewMsg("benchmark/topic", []byte(`{"value": 42}`), "benchmark")
+	msg := messenger.NewMsg("benchmark/topic", []byte(`{"value": 42}`), "benchmark")
 
 	// Start consumer
 	go func() {
@@ -631,10 +631,10 @@ func TestWebSocketIntegration(t *testing.T) {
 
 		// Send messages
 		wq := ws.GetWriteQ()
-		messages := []*messanger.Msg{
-			messanger.NewMsg("sensor/temperature", []byte(`{"value": 23.5}`), "sensor-1"),
-			messanger.NewMsg("sensor/humidity", []byte(`{"value": 65}`), "sensor-2"),
-			messanger.NewMsg("sensor/pressure", []byte(`{"value": 1013.25}`), "sensor-3"),
+		messages := []*messenger.Msg{
+			messenger.NewMsg("sensor/temperature", []byte(`{"value": 23.5}`), "sensor-1"),
+			messenger.NewMsg("sensor/humidity", []byte(`{"value": 65}`), "sensor-2"),
+			messenger.NewMsg("sensor/pressure", []byte(`{"value": 1013.25}`), "sensor-3"),
 		}
 
 		go func() {

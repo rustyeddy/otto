@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 )
 
 // Station is the primary structure that holds an array of
@@ -24,8 +26,8 @@ type Station struct {
 	Local      bool          `json:"local"`
 	Ifaces     []*Iface      `json:"iface"`
 
-	*DeviceManager
-	messanger.Messanger `json:"-"`
+	Devices *DeviceManager
+	Metrics *StationMetrics `json:"metrics"`
 
 	errq   chan error
 	errors []error `json:"-"`
@@ -36,14 +38,11 @@ type Station struct {
 	done   chan bool          `json:"-"`
 	cancel context.CancelFunc `json:"-"`
 	mu     sync.RWMutex       `json:"-"`
-
-	// Add metrics
-	Metrics *StationMetrics `json:"metrics"`
 }
 
 type Iface struct {
 	Name    string
-	IPAddrs []net.IP
+	IPAddrs []netip.Addr
 	MACAddr string
 }
 
@@ -51,35 +50,26 @@ type StationConfig struct {
 	AnnouncementInterval time.Duration
 	Timeout              time.Duration
 	MaxErrors            int
-	MessangerType        string
+	MessengerType        string
 }
 
 // NewStation creates a new Station with an ID as provided
 // by the first parameter. Here we need to detect a duplicate
 // station before trying to register another one.
-func newStation(id string) (*Station, error) {
+func NewStation(id string) (*Station, error) {
 	if id == "" {
 		return nil, errors.New("station ID cannot be empty")
 	}
 
 	st := &Station{
-		ID:            id,
-		Expiration:    3 * time.Minute,
-		Duration:      1 * time.Minute,
-		errq:          make(chan error, 10),
-		done:          make(chan bool, 1),
-		Metrics:       NewStationMetrics(),
-		DeviceManager: NewDeviceManager(),
+		ID:         id,
+		Expiration: 3 * time.Minute,
+		Duration:   1 * time.Minute,
+		errq:       make(chan error, 10),
+		done:       make(chan bool, 1),
+		Metrics:    NewStationMetrics(),
+		Devices:    NewDeviceManager(),
 	}
-
-	// Use the workspace-wide topic name from utils for station topics
-	// topic := utils.StationName()
-	// if topic == "" {
-	// 	// fallback to previous pattern if utils not configured
-	// 	topic = "otto/stations"
-	// }
-	// messanger.NewMessanger("local", topic+"/"+id)
-	// st.Messanger = messanger.GetMessanger()
 
 	go st.errorHandler()
 	return st, nil
@@ -162,22 +152,10 @@ func (st *Station) StartTicker(duration time.Duration) error {
 }
 
 func (st *Station) SayHello() {
-	// publish a simple hello payload if available
-	if st.Messanger != nil {
-		payload := map[string]any{
-			"type": "hello",
-			"id":   st.ID,
-			"ts":   time.Now().UTC(),
-		}
-		// Use explicit topic for hello messages
-		topic := messanger.GetTopics().Data("hello")
-		if err := st.Messanger.Pub(topic, payload); err != nil {
-			// record the error for metrics / diagnostics
-			st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
-		}
-	}
 
-	// Record metrics
+	// XXX: Record metrics - this needs to only be run if
+	// there is a broker listening. That is moved under the
+	// msgr == nil clause.
 	if st.Metrics != nil {
 		st.Metrics.RecordAnnouncement()
 	}
@@ -185,6 +163,31 @@ func (st *Station) SayHello() {
 	st.mu.Lock()
 	st.LastHeard = time.Now()
 	st.mu.Unlock()
+
+	// publish a simple hello payload if available
+	msgr := messenger.GetMessenger()
+	if msgr == nil {
+		return
+	}
+
+	payload := map[string]any{
+		"type": "hello",
+		"id":   st.ID,
+		"ts":   time.Now().UTC(),
+	}
+
+	pbytes, err := json.Marshal(payload)
+	if err != nil {
+		slog.Error("station.SayHello failed to map payload into json", "error", err)
+		return
+	}
+
+	// Use explicit topic for hello messages
+	topic := messenger.GetTopics().Data("hello")
+	if err := msgr.Pub(topic, pbytes); err != nil {
+		// record the error for metrics / diagnostics
+		st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
+	}
 }
 
 // GetNetwork will set the IP addresses
@@ -218,7 +221,7 @@ func (st *Station) GetNetwork() error {
 			if ip == nil {
 				continue
 			}
-			ifc.IPAddrs = append(ifc.IPAddrs, ip)
+			ifc.IPAddrs = append(ifc.IPAddrs, netip.MustParseAddr(ip.String()))
 		}
 
 		ifaces = append(ifaces, ifc)
@@ -243,7 +246,7 @@ func (st *Station) GetNetwork() error {
 
 // Update() will append a new data value to the series
 // of data points.
-func (s *Station) Update(msg *messanger.Msg) {
+func (s *Station) Update(msg *messenger.Msg) {
 	// Record metrics
 	if s.Metrics != nil && msg != nil {
 		var size uint64
@@ -258,7 +261,6 @@ func (s *Station) Update(msg *messanger.Msg) {
 	s.LastHeard = time.Now()
 	s.mu.Unlock()
 
-	// TODO: Actually process the message data
 }
 
 // Stop the station from advertising
@@ -277,11 +279,6 @@ func (st *Station) Stop() {
 	select {
 	case st.done <- true:
 	default:
-	}
-
-	// Safely close messanger
-	if st.Messanger != nil {
-		st.Messanger.Close()
 	}
 }
 

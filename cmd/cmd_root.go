@@ -30,17 +30,8 @@ func init() {
 	rootCmd.SetOut(cmdOutput)
 
 	rootCmd.AddCommand(cliCmd)
-	rootCmd.AddCommand(fileCmd)
-
-	rootCmd.AddCommand(msgCmd)
-	msgCmd.AddCommand(msgConnectCmd)
-	msgCmd.AddCommand(msgPubCmd)
-	msgCmd.AddCommand(msgSubCmd)
-
-	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(stationsCmd)
 	rootCmd.AddCommand(statsCmd)
-	rootCmd.AddCommand(tickerCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 

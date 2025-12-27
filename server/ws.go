@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 )
 
 type Websock struct {
 	*websocket.Conn
-	writeQ chan *messanger.Msg
+	writeQ chan *messenger.Msg
 	Done   chan any
 }
 
@@ -23,12 +23,12 @@ func NewWebsock(conn *websocket.Conn) *Websock {
 	ws := &Websock{
 		Conn:   conn,
 		Done:   make(chan any),
-		writeQ: make(chan *messanger.Msg),
+		writeQ: make(chan *messenger.Msg),
 	}
 	return ws
 }
 
-func (ws *Websock) GetWriteQ() chan *messanger.Msg {
+func (ws *Websock) GetWriteQ() chan *messenger.Msg {
 	return ws.writeQ
 }
 
@@ -58,7 +58,7 @@ func (ws WServe) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wsock := NewWebsock(conn)
 	go func() {
 		for {
-			// var messanger StationEvent
+			// var messenger StationEvent
 			mt, message, err := conn.ReadMessage()
 			if err != nil {
 				slog.Error("websocket read:", "error", err)

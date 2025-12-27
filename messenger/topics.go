@@ -1,4 +1,4 @@
-package messanger
+package messenger
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/rustyeddy/otto/utils"
 )
@@ -16,7 +17,7 @@ import (
 //
 // Otto uses a standardized topic format: "ss/[c|d]/station/sensor"
 // Where:
-//   - "ss" is the namespace prefix (Smart Station)
+//   - "o" is the namespace prefix (Smart Station)
 //   - "c" indicates control topics (commands to devices)
 //   - "d" indicates data topics (sensor readings, telemetry)
 //   - station is the station/device identifier
@@ -26,19 +27,21 @@ import (
 //   - "ss/c/station1/led" - Control topic to turn LED on/off
 //   - "ss/d/station1/temp" - Data topic for temperature readings
 type Topics struct {
-	TopicFmt string         // Format string for topic generation (e.g., "ss/%s/%s/%s")
-	Topicmap map[string]int // Map of topic to usage count
+	Prefix string         // Prefix for all topics
+	Format string         // Format string for topic generation (e.g., "ss/%s/%s/%s")
+	Map    map[string]int // Map of topic to usage count
+
+	mu sync.RWMutex `json:"-"`
 }
 
 var (
-	// topics is the singleton Topics instance for the application
 	topics *Topics
 )
 
 func init() {
 	topics = &Topics{
-		TopicFmt: "ss/%s/%s/%s",
-		Topicmap: make(map[string]int),
+		Format: "o/%s/%s/%s",
+		Map:    make(map[string]int),
 	}
 }
 
@@ -65,7 +68,7 @@ func ValidateTopic(topic string) bool {
 		return false
 	}
 
-	if path[0] != "ss" {
+	if path[0] != "o" {
 		return false
 	}
 
@@ -111,8 +114,10 @@ func GetTopics() *Topics {
 //	topics := GetTopics()
 //	ledTopic := topics.Control("led")  // Returns "ss/c/mystation/led"
 func (t *Topics) Control(topic string) string {
-	top := fmt.Sprintf(t.TopicFmt, "c", utils.StationName(), topic)
-	t.Topicmap[top]++
+	top := fmt.Sprintf(t.Format, "c", utils.StationName(), topic)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.Map[top]++
 	return top
 }
 
@@ -132,8 +137,10 @@ func (t *Topics) Control(topic string) string {
 //	topics := GetTopics()
 //	tempTopic := topics.Data("temp")  // Returns "ss/d/mystation/temp"
 func (t *Topics) Data(topic string) string {
-	top := fmt.Sprintf(t.TopicFmt, "d", utils.StationName(), topic)
-	t.Topicmap[top]++
+	top := fmt.Sprintf(t.Format, "d", utils.StationName(), topic)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.Map[top]++
 	return top
 }
 

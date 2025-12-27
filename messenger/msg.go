@@ -1,4 +1,4 @@
-package messanger
+package messenger
 
 import (
 	"encoding/json"
@@ -42,8 +42,7 @@ type Msg struct {
 
 var (
 	// msgid is the global message ID counter. It's incremented for each new message.
-	msgid int64 = 0
-	// msgSaver optionally records messages for debugging and testing
+	msgid    int64 = 0
 	msgSaver *MsgSaver
 )
 
@@ -79,7 +78,6 @@ func getMsgID() int64 {
 //	bytes, err := Bytes(25.5)  // Returns []byte("25.50"), nil
 func Bytes(data any) ([]byte, error) {
 	var buf []byte
-
 	switch data.(type) {
 	case []byte:
 		buf = data.([]byte)
