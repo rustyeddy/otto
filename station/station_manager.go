@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rustyeddy/otto/messanger"
+	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/server"
 )
 
@@ -56,7 +56,7 @@ func NewStationManager() (sm *StationManager) {
 	return sm
 }
 
-func (sm *StationManager) Callback(msg *messanger.Msg) {
+func (sm *StationManager) Callback(msg *messenger.Msg) {
 	sm.Update(msg)
 }
 
@@ -127,7 +127,7 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 	if sm.Get(st) != nil {
 		return nil, fmt.Errorf("Error adding an existing station")
 	}
-	station, err = newStation(st)
+	station, err = NewStation(st)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 	return station, nil
 }
 
-func (sm *StationManager) Update(msg *messanger.Msg) (st *Station) {
+func (sm *StationManager) Update(msg *messenger.Msg) (st *Station) {
 
 	var err error
 

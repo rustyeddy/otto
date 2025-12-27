@@ -7,12 +7,15 @@ import (
 )
 
 func TestOttOInit(t *testing.T) {
-	o := &OttO{Name: "TestOttO"}
+	o := &OttO{
+		Name:       "TestOttO",
+		MQTTBroker: "localhost",
+	}
 
 	o.Init()
 
 	assert.NotNil(t, o.done, "Expected done channel to be initialized")
-	assert.NotNil(t, o.Messanger, "Expected Messanger to be initialized")
+	assert.NotNil(t, o.Messenger, "Expected Messanger to be initialized")
 	assert.NotNil(t, o.StationManager, "Expected StationManager to be initialized")
 	assert.NotNil(t, o.Station, "Expected Station to be initialized")
 	assert.NotNil(t, o.Server, "Expected Server to be initialized")

@@ -1,4 +1,4 @@
-package messanger
+package messenger
 
 import (
 	"encoding/json"
@@ -28,25 +28,21 @@ func TestControl(t *testing.T) {
 	topics := GetTopics()
 	utils.SetStationName("TestStation")
 	controlTopic := topics.Control("foo")
-	expected := "ss/c/TestStation/foo"
-	if controlTopic != expected {
-		t.Errorf("Expected control topic '%s', got '%s'", expected, controlTopic)
-	}
-	if topics.Topicmap[controlTopic] != 1 {
-		t.Errorf("Expected topic count for '%s' to be 1, got %d", controlTopic, topics.Topicmap[controlTopic])
-	}
+	expected := "o/c/TestStation/foo"
+	assert.Equal(t, controlTopic, expected)
+	assert.Equal(t, topics.Map[controlTopic], 1)
 }
 
 func TestData(t *testing.T) {
 	topics := GetTopics()
 	utils.SetStationName("TestStation")
 	dataTopic := topics.Data("bar")
-	expected := "ss/d/TestStation/bar"
+	expected := "o/d/TestStation/bar"
 	if dataTopic != expected {
 		t.Errorf("Expected data topic '%s', got '%s'", expected, dataTopic)
 	}
-	if topics.Topicmap[dataTopic] != 1 {
-		t.Errorf("Expected topic count for '%s' to be 1, got %d", dataTopic, topics.Topicmap[dataTopic])
+	if topics.Map[dataTopic] != 1 {
+		t.Errorf("Expected topic count for '%s' to be 1, got %d", dataTopic, topics.Map[dataTopic])
 	}
 }
 
@@ -76,6 +72,6 @@ func TestServeHTTP(t *testing.T) {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	assert.Equal(t, 0, decodedTopics.Topicmap["ss/c/TesstStation/foo"])
-	assert.Equal(t, 0, decodedTopics.Topicmap["ss/d/TesstStation/bar"])
+	assert.Equal(t, 0, decodedTopics.Map["o/c/TesstStation/foo"])
+	assert.Equal(t, 0, decodedTopics.Map["o/d/TesstStation/bar"])
 }
