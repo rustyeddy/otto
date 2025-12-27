@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rustyeddy/otto/client"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +13,7 @@ var (
 		Short: "Print the version number of otto",
 		Long:  `All software has versions. This is OttO's`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cli := client.NewClient("http://localhost:8011")
+			cli := getClient()
 			version, err := cli.GetVersion()
 			if err != nil {
 				fmt.Fprintln(cmdOutput, "Failed to get otto client", err)

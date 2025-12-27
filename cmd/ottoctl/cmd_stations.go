@@ -16,7 +16,7 @@ var stationsCmd = &cobra.Command{
 }
 
 func stationsRun(cmd *cobra.Command, args []string) {
-	client := GetClient()
+	client := getClient()
 	if client == nil {
 		fmt.Fprintf(cmdOutput, "Failed to get an otto client")
 		return

@@ -13,6 +13,7 @@ var (
 	cmdOutput io.Writer
 	serverURL string
 	format    string
+	cli       *client.Client
 )
 
 var rootCmd = &cobra.Command{
@@ -33,6 +34,13 @@ func init() {
 	rootCmd.AddCommand(stationsCmd)
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(versionCmd)
+}
+
+func getClient() *client.Client {
+	if cli == nil {
+		cli = GetClient()
+	}
+	return cli
 }
 
 func GetRootCmd() *cobra.Command {

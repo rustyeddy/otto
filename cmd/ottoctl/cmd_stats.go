@@ -17,7 +17,7 @@ var statsCmd = &cobra.Command{
 
 func statsRun(cmd *cobra.Command, args []string) {
 	// Check if we should connect to a remote server
-	client := GetClient()
+	client := getClient()
 	if client == nil {
 		fmt.Fprintf(cmdOutput, "Failed to get an otto client")
 		return
