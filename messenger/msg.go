@@ -78,7 +78,6 @@ func getMsgID() int64 {
 //	bytes, err := Bytes(25.5)  // Returns []byte("25.50"), nil
 func Bytes(data any) ([]byte, error) {
 	var buf []byte
-
 	switch data.(type) {
 	case []byte:
 		buf = data.([]byte)

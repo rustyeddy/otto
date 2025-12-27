@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/rustyeddy/otto/utils"
 )
@@ -29,6 +30,8 @@ type Topics struct {
 	Prefix string         // Prefix for all topics
 	Format string         // Format string for topic generation (e.g., "ss/%s/%s/%s")
 	Map    map[string]int // Map of topic to usage count
+
+	mu sync.RWMutex `json:"-"`
 }
 
 var (
@@ -112,6 +115,8 @@ func GetTopics() *Topics {
 //	ledTopic := topics.Control("led")  // Returns "ss/c/mystation/led"
 func (t *Topics) Control(topic string) string {
 	top := fmt.Sprintf(t.Format, "c", utils.StationName(), topic)
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.Map[top]++
 	return top
 }
@@ -133,6 +138,8 @@ func (t *Topics) Control(topic string) string {
 //	tempTopic := topics.Data("temp")  // Returns "ss/d/mystation/temp"
 func (t *Topics) Data(topic string) string {
 	top := fmt.Sprintf(t.Format, "d", utils.StationName(), topic)
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.Map[top]++
 	return top
 }

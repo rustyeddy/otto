@@ -56,14 +56,18 @@ func NewStationManager() (sm *StationManager) {
 	return sm
 }
 
-func (sm *StationManager) Callback(msg *messenger.Msg) {
+func (sm *StationManager) HandleMsg(msg *messenger.Msg) error {
 	sm.Update(msg)
+	return nil
 }
 
 func (sm *StationManager) Start() {
 
 	srv := server.GetServer()
 	srv.Register("/api/stations", sm)
+
+	msgr := messenger.GetMessenger()
+	msgr.Sub("o/d/+/hello", sm.HandleMsg)
 
 	// Start a ticker to clean up stale entries
 	quit := make(chan struct{})

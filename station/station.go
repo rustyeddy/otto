@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -27,8 +28,6 @@ type Station struct {
 
 	Devices *DeviceManager
 	Metrics *StationMetrics `json:"metrics"`
-
-	*messenger.Messenger `json:"-"`
 
 	errq   chan error
 	errors []error `json:"-"`
@@ -153,22 +152,10 @@ func (st *Station) StartTicker(duration time.Duration) error {
 }
 
 func (st *Station) SayHello() {
-	// publish a simple hello payload if available
-	if st.Messenger != nil {
-		payload := map[string]any{
-			"type": "hello",
-			"id":   st.ID,
-			"ts":   time.Now().UTC(),
-		}
-		// Use explicit topic for hello messages
-		topic := messenger.GetTopics().Data("hello")
-		if err := st.Messenger.Pub(topic, payload); err != nil {
-			// record the error for metrics / diagnostics
-			st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
-		}
-	}
 
-	// Record metrics
+	// XXX: Record metrics - this needs to only be run if
+	// there is a broker listening. That is moved under the
+	// msgr == nil clause.
 	if st.Metrics != nil {
 		st.Metrics.RecordAnnouncement()
 	}
@@ -176,6 +163,31 @@ func (st *Station) SayHello() {
 	st.mu.Lock()
 	st.LastHeard = time.Now()
 	st.mu.Unlock()
+
+	// publish a simple hello payload if available
+	msgr := messenger.GetMessenger()
+	if msgr == nil {
+		return
+	}
+
+	payload := map[string]any{
+		"type": "hello",
+		"id":   st.ID,
+		"ts":   time.Now().UTC(),
+	}
+
+	pbytes, err := json.Marshal(payload)
+	if err != nil {
+		slog.Error("station.SayHello failed to map payload into json", "error", err)
+		return
+	}
+
+	// Use explicit topic for hello messages
+	topic := messenger.GetTopics().Data("hello")
+	if err := msgr.Pub(topic, pbytes); err != nil {
+		// record the error for metrics / diagnostics
+		st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
+	}
 }
 
 // GetNetwork will set the IP addresses
@@ -267,11 +279,6 @@ func (st *Station) Stop() {
 	select {
 	case st.done <- true:
 	default:
-	}
-
-	// Safely close messenger
-	if st.Messenger != nil {
-		st.Messenger.Close()
 	}
 }
 

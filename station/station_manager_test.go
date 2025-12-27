@@ -168,24 +168,24 @@ func TestStationManagerUpdate(t *testing.T) {
 	})
 }
 
-func TestStationManagerCallback(t *testing.T) {
+func TestStationManagerHandleMsg(t *testing.T) {
 	sm := NewStationManager()
 
-	t.Run("Callback updates station", func(t *testing.T) {
+	t.Run("HandleMsg updates station", func(t *testing.T) {
 		msg := messenger.NewMsg(messenger.GetTopics().Data("hello"), []byte("test-sm-callback"), "test-callback-updates-station")
-		sm.Callback(msg)
+		sm.HandleMsg(msg)
 
 		station := sm.Get(utils.StationName())
 		assert.NotNil(t, station, "Station should be created via callback")
 		assert.Equal(t, utils.StationName(), station.ID, "Station should have correct ID")
 	})
 
-	t.Run("Callback with malformed JSON", func(t *testing.T) {
+	t.Run("HandleMsg with malformed JSON", func(t *testing.T) {
 		msg := messenger.NewMsg("data/malformed-test/hello", []byte(`{invalid json`), "test-invalid-json-and-topic")
 		// This should not panic
 		assert.NotPanics(t, func() {
-			sm.Callback(msg)
-		}, "Callback should handle malformed JSON gracefully")
+			sm.HandleMsg(msg)
+		}, "HandleMsg should handle malformed JSON gracefully")
 	})
 }
 
@@ -389,11 +389,11 @@ func TestStationManagerEdgeCases(t *testing.T) {
 		assert.Nil(t, station, "Update with empty message should return nil")
 	})
 
-	t.Run("Callback with nil data", func(t *testing.T) {
+	t.Run("HandleMsg with nil data", func(t *testing.T) {
 		msg := messenger.NewMsg(messenger.GetTopics().Data("hello"), nil, "test-nil-data")
 		assert.NotPanics(t, func() {
-			sm.Callback(msg)
-		}, "Callback should handle nil data gracefully")
+			sm.HandleMsg(msg)
+		}, "HandleMsg should handle nil data gracefully")
 	})
 }
 

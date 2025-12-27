@@ -67,7 +67,7 @@ var (
 //   - "none": Creates a local in-process messanger without MQTT
 //   - "otto": Starts an embedded MQTT broker and creates an MQTT messanger
 //   - default: Creates an MQTT messanger connecting to an external broker
-func NewMessenger(broker string) (msgr *Messenger) {
+func NewMessenger(broker string) *Messenger {
 	msgr = &Messenger{}
 	msgr.ID = "otto-client"
 	msgr.Broker = broker

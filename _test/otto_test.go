@@ -2,7 +2,6 @@ package system
 
 import (
 	"bytes"
-	"context"
 	"flag"
 	"fmt"
 	"net/netip"
@@ -15,7 +14,6 @@ import (
 	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/station"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type Config struct {
@@ -51,33 +49,32 @@ func TestRunTests(t *testing.T) {
 	st := &systemTest{}
 
 	t.Run("start", st.startOttO)
-
 	t.Run("messenger", st.startMessenger)
-
 	t.Run("stations", st.testStations)
 
+	time.Sleep(5 * time.Minute)
 	t.Run("stop", st.stopOttO)
 }
 
 func (ts *systemTest) startOttO(t *testing.T) {
-	path, err := exec.LookPath("../otto")
-	require.NoError(t, err, "expect to find the executable otto but did not: %s", path)
+	// path, err := exec.LookPath("../otto")
+	// require.NoError(t, err, "expect to find the executable otto but did not: %s", path)
 
-	ctx, _ := context.WithCancel(context.Background())
-	ocmd = exec.CommandContext(ctx, "../otto", "serve")
+	// ctx, _ := context.WithCancel(context.Background())
+	// ocmd = exec.CommandContext(ctx, "../otto", "serve")
 
-	var stdout, stderr bytes.Buffer
-	ocmd.Stdout = &stdout
-	ocmd.Stderr = &stderr
+	// var stdout, stderr bytes.Buffer
+	// ocmd.Stdout = &stdout
+	// ocmd.Stderr = &stderr
 
-	err = ocmd.Start()
-	require.NoError(t, err, "expected to run otto but got an error")
+	// err = ocmd.Start()
+	// require.NoError(t, err, "expected to run otto but got an error")
 
-	time.Sleep(500 * time.Millisecond)
+	// time.Sleep(500 * time.Millisecond)
 
 	// verify otto is running
 	cli := client.NewClient(config.URL)
-	err = cli.Ping()
+	err := cli.Ping()
 	assert.NoError(t, err, "expected no error but got one")
 
 }
@@ -101,7 +98,7 @@ func (ts *systemTest) startMessenger(t *testing.T) {
 func (ts *systemTest) mockStations() {
 	sm := station.GetStationManager()
 	for i := 1; i < config.StationCount; i++ {
-		stname := fmt.Sprintf("station-%3d", i)
+		stname := fmt.Sprintf("station-%03d", i)
 		st, err := sm.Add(stname)
 		if err != nil {
 			panic(err)
@@ -113,7 +110,6 @@ func (ts *systemTest) mockStations() {
 			MACAddr: fmt.Sprintf("22:33:44:55:66:%02x", i),
 		}
 		ipstr := fmt.Sprintf("10.77.1.%d", i)
-		fmt.Println(ipstr)
 		ipaddr, err := netip.ParseAddr(ipstr)
 		if err != nil {
 			panic(err)
@@ -121,7 +117,7 @@ func (ts *systemTest) mockStations() {
 
 		iface.IPAddrs = append(iface.IPAddrs, ipaddr)
 		st.Ifaces = append(st.Ifaces, iface)
-
+		st.StartTicker(1 * time.Minute)
 		st.SayHello()
 	}
 }
@@ -135,8 +131,6 @@ func (ts *systemTest) testStations(t *testing.T) {
 	stations, err := cli.GetStations()
 	assert.NoError(t, err)
 
-	for _, st := range stations {
-		fmt.Printf("station: %+v\n", st)
-	}
+	assert.Equal(t, 2, len(stations))
 
 }

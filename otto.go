@@ -245,8 +245,11 @@ func (o *OttO) Stop() {
 
 	if o.Messenger != nil {
 		o.Messenger.Close()
-		messenger.StopMQTTBroker(context.Background())
 	}
+
+	// TODO Check if local broker is running, only if it is
+	// then stop it
+	messenger.StopMQTTBroker(context.Background())
 }
 
 // AddManagedDevice creates a managed device wrapper and adds it to the station
