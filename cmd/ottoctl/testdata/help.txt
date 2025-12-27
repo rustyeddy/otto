@@ -1,0 +1,21 @@
+This is cool stuff and you will be able to find a lot of cool information 
+                in the following documentation https://rustyeddy.com/otto/
+
+Usage:
+  otto [flags]
+  otto [command]
+
+Available Commands:
+  cli         Run auto in interactive CLI mode
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  stations    Get station information
+  stats       Display runtime stats
+  version     Print the version number of otto
+
+Flags:
+      --format string   choices are <human | json> default json (default "json")
+  -h, --help            help for otto
+      --server string   Otto server URL (e.g., http://localhost:8011) (default "http://localhost:8011")
+
+Use "otto [command] --help" for more information about a command.

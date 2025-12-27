@@ -20,9 +20,7 @@ examples/heater/heater
 examples/mock/mock
 examples/logging_demo
 otto/otto
-otto
-ottoctl
-cmd/otto/otto
+ottoctl/ottoctl
 mock/mock
 gpio/gpio
 station/station
