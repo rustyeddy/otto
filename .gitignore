@@ -21,6 +21,7 @@ examples/mock/mock
 examples/logging_demo
 otto/otto
 otto
+ottoctl
 cmd/otto/otto
 mock/mock
 gpio/gpio
@@ -30,3 +31,4 @@ debug*
 *.code-workspace
 *.log
 coverage.*
+__debug*

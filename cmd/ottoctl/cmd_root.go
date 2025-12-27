@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	cmdOutput = os.Stdout
 	rootCmd.PersistentFlags().StringVar(&appdir, "appdir", "embed", "root of the web app")
-	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "", "Otto server URL (e.g., http://localhost:8011)")
+	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "http://localhost:8011", "Otto server URL (e.g., http://localhost:8011)")
 	rootCmd.SetOut(cmdOutput)
 
 	rootCmd.AddCommand(cliCmd)
@@ -47,7 +47,6 @@ func Execute() {
 }
 
 func ottoRun(cmd *cobra.Command, args []string) {
-	serveRun(cmd, args)
 }
 
 // GetClient returns an Otto client if remote mode is enabled, nil otherwise.

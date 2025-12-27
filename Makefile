@@ -1,7 +1,8 @@
-# SUBDIRS := data mesh messanger otto server station utils
-PIENV	= env GOOS=linux GOARCH=arm GOARM=7
-BINARY_NAME=otto
-VERSION?=0.0.12	
+PIENV		= env GOOS=linux GOARCH=arm GOARM=7
+OTTO_BINARY	= otto
+OTTOCTL_BINARY	= ottoctl
+# TODO read the version from version.go
+VERSION?	= 0.0.12	
 
 all: test build
 
@@ -14,8 +15,13 @@ fmt:
 vet:
 	go vet ./...
 
-build:
-	go build -o ${BINARY_NAME} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
+ottoctl:
+	go build -o ${OTTOCTL_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/ottoctl/ottoctl
+
+otto:
+	go build -o ${OTTO_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
+
+build: ottoctl otto
 
 run: build
 	./otto
@@ -97,4 +103,4 @@ service-status:
 service-logs:
 	sudo journalctl -u $(SERVICE_FILE) -f
 
-.PHONY: all build clean ci fmt run test vet install install-service enable-service uninstall-service uninstall service-status service-logs $(SUBDIRS)
+.PHONY: all build otto ottoctl clean ci fmt run test vet install install-service enable-service uninstall-service uninstall service-status service-logs $(SUBDIRS)
