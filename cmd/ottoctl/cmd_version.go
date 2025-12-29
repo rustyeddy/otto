@@ -1,7 +1,7 @@
-package cmd
+package ottoctl
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -12,20 +12,24 @@ var (
 		Use:   "version",
 		Short: "Print the version number of otto",
 		Long:  `All software has versions. This is OttO's`,
-		Run: func(cmd *cobra.Command, args []string) {
-			cli := getClient()
-			version, err := cli.GetVersion()
-			if err != nil {
-				fmt.Fprintln(cmdOutput, "Failed to get otto client", err)
-			}
-
-			// Pretty print the JSON response
-			jsonBytes, err := json.MarshalIndent(version, "", "  ")
-			if err != nil {
-				fmt.Fprintf(cmdOutput, "version: %+v\n", version)
-				return
-			}
-			fmt.Fprintf(cmdOutput, "%s\n", string(jsonBytes))
-		},
+		Args:  cobra.MaximumNArgs(0),
+		RunE:  runVersion,
 	}
 )
+
+func runVersion(cmd *cobra.Command, args []string) error {
+
+	cli := getClient()
+	vmap, err := cli.GetVersion()
+	if err != nil {
+		fmt.Fprintln(cmdOutput, "Failed to get otto client", err)
+	}
+	version, ex := vmap["version"]
+	if !ex {
+		fmt.Fprintf(errOutput, "%s\n", "failed to get version")
+		return errors.New("failed to get version")
+	}
+
+	fmt.Fprintf(cmdOutput, "%s\n", version)
+	return nil
+}

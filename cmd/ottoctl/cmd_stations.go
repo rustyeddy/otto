@@ -1,4 +1,4 @@
-package cmd
+package ottoctl
 
 import (
 	"encoding/json"

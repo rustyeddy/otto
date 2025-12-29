@@ -1,4 +1,4 @@
-package cmd
+package ottoctl
 
 import (
 	"io"
@@ -11,6 +11,7 @@ import (
 
 var (
 	cmdOutput io.Writer
+	errOutput io.Writer
 	serverURL string
 	format    string
 	cli       *client.Client
@@ -26,9 +27,11 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cmdOutput = os.Stdout
+	errOutput = os.Stderr
 	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "http://localhost:8011", "Otto server URL (e.g., http://localhost:8011)")
 	rootCmd.PersistentFlags().StringVar(&format, "format", "json", "choices are <human | json> default json")
 	rootCmd.SetOut(cmdOutput)
+	rootCmd.SetErr(errOutput)
 
 	rootCmd.AddCommand(cliCmd)
 	rootCmd.AddCommand(stationsCmd)
