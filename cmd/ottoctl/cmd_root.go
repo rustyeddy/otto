@@ -1,4 +1,4 @@
-package cmd
+package ottoctl
 
 import (
 	"io"
@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	appdir    string
 	cmdOutput io.Writer
+	errOutput io.Writer
 	serverURL string
+	format    string
+	cli       *client.Client
 )
 
 var rootCmd = &cobra.Command{
@@ -25,14 +27,23 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cmdOutput = os.Stdout
-	rootCmd.PersistentFlags().StringVar(&appdir, "appdir", "embed", "root of the web app")
-	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "", "Otto server URL (e.g., http://localhost:8011)")
+	errOutput = os.Stderr
+	rootCmd.PersistentFlags().StringVar(&serverURL, "server", "http://localhost:8011", "Otto server URL (e.g., http://localhost:8011)")
+	rootCmd.PersistentFlags().StringVar(&format, "format", "json", "choices are <human | json> default json")
 	rootCmd.SetOut(cmdOutput)
+	rootCmd.SetErr(errOutput)
 
 	rootCmd.AddCommand(cliCmd)
 	rootCmd.AddCommand(stationsCmd)
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(versionCmd)
+}
+
+func getClient() *client.Client {
+	if cli == nil {
+		cli = GetClient()
+	}
+	return cli
 }
 
 func GetRootCmd() *cobra.Command {
@@ -47,7 +58,6 @@ func Execute() {
 }
 
 func ottoRun(cmd *cobra.Command, args []string) {
-	serveRun(cmd, args)
 }
 
 // GetClient returns an Otto client if remote mode is enabled, nil otherwise.

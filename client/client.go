@@ -81,6 +81,19 @@ func (c *Client) GetStations() (map[string]interface{}, error) {
 	return stations, nil
 }
 
+// GetVersion retrieves version number of the server.
+//
+// This calls the /version endpoint on the server.
+func (c *Client) GetVersion() (map[string]interface{}, error) {
+	var ver map[string]interface{}
+
+	if err := c.get("/version", &ver); err != nil {
+		return nil, err
+	}
+
+	return ver, nil
+}
+
 // Ping checks if the Otto server is reachable and responding.
 // Returns nil if the server is healthy, error otherwise.
 func (c *Client) Ping() error {

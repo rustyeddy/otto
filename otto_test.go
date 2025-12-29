@@ -25,18 +25,3 @@ func TestOttOInit(t *testing.T) {
 	}()
 	o.Stop()
 }
-
-func TestOttOBrokerShutdown(t *testing.T) {
-	o := &OttO{Name: "TestOttOShutdown"}
-	o.Init()
-
-	// Test that calling Stop doesn't panic and properly shuts down the broker
-	assert.NotPanics(t, func() {
-		// Start a goroutine to receive from done channel
-		go func() {
-			<-o.Done()
-		}()
-
-		o.Stop()
-	}, "Stop() should not panic")
-}

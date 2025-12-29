@@ -20,8 +20,7 @@ examples/heater/heater
 examples/mock/mock
 examples/logging_demo
 otto/otto
-otto
-cmd/otto/otto
+ottoctl/ottoctl
 mock/mock
 gpio/gpio
 station/station
@@ -30,3 +29,4 @@ debug*
 *.code-workspace
 *.log
 coverage.*
+__debug*

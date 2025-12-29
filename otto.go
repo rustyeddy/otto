@@ -130,6 +130,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/rustyeddy/otto/messenger"
@@ -167,10 +168,6 @@ var (
 	Interactive bool
 )
 
-func init() {
-	Version = "0.0.12"
-}
-
 func (o *OttO) Done() chan any {
 	return o.done
 }
@@ -202,6 +199,9 @@ func (o *OttO) Init() {
 
 	if o.Server == nil {
 		o.Server = server.GetServer()
+		o.Server.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(fmt.Sprintf(`{"version": "%s"}`, version)))
+		})
 	}
 
 	if o.Name == "" {
@@ -268,4 +268,8 @@ func (o *OttO) GetManagedDevice(name string) *station.ManagedDevice {
 	}
 	device := o.Station.Devices.Get(name)
 	return device
+}
+
+func (o *OttO) ServeHTTP(w *http.ResponseWriter, r http.Request) {
+
 }

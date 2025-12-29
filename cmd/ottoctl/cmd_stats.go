@@ -1,11 +1,10 @@
-package cmd
+package ottoctl
 
 import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
 
-	"github.com/rustyeddy/otto/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +17,9 @@ var statsCmd = &cobra.Command{
 
 func statsRun(cmd *cobra.Command, args []string) {
 	// Check if we should connect to a remote server
-	client := GetClient()
+	client := getClient()
 	if client == nil {
-		// Local mode: get stats directly
-		slog.Debug("Getting stats from local process")
-		stats := utils.GetStats()
-		fmt.Fprintf(cmdOutput, "Stats: %+v\n", stats)
+		fmt.Fprintf(cmdOutput, "Failed to get an otto client")
 		return
 	}
 
