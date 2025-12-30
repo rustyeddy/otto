@@ -154,10 +154,11 @@ type Controller interface {
 type OttO struct {
 	Name string
 
+	*utils.LogConfig
 	*station.Station
 	*station.StationManager
-	*server.Server
 	*messenger.Messenger
+	*server.Server
 
 	Mock       bool
 	MQTTBroker string // MQTT broker URL, defaults to test.mosquitto.org
@@ -166,7 +167,6 @@ type OttO struct {
 
 // global variables and structures
 var (
-	Version     string
 	Interactive bool
 )
 
@@ -183,6 +183,9 @@ func (o *OttO) Init() {
 		return
 	}
 	o.done = make(chan any)
+
+	o.LogConfig = utils.DefaultLogConfig()
+	utils.InitLogger(*o.LogConfig)
 
 	if o.Messenger == nil {
 		broker := o.MQTTBroker
@@ -201,9 +204,6 @@ func (o *OttO) Init() {
 
 	if o.Server == nil {
 		o.Server = server.GetServer()
-		o.Server.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(fmt.Sprintf(`{"version": "%s"}`, version)))
-		})
 	}
 
 	if o.Name == "" {
@@ -221,9 +221,11 @@ func (o *OttO) Init() {
 		o.Station.Init()
 	}
 
+	o.Server.Register("/version", o)
+	o.Server.Register("/api/shutdown", o)
 	o.Server.Register("/api/topics", messenger.GetTopics())
 	o.Server.Register("/api/stats", &utils.Stats{})
-	o.Server.Register("/api/shutdown", o)
+	o.Server.Register("/api/log", o.LogConfig)
 }
 
 // Start the OttO process, TODO return a stop channel or context?
@@ -291,6 +293,11 @@ func (o *OttO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			o.Stop()
 		}()
 		response = `{ "shutdown": "shutting down in 2 seconds" }`
+
+	case "/version":
+		vj := VersionJSON()
+		fmt.Printf("VJ: %s\n", string(vj))
+		w.Write(vj)
 
 	default:
 		// change this to 404 not found

@@ -2,9 +2,11 @@ package utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"os"
 )
 
@@ -56,6 +58,15 @@ type LogConfig struct {
 	Format   LogFormat     // Format: text, json
 	FilePath string        // Path to log file (used when Output is file)
 	Buffer   *bytes.Buffer // Buffer to write logs to (used when Output is string)
+}
+
+func DefaultLogConfig() *LogConfig {
+	return &LogConfig{
+		Level:    "info",
+		Output:   LogOutputStdout,
+		Format:   LogFormatText,
+		FilePath: "/var/log/otto.log",
+	}
 }
 
 // InitLoggerWithConfig initializes the logger with a LogConfig
@@ -132,4 +143,17 @@ func SetLogLevel(loglevel string) slog.Level {
 	}
 	slog.SetLogLoggerLevel(level)
 	return level
+}
+
+func (lc *LogConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(lc); err != nil {
+			slog.Error("Failed to encode stats", "error", err)
+			http.Error(w, "Failed to encode stats", http.StatusInternalServerError)
+			return
+		}
+
+	}
 }

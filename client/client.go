@@ -105,6 +105,17 @@ func (c *Client) Shutdown() (map[string]any, error) {
 	return result, nil
 }
 
+// GetLogConfig retrieves the log configuration
+func (c *Client) GetLogConfig() (map[string]any, error) {
+	var result map[string]any
+
+	if err := c.get("/api/log", &result); err != nil {
+		return result, err
+	}
+	return result, nil
+
+}
+
 // Ping checks if the Otto server is reachable and responding.
 // Returns nil if the server is healthy, error otherwise.
 func (c *Client) Ping() error {
