@@ -94,6 +94,17 @@ func (c *Client) GetVersion() (map[string]interface{}, error) {
 	return ver, nil
 }
 
+// GetVersion retrieves version number of the server.
+//
+// This calls the /version endpoint on the server.
+func (c *Client) Shutdown() error {
+	var result any
+	if err := c.get("/api/shutdown", &result); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Ping checks if the Otto server is reachable and responding.
 // Returns nil if the server is healthy, error otherwise.
 func (c *Client) Ping() error {

@@ -246,8 +246,6 @@ func TestServerStart(t *testing.T) {
 		assert.True(t, ok)
 		_, ok = s.EndPoints.Load("/api")
 		assert.True(t, ok)
-		_, ok = s.EndPoints.Load("/api/topics")
-		assert.True(t, ok)
 	})
 }
 

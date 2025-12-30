@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	versionCmd = &cobra.Command{
+	shutdownCmd = &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of otto",
 		Long:  `All software has versions. This is OttO's`,

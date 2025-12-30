@@ -10,13 +10,13 @@ import (
 )
 
 func main() {
-	o := otto.OttO{}
-	o.Init()
-	o.Start()
-
 	// Set up signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	o := otto.OttO{}
+	o.Init()
+	o.Start()
 
 	// Block until we receive a signal or done channel closes
 	select {
@@ -25,6 +25,7 @@ func main() {
 		o.Stop()
 	case <-o.Done():
 		slog.Info("Server done channel closed")
+		o.Shutdown()
 	}
 
 	slog.Info("OttO server stopped")

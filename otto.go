@@ -136,6 +136,7 @@ import (
 	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/server"
 	"github.com/rustyeddy/otto/station"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Controller is a message handler that oversees all interactions
@@ -218,6 +219,10 @@ func (o *OttO) Init() {
 		// Initialzie the local station
 		o.Station.Init()
 	}
+
+	o.Server.Register("/api/topics", messenger.GetTopics())
+	o.Server.Register("/api/stats", &utils.Stats{})
+	o.Server.Register("/api/shutdown", o)
 }
 
 // Start the OttO process, TODO return a stop channel or context?
@@ -235,10 +240,15 @@ func (o *OttO) Start() {
 	}
 }
 
+// Stop OttO nicely allowing it to cleanup resources. TODO This is
+// probably going to need to be refactored and examined through out
+// the code base
 func (o *OttO) Stop() {
+	slog.Info("sending true on the done channel")
 	o.done <- true
-	slog.Info("Done, cleaning up()")
+}
 
+func (o *OttO) Shutdown() {
 	if err := server.GetServer().Close(); err != nil {
 		slog.Error("Failed to close server", "error", err)
 	}
@@ -270,6 +280,19 @@ func (o *OttO) GetManagedDevice(name string) *station.ManagedDevice {
 	return device
 }
 
-func (o *OttO) ServeHTTP(w *http.ResponseWriter, r http.Request) {
+func (o *OttO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	response := ""
+	url := r.URL.String()
+	switch url {
+	case "/api/shutdown":
+		o.Stop()
+		response = "OttO is shutting down"
+
+	default:
+		// change this to 404 not found
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+	fmt.Fprint(w, response)
 
 }

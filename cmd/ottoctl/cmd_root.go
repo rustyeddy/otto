@@ -34,6 +34,7 @@ func init() {
 	rootCmd.SetErr(errOutput)
 
 	rootCmd.AddCommand(cliCmd)
+	rootCmd.AddCommand(shutdownCmd)
 	rootCmd.AddCommand(stationsCmd)
 	rootCmd.AddCommand(statsCmd)
 	rootCmd.AddCommand(versionCmd)

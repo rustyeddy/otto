@@ -160,7 +160,6 @@ func (t *Topics) Data(topic string) string {
 //
 // This is useful for monitoring which topics are being used and how frequently.
 func (t Topics) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(t)
 	if err != nil {
