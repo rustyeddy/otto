@@ -16,7 +16,7 @@ func Example_logToStdout() {
 		Format: utils.LogFormatText,
 	}
 
-	utils.InitLoggerWithConfig(config)
+	utils.InitLogger(config)
 	slog.Info("Application started successfully")
 	// Output will go to stdout
 }
@@ -30,7 +30,7 @@ func Example_logToFile() {
 		FilePath: "/tmp/app.log",
 	}
 
-	_, err := utils.InitLoggerWithConfig(config)
+	_, err := utils.InitLogger(config)
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		return
@@ -49,7 +49,7 @@ func Example_logToString() {
 		Format: utils.LogFormatText,
 	}
 
-	buffer, err := utils.InitLoggerWithConfig(config)
+	buffer, err := utils.InitLogger(config)
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		return
@@ -70,7 +70,7 @@ func Example_logJSONFormat() {
 		Format: utils.LogFormatJSON,
 	}
 
-	utils.InitLoggerWithConfig(config)
+	utils.InitLogger(config)
 	slog.Info("User logged in", "user_id", 12345, "ip", "192.168.1.1")
 	// Output will be in JSON format to stderr
 }
@@ -85,16 +85,9 @@ func Example_customBuffer() {
 		Buffer: customBuffer,
 	}
 
-	utils.InitLoggerWithConfig(config)
+	utils.InitLogger(config)
 	slog.Debug("Debug with custom buffer", "component", "auth")
 
 	// Use the custom buffer
 	fmt.Printf("Buffer contains %d bytes\n", customBuffer.Len())
-}
-
-// Example_backwardCompatibility demonstrates the old API still works
-func Example_backwardCompatibility() {
-	// Old API is still supported for backward compatibility
-	utils.InitLogger("info", "/tmp/legacy.log")
-	slog.Info("Using legacy API")
 }

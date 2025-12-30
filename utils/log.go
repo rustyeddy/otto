@@ -58,22 +58,8 @@ type LogConfig struct {
 	Buffer   *bytes.Buffer // Buffer to write logs to (used when Output is string)
 }
 
-// InitLogger initializes the logger with the old signature for backward compatibility
-func InitLogger(lstr string, lf string) {
-	if lf == "" {
-		lf = logfile
-	}
-	level := SetLogLevel(lstr)
-	f, err := os.OpenFile(lf, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		slog.Error("error opening log ", "err", err)
-	}
-	l := slog.New(slog.NewTextHandler(f, &slog.HandlerOptions{Level: level}))
-	slog.SetDefault(l)
-}
-
 // InitLoggerWithConfig initializes the logger with a LogConfig
-func InitLoggerWithConfig(config LogConfig) (*bytes.Buffer, error) {
+func InitLogger(config LogConfig) (*bytes.Buffer, error) {
 	level := SetLogLevel(config.Level)
 
 	var writer io.Writer

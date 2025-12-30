@@ -138,7 +138,11 @@ func TestInitLogger(t *testing.T) {
 	defer slog.SetDefault(originalLogger)
 
 	t.Run("InitLogger with custom file and level", func(t *testing.T) {
-		InitLogger("info", testLogFile)
+		config := LogConfig{
+			Level:  "info",
+			Output: "file",
+		}
+		InitLogger(config)
 
 		// Check that log file was created
 		if _, err := os.Stat(testLogFile); os.IsNotExist(err) {
@@ -166,8 +170,12 @@ func TestInitLogger(t *testing.T) {
 	t.Run("InitLogger with empty filename uses default", func(t *testing.T) {
 		// Clean up previous test file
 		os.Remove(testLogFile)
-
-		InitLogger("debug", "")
+		config := LogConfig{
+			Level:    "debug",
+			Output:   "file",
+			FilePath: testLogFile,
+		}
+		InitLogger(config)
 
 		// Should use the default logfile (otto.log in tempDir)
 		if _, err := os.Stat(testLogFile); os.IsNotExist(err) {
@@ -177,7 +185,11 @@ func TestInitLogger(t *testing.T) {
 
 	t.Run("InitLogger appends to existing file", func(t *testing.T) {
 		// Create initial content
-		InitLogger("warn", testLogFile)
+		config := LogConfig{
+			Level:  "info",
+			Output: "file",
+		}
+		InitLogger(config)
 		slog.Warn("first message")
 
 		// Read initial content
@@ -190,7 +202,11 @@ func TestInitLogger(t *testing.T) {
 		time.Sleep(1 * time.Millisecond)
 
 		// Initialize again (should append)
-		InitLogger("error", testLogFile)
+		config = LogConfig{
+			Level:  "error",
+			Output: "file",
+		}
+		InitLogger(config)
 		slog.Error("second message")
 
 		// Read final content
@@ -282,7 +298,12 @@ func TestInitLoggerWithDifferentLevels(t *testing.T) {
 			os.Remove(testLogFile)
 
 			// Initialize logger with specific level
-			InitLogger(tt.level, testLogFile)
+			config := LogConfig{
+				Level:    tt.level,
+				Output:   "file",
+				FilePath: testLogFile,
+			}
+			InitLogger(config)
 
 			// Log messages at different levels
 			slog.Debug("debug message")
@@ -333,7 +354,12 @@ func TestInitLoggerErrorHandling(t *testing.T) {
 		// This should not panic, but will log an error
 		// Capture the error output
 		output := captureStdout(func() {
-			InitLogger("info", invalidPath)
+			config := LogConfig{
+				Level:    "info",
+				Output:   "file",
+				FilePath: invalidPath,
+			}
+			InitLogger(config)
 		})
 
 		// The function should handle the error gracefully
@@ -358,7 +384,12 @@ func TestInitLoggerErrorHandling(t *testing.T) {
 		logfile = restrictedFile
 
 		// This should handle the permission error gracefully
-		InitLogger("info", restrictedFile)
+		config := LogConfig{
+			Level:    "info",
+			Output:   "file",
+			FilePath: restrictedFile,
+		}
+		InitLogger(config)
 
 		// The function should not panic, even if file creation fails
 	})
@@ -392,7 +423,12 @@ func BenchmarkInitLogger(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		InitLogger("info", testLogFile)
+		config := LogConfig{
+			Level:    "info",
+			Output:   "file",
+			FilePath: testLogFile,
+		}
+		InitLogger(config)
 	}
 }
 
@@ -408,9 +444,9 @@ func TestLogConfig_OutputToStdout(t *testing.T) {
 		Format: LogFormatText,
 	}
 
-	_, err := InitLoggerWithConfig(config)
+	_, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	// This should not panic or error
@@ -428,9 +464,9 @@ func TestLogConfig_OutputToStderr(t *testing.T) {
 		Format: LogFormatText,
 	}
 
-	_, err := InitLoggerWithConfig(config)
+	_, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	// This should not panic or error
@@ -454,9 +490,9 @@ func TestLogConfig_OutputToFile(t *testing.T) {
 		FilePath: testLogFile,
 	}
 
-	_, err := InitLoggerWithConfig(config)
+	_, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	// Write some log messages
@@ -493,9 +529,9 @@ func TestLogConfig_OutputToString(t *testing.T) {
 		Format: LogFormatText,
 	}
 
-	buffer, err := InitLoggerWithConfig(config)
+	buffer, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	if buffer == nil {
@@ -529,9 +565,9 @@ func TestLogConfig_OutputToStringWithProvidedBuffer(t *testing.T) {
 		Buffer: providedBuffer,
 	}
 
-	returnedBuffer, err := InitLoggerWithConfig(config)
+	returnedBuffer, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	if returnedBuffer != providedBuffer {
@@ -559,9 +595,9 @@ func TestLogConfig_JSONFormat(t *testing.T) {
 		Format: LogFormatJSON,
 	}
 
-	buffer, err := InitLoggerWithConfig(config)
+	buffer, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	// Write log messages
@@ -595,9 +631,9 @@ func TestLogConfig_TextFormat(t *testing.T) {
 		Format: LogFormatText,
 	}
 
-	buffer, err := InitLoggerWithConfig(config)
+	buffer, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig failed: %v", err)
+		t.Fatalf("InitLogger failed: %v", err)
 	}
 
 	// Write log messages
@@ -643,9 +679,9 @@ func TestLogConfig_DifferentLevels(t *testing.T) {
 				Format: LogFormatText,
 			}
 
-			buffer, err := InitLoggerWithConfig(config)
+			buffer, err := InitLogger(config)
 			if err != nil {
-				t.Fatalf("InitLoggerWithConfig failed: %v", err)
+				t.Fatalf("InitLogger failed: %v", err)
 			}
 
 			testMsg := "test message for " + tt.name
@@ -676,7 +712,7 @@ func TestLogConfig_InvalidFilePathError(t *testing.T) {
 		FilePath: "/non/existent/directory/test.log",
 	}
 
-	_, err := InitLoggerWithConfig(config)
+	_, err := InitLogger(config)
 	if err == nil {
 		t.Error("Expected error for invalid file path, got nil")
 	}
@@ -694,9 +730,9 @@ func TestLogConfig_DefaultOutput(t *testing.T) {
 	}
 
 	// Should default to stdout and not error
-	_, err := InitLoggerWithConfig(config)
+	_, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig should not fail with invalid output type: %v", err)
+		t.Fatalf("InitLogger should not fail with invalid output type: %v", err)
 	}
 }
 
@@ -711,9 +747,9 @@ func TestLogConfig_DefaultFormat(t *testing.T) {
 		Format: LogFormat("invalid"),
 	}
 
-	buffer, err := InitLoggerWithConfig(config)
+	buffer, err := InitLogger(config)
 	if err != nil {
-		t.Fatalf("InitLoggerWithConfig should not fail with invalid format: %v", err)
+		t.Fatalf("InitLogger should not fail with invalid format: %v", err)
 	}
 
 	// Should default to text format
