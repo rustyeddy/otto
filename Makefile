@@ -15,13 +15,14 @@ fmt:
 vet:
 	go vet ./...
 
-ottoctl:
-	go build -o ${OTTOCTL_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/ottoctl/ottoctl
+# ottoctl:
+# 	go build -o ${OTTOCTL_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/ottoctl/ottoctl
 
-otto:
-	go build -o ${OTTO_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
+# otto:
+# 	go build -o ${OTTO_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
 
-build: ottoctl otto
+build:
+	$(MAKE) -C cmd
 
 run: build
 	./otto
@@ -103,4 +104,4 @@ service-status:
 service-logs:
 	sudo journalctl -u $(SERVICE_FILE) -f
 
-.PHONY: all build otto ottoctl clean ci fmt run test vet install install-service enable-service uninstall-service uninstall service-status service-logs $(SUBDIRS)
+.PHONY: all build cmd otto ottoctl clean ci fmt run test vet install install-service enable-service uninstall-service uninstall service-status service-logs $(SUBDIRS)

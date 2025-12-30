@@ -42,7 +42,7 @@ func init() {
 
 func getClient() *client.Client {
 	if cli == nil {
-		cli = GetClient()
+		cli = newClient()
 	}
 	return cli
 }
@@ -63,7 +63,7 @@ func ottoRun(cmd *cobra.Command, args []string) {
 
 // GetClient returns an Otto client if remote mode is enabled, nil otherwise.
 // It checks the --server flag first, then the OTTO_SERVER environment variable.
-func GetClient() *client.Client {
+func newClient() *client.Client {
 	// Start with the value provided via --server flag (if any).
 	effectiveURL := serverURL
 
@@ -80,9 +80,4 @@ func GetClient() *client.Client {
 	}
 
 	return nil
-}
-
-// IsRemoteMode returns true if commands should connect to a remote server
-func IsRemoteMode() bool {
-	return GetClient() != nil
 }

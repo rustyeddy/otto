@@ -132,6 +132,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/server"
@@ -285,8 +286,11 @@ func (o *OttO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.String()
 	switch url {
 	case "/api/shutdown":
-		o.Stop()
-		response = "OttO is shutting down"
+		go func() {
+			time.Sleep(2 * time.Second)
+			o.Stop()
+		}()
+		response = `{ "shutdown": "shutting down in 2 seconds" }`
 
 	default:
 		// change this to 404 not found
