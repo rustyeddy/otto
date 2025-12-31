@@ -5,10 +5,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/rustyeddy/otto"
+	"github.com/rustyeddy/otto/station"
 	"github.com/rustyeddy/otto/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewClient(t *testing.T) {
@@ -87,14 +90,12 @@ func TestGetStations(t *testing.T) {
 		if r.URL.Path != "/api/stations" {
 			t.Errorf("Expected path /api/stations, got %s", r.URL.Path)
 		}
-		stationsData := map[string]interface{}{
-			"stations": map[string]interface{}{
-				"station1": map[string]interface{}{
-					"id":       "station1",
-					"hostname": "test-host",
-				},
+		stationsData := []*station.StationSummary{
+			{
+				ID:        "station-01",
+				Hostname:  "station-01-hostname",
+				LastHeard: 2 * time.Minute,
 			},
-			"stale": map[string]interface{}{},
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(stationsData)
@@ -103,18 +104,12 @@ func TestGetStations(t *testing.T) {
 
 	client := NewClient(ts.URL)
 	stations, err := client.GetStations()
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	stationsMap, ok := stations["stations"].(map[string]interface{})
-	if !ok {
-		t.Fatal("Expected stations map in response")
-	}
-
-	if len(stationsMap) != 1 {
-		t.Errorf("Expected 1 station, got %d", len(stationsMap))
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(stations))
+	st := stations[0]
+	assert.Equal(t, "station-01", st.ID)
+	assert.Equal(t, "station-01-hostname", st.Hostname)
+	assert.Equal(t, 2*time.Minute, st.LastHeard)
 }
 
 func TestGetStations_ServerError(t *testing.T) {
@@ -163,8 +158,8 @@ func TestGetLogConfig(t *testing.T) {
 	lc, err := client.GetLogConfig()
 	assert.NoError(t, err)
 	deflc := utils.DefaultLogConfig()
-	assert.NotNil(t, deflc.FilePath, lc["FilePath"])
-	assert.NotNil(t, deflc.Format, "text")
-	assert.NotNil(t, deflc.Level, "info")
-	assert.NotNil(t, deflc.Output, "stdout")
+	assert.NotNil(t, deflc.FilePath, lc.FilePath)
+	assert.NotNil(t, deflc.Format, lc.Format)
+	assert.NotNil(t, deflc.Level, lc.Level)
+	assert.NotNil(t, deflc.Output, lc.Output)
 }

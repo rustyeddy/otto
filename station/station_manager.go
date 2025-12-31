@@ -169,15 +169,24 @@ func (sm *StationManager) Update(msg *messenger.Msg) (st *Station) {
 	return st
 }
 
+// Count returns the number of stations managed by this server
 func (sm *StationManager) Count() int {
 	return len(sm.Stations)
 }
 
+// ServeHTTP will handle all REST requests by clients returning an array
+// of summarized stations.
 func (sm StationManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case "GET":
-		json.NewEncoder(w).Encode(sm)
+
+		var stresp []*StationSummary
+
+		for _, st := range sm.Stations {
+			stresp = append(stresp, getSummary(st))
+		}
+		json.NewEncoder(w).Encode(stresp)
 
 	case "POST", "PUT":
 		http.Error(w, "Not Yet Supported", 401)

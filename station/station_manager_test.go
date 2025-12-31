@@ -275,10 +275,10 @@ func TestStationManagerServeHTTP(t *testing.T) {
 		assert.Equal(t, "application/json", rr.Header().Get("Content-Type"), "Should set JSON content type")
 
 		// Parse response
-		var response StationManager
+		var response []*StationSummary
 		err = json.Unmarshal(rr.Body.Bytes(), &response)
 		assert.NoError(t, err, "Response should be valid JSON")
-		assert.Equal(t, 2, len(response.Stations), "Response should contain 2 stations")
+		assert.Equal(t, 2, len(response), "Response should contain 2 stations")
 	})
 
 	t.Run("POST request", func(t *testing.T) {

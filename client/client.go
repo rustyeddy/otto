@@ -8,6 +8,9 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/rustyeddy/otto/station"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Client represents a connection to a remote Otto server.
@@ -47,7 +50,7 @@ func (c *Client) get(path string, result interface{}) error {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
+		return fmt.Errorf("%d - %s", resp.StatusCode, string(body))
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
@@ -70,11 +73,12 @@ func (c *Client) GetStats() (map[string]interface{}, error) {
 }
 
 // GetStations retrieves a list of all stations from the Otto server.
-// Returns a map containing stations and stale station information.
+// Returns a slice of StationSummary pointers, each containing key station details
+// and any associated staleness or status information as defined by StationSummary.
 //
 // This calls the /api/stations endpoint on the server.
-func (c *Client) GetStations() (map[string]interface{}, error) {
-	var stations map[string]interface{}
+func (c *Client) GetStations() ([]*station.StationSummary, error) {
+	var stations []*station.StationSummary
 	if err := c.get("/api/stations", &stations); err != nil {
 		return nil, err
 	}
@@ -106,10 +110,9 @@ func (c *Client) Shutdown() (map[string]any, error) {
 }
 
 // GetLogConfig retrieves the log configuration
-func (c *Client) GetLogConfig() (map[string]any, error) {
-	var result map[string]any
+func (c *Client) GetLogConfig() (result utils.LogConfig, err error) {
 
-	if err := c.get("/api/log", &result); err != nil {
+	if err = c.get("/api/log", &result); err != nil {
 		return result, err
 	}
 	return result, nil
