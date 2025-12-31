@@ -296,7 +296,6 @@ func (o *OttO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	case "/version":
 		vj := VersionJSON()
-		fmt.Printf("VJ: %s\n", string(vj))
 		w.Write(vj)
 
 	default:
