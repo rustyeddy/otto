@@ -52,8 +52,6 @@ func (c *Client) get(path string, result interface{}) error {
 		return fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
 	}
 
-	fmt.Printf("RESP BODY: %+v\n", resp.Body)
-
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
