@@ -73,7 +73,8 @@ func (c *Client) GetStats() (map[string]interface{}, error) {
 }
 
 // GetStations retrieves a list of all stations from the Otto server.
-// Returns a map containing stations and stale station information.
+// Returns a slice of StationSummary pointers, each containing key station details
+// and any associated staleness or status information as defined by StationSummary.
 //
 // This calls the /api/stations endpoint on the server.
 func (c *Client) GetStations() ([]*station.StationSummary, error) {
