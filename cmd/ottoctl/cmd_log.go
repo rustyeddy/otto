@@ -22,6 +22,9 @@ func runLog(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(cmdOutput, "otto client failed to retrieve log config", err)
 		return err
 	}
-	fmt.Printf("Log config: %+v\n", lc)
+	fmt.Fprintf(cmdOutput, "Output: %s\n", lc.Output)
+	fmt.Fprintf(cmdOutput, "Format: %s\n", lc.Format)
+	fmt.Fprintf(cmdOutput, "FilePath: %s\n", lc.FilePath)
+	fmt.Fprintf(cmdOutput, "Buffer: %s\n", lc.Buffer)
 	return nil
 }
