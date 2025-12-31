@@ -1,6 +1,7 @@
 package ottoctl
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -11,22 +12,20 @@ var stationsCmd = &cobra.Command{
 	Use:   "stations",
 	Short: "Get station information",
 	Long:  `Get a list of stations as well as details of a given station`,
-	Run:   stationsRun,
+	RunE:  stationsRun,
 }
 
-func stationsRun(cmd *cobra.Command, args []string) {
+func stationsRun(cmd *cobra.Command, args []string) error {
 	client := getClient()
 	if client == nil {
-		fmt.Fprintf(cmdOutput, "Failed to get an otto client")
-		return
+		return errors.New("Failed to get an otto client")
 	}
 
 	// Remote mode: fetch stations from server
 	slog.Debug("Fetching stations from remote server", "url", client.BaseURL)
 	stationsData, err := client.GetStations()
 	if err != nil {
-		fmt.Fprintf(cmdOutput, "Error fetching remote stations: %v\n", err)
-		return
+		return errors.New(fmt.Sprintf("Error fetching remote stations: %v\n", err))
 	}
 
 	// // Pretty print the JSON response
@@ -40,4 +39,5 @@ func stationsRun(cmd *cobra.Command, args []string) {
 	for _, st := range stationsData {
 		fmt.Fprintf(cmdOutput, "%s: %s %d\n", st.ID, st.Hostname, st.LastHeard)
 	}
+	return nil
 }

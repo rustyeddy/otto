@@ -18,6 +18,7 @@ type tstInput struct {
 	cmd      *cobra.Command
 	args     []string
 	clifunc  func(cmd *cobra.Command, args []string) error
+	statusCode int
 }
 
 func newTstInput(clifunc func(cmd *cobra.Command, args []string) error, response string) (tst *tstInput) {
