@@ -260,7 +260,6 @@ func (s *Station) Update(msg *messenger.Msg) {
 	s.mu.Lock()
 	s.LastHeard = time.Now()
 	s.mu.Unlock()
-
 }
 
 // Stop the station from advertising

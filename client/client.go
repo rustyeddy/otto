@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/rustyeddy/otto/station"
 )
 
 // Client represents a connection to a remote Otto server.
@@ -50,6 +52,8 @@ func (c *Client) get(path string, result interface{}) error {
 		return fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
 	}
 
+	fmt.Printf("RESP BODY: %+v\n", resp.Body)
+
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -73,8 +77,8 @@ func (c *Client) GetStats() (map[string]interface{}, error) {
 // Returns a map containing stations and stale station information.
 //
 // This calls the /api/stations endpoint on the server.
-func (c *Client) GetStations() (map[string]interface{}, error) {
-	var stations map[string]interface{}
+func (c *Client) GetStations() ([]*station.StationSummary, error) {
+	var stations []*station.StationSummary
 	if err := c.get("/api/stations", &stations); err != nil {
 		return nil, err
 	}

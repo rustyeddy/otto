@@ -1,7 +1,6 @@
 package ottoctl
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -30,11 +29,15 @@ func stationsRun(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// Pretty print the JSON response
-	jsonBytes, err := json.MarshalIndent(stationsData, "", "  ")
-	if err != nil {
-		fmt.Fprintf(cmdOutput, "Stations: %+v\n", stationsData)
-		return
+	// // Pretty print the JSON response
+	// jsonBytes, err := json.MarshalIndent(stationsData, "", "  ")
+	// if err != nil {
+	// 	fmt.Fprintf(cmdOutput, "Stations: %+v\n", stationsData)
+	// 	return
+	// }
+	fmt.Fprintf(cmdOutput, "ID Hostname		LastHeard\n")
+	fmt.Fprintf(cmdOutput, "-------------------------\n")
+	for _, st := range stationsData {
+		fmt.Fprintf(cmdOutput, "%s: %s %d\n", st.ID, st.Hostname, st.LastHeard)
 	}
-	fmt.Fprintf(cmdOutput, "%s\n", string(jsonBytes))
 }

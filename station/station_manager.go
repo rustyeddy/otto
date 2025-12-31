@@ -173,11 +173,32 @@ func (sm *StationManager) Count() int {
 	return len(sm.Stations)
 }
 
+type StationSummary struct {
+	ID        string
+	Hostname  string
+	LastHeard time.Duration
+}
+
+func getSummary(st *Station) *StationSummary {
+	stsum := &StationSummary{
+		ID:       st.ID,
+		Hostname: st.Hostname,
+		//LastHeard: time.Since(st.LastHeard),
+	}
+	return stsum
+}
+
 func (sm StationManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case "GET":
-		json.NewEncoder(w).Encode(sm)
+
+		var stresp []*StationSummary
+
+		for _, st := range sm.Stations {
+			stresp = append(stresp, getSummary(st))
+		}
+		json.NewEncoder(w).Encode(stresp)
 
 	case "POST", "PUT":
 		http.Error(w, "Not Yet Supported", 401)
