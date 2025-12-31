@@ -75,6 +75,23 @@ func NewStation(id string) (*Station, error) {
 	return st, nil
 }
 
+// StationSummary is a summarization of a give station used by
+// the REST server
+type StationSummary struct {
+	ID        string
+	Hostname  string
+	LastHeard time.Duration
+}
+
+func getSummary(st *Station) *StationSummary {
+	stsum := &StationSummary{
+		ID:        st.ID,
+		Hostname:  st.Hostname,
+		LastHeard: time.Since(st.LastHeard),
+	}
+	return stsum
+}
+
 // Initialize the local station
 func (st *Station) Init() {
 	// get IP addresses

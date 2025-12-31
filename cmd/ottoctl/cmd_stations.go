@@ -30,12 +30,6 @@ func stationsRun(cmd *cobra.Command, args []string) error {
 		return errors.New(fmt.Sprintf("Error fetching remote stations: %v\n", err))
 	}
 
-	// // Pretty print the JSON response
-	// jsonBytes, err := json.MarshalIndent(stationsData, "", "  ")
-	// if err != nil {
-	// 	fmt.Fprintf(cmdOutput, "Stations: %+v\n", stationsData)
-	// 	return
-	// }
 	fmt.Fprintf(cmdOutput, "ID Hostname		LastHeard\n")
 	fmt.Fprintf(cmdOutput, "-------------------------\n")
 	for _, st := range stationsData {

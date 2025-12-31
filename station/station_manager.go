@@ -169,25 +169,13 @@ func (sm *StationManager) Update(msg *messenger.Msg) (st *Station) {
 	return st
 }
 
+// Count returns the number of stations managed by this server
 func (sm *StationManager) Count() int {
 	return len(sm.Stations)
 }
 
-type StationSummary struct {
-	ID        string
-	Hostname  string
-	LastHeard time.Duration
-}
-
-func getSummary(st *Station) *StationSummary {
-	stsum := &StationSummary{
-		ID:        st.ID,
-		Hostname:  st.Hostname,
-		LastHeard: time.Since(st.LastHeard),
-	}
-	return stsum
-}
-
+// ServeHTTP will handle all REST requests by clients returning an array
+// of summarized stations.
 func (sm StationManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
