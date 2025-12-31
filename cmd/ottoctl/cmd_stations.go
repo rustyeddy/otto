@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -38,7 +39,8 @@ func stationsRun(cmd *cobra.Command, args []string) error {
 	fmt.Fprintf(cmdOutput, "ID Hostname		LastHeard\n")
 	fmt.Fprintf(cmdOutput, "-------------------------\n")
 	for _, st := range stationsData {
-		fmt.Fprintf(cmdOutput, "%s: %s %d\n", st.ID, st.Hostname, st.LastHeard)
+		rounded := st.LastHeard.Round(time.Second)
+		fmt.Fprintf(cmdOutput, "%s: %s %s\n", st.ID, st.Hostname, rounded)
 	}
 	return nil
 }
