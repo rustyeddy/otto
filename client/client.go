@@ -113,7 +113,6 @@ func (c *Client) GetLogConfig() (map[string]any, error) {
 		return result, err
 	}
 	return result, nil
-
 }
 
 // Ping checks if the Otto server is reachable and responding.

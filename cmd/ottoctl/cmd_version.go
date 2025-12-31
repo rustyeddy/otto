@@ -23,6 +23,7 @@ func runVersion(cmd *cobra.Command, args []string) error {
 	vmap, err := cli.GetVersion()
 	if err != nil {
 		fmt.Fprintln(cmdOutput, "Failed to get otto client", err)
+		return err
 	}
 	version, ex := vmap["version"]
 	if !ex {

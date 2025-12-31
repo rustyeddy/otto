@@ -66,6 +66,7 @@ func TestGetClient(t *testing.T) {
 	}()
 
 	t.Run("returns nil when no server URL is provided", func(t *testing.T) {
+		cli = nil
 		serverURL = ""
 		os.Unsetenv("OTTO_SERVER")
 		client := getClient()

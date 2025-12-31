@@ -60,6 +60,15 @@ type LogConfig struct {
 	Buffer   *bytes.Buffer // Buffer to write logs to (used when Output is string)
 }
 
+func (lc *LogConfig) JSON() []byte {
+	jbytes, err := json.Marshal(lc)
+	if err != nil {
+		slog.Error("failed marshaling log config into json", "error", err)
+		return nil
+	}
+	return jbytes
+}
+
 func DefaultLogConfig() *LogConfig {
 	return &LogConfig{
 		Level:    "info",

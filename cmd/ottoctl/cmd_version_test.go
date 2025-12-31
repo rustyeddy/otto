@@ -1,35 +1,18 @@
 package ottoctl
 
 import (
-	"bytes"
 	"os"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
-
-type tstInput struct {
-	response string
-	buffer   *bytes.Buffer
-	errbuf   *bytes.Buffer
-	cmd      *cobra.Command
-	args     []string
-}
 
 func TestVersion(t *testing.T) {
 	tstfile := "testdata/version.json"
 	response, err := os.ReadFile(tstfile)
 	assert.NoError(t, err, "failed to open")
 
-	tst := &tstInput{
-		response: string(response),
-		buffer:   bytes.NewBufferString(""),
-		errbuf:   bytes.NewBufferString(""),
-		args:     []string{},
-		cmd:      &cobra.Command{},
-	}
-
+	tst := newTstInput(runVersion, string(response))
 	err = httpQuery(t, tst)
 	assert.NoError(t, err)
 

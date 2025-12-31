@@ -8,7 +8,29 @@ import (
 	"testing"
 
 	"github.com/rustyeddy/otto/client"
+	"github.com/spf13/cobra"
 )
+
+type tstInput struct {
+	response string
+	buffer   *bytes.Buffer
+	errbuf   *bytes.Buffer
+	cmd      *cobra.Command
+	args     []string
+	clifunc  func(cmd *cobra.Command, args []string) error
+}
+
+func newTstInput(clifunc func(cmd *cobra.Command, args []string) error, response string) (tst *tstInput) {
+	tst = &tstInput{
+		response: response,
+		buffer:   bytes.NewBufferString(""),
+		errbuf:   bytes.NewBufferString(""),
+		args:     []string{},
+		cmd:      &cobra.Command{},
+		clifunc:  clifunc,
+	}
+	return tst
+}
 
 func httpQuery(t *testing.T, tst *tstInput) (err error) {
 	t.Helper()
@@ -29,6 +51,6 @@ func httpQuery(t *testing.T, tst *tstInput) (err error) {
 	cmdOutput = tst.buffer
 	errOutput = tst.errbuf
 
-	runVersion(tst.cmd, tst.args)
+	tst.clifunc(tst.cmd, tst.args)
 	return err
 }
