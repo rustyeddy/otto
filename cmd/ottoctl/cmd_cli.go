@@ -98,6 +98,10 @@ var RunLine = func(line string) bool {
 	}
 
 	cmd.ParseFlags(args)
-	cmd.Run(cmd, args)
+	if cmd.Run != nil {
+		cmd.Run(cmd, args)
+	} else if cmd.RunE != nil {
+		cmd.RunE(cmd, args)
+	}
 	return true
 }

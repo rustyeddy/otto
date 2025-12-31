@@ -5,6 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/rustyeddy/otto"
+	"github.com/rustyeddy/otto/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewClient(t *testing.T) {
@@ -126,4 +130,41 @@ func TestGetStations_ServerError(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
+}
+
+func TestGetVersion(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, r.URL.String(), "/version")
+		version := map[string]any{
+			"version": otto.Version,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(version)
+	}))
+	defer ts.Close()
+
+	client := NewClient(ts.URL)
+	vmap, err := client.GetVersion()
+	assert.NoError(t, err)
+	assert.Equal(t, vmap["version"], otto.Version)
+}
+
+func TestGetLogConfig(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, r.URL.String(), "/api/log")
+
+		lc := utils.DefaultLogConfig()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(lc)
+	}))
+	defer ts.Close()
+
+	client := NewClient(ts.URL)
+	lc, err := client.GetLogConfig()
+	assert.NoError(t, err)
+	deflc := utils.DefaultLogConfig()
+	assert.NotNil(t, deflc.FilePath, lc["FilePath"])
+	assert.NotNil(t, deflc.Format, "text")
+	assert.NotNil(t, deflc.Level, "info")
+	assert.NotNil(t, deflc.Output, "stdout")
 }

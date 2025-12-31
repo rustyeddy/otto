@@ -21,7 +21,7 @@ func main() {
 		Output: utils.LogOutputStdout,
 		Format: utils.LogFormatText,
 	}
-	utils.InitLoggerWithConfig(config1)
+	utils.InitLogger(config1)
 	slog.Info("Application started", "version", "1.0.0", "mode", "demo")
 	fmt.Println()
 
@@ -32,7 +32,7 @@ func main() {
 		Output: utils.LogOutputStderr,
 		Format: utils.LogFormatJSON,
 	}
-	utils.InitLoggerWithConfig(config2)
+	utils.InitLogger(config2)
 	slog.Warn("System resource usage high", "cpu_percent", 85, "memory_mb", 2048)
 	fmt.Println()
 
@@ -43,7 +43,7 @@ func main() {
 		Output: utils.LogOutputString,
 		Format: utils.LogFormatText,
 	}
-	buffer, _ := utils.InitLoggerWithConfig(config3)
+	buffer, _ := utils.InitLogger(config3)
 	slog.Debug("Debug message", "component", "auth", "user_id", 12345)
 	slog.Info("Info message captured in buffer")
 	fmt.Printf("   Buffer contents:\n   %s\n", buffer.String())
@@ -55,7 +55,7 @@ func main() {
 		Output: utils.LogOutputString,
 		Format: utils.LogFormatJSON,
 	}
-	jsonBuffer, _ := utils.InitLoggerWithConfig(config4)
+	jsonBuffer, _ := utils.InitLogger(config4)
 	slog.Info("JSON formatted log", "event", "user_login", "timestamp", 1234567890)
 	fmt.Printf("   JSON output:\n   %s\n", jsonBuffer.String())
 
@@ -67,7 +67,7 @@ func main() {
 		Format:   utils.LogFormatText,
 		FilePath: "/tmp/otto-demo.log",
 	}
-	_, err := utils.InitLoggerWithConfig(config5)
+	_, err := utils.InitLogger(config5)
 	if err != nil {
 		fmt.Printf("   Error: %v\n", err)
 	} else {
@@ -89,16 +89,9 @@ func main() {
 		Format: utils.LogFormatJSON,
 		Buffer: customBuffer,
 	}
-	utils.InitLoggerWithConfig(config6)
+	utils.InitLogger(config6)
 	slog.Info("Custom buffer log", "sensor", "temperature", "value", 23.5)
 	fmt.Printf("   Custom buffer: %s\n", customBuffer.String())
-
-	// Demo 7: Backward compatibility with old API
-	fmt.Println("7. Backward compatibility (legacy API):")
-	utils.InitLogger("warn", "/tmp/otto-legacy.log")
-	slog.Warn("Using legacy InitLogger API")
-	legacyContent, _ := os.ReadFile("/tmp/otto-legacy.log")
-	fmt.Printf("   Legacy log file: %s\n", string(legacyContent))
 
 	fmt.Println()
 	fmt.Println("\n=== Demo Complete ===")

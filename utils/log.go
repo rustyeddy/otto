@@ -2,9 +2,11 @@ package utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"os"
 )
 
@@ -58,22 +60,26 @@ type LogConfig struct {
 	Buffer   *bytes.Buffer // Buffer to write logs to (used when Output is string)
 }
 
-// InitLogger initializes the logger with the old signature for backward compatibility
-func InitLogger(lstr string, lf string) {
-	if lf == "" {
-		lf = logfile
-	}
-	level := SetLogLevel(lstr)
-	f, err := os.OpenFile(lf, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func (lc *LogConfig) JSON() []byte {
+	jbytes, err := json.Marshal(lc)
 	if err != nil {
-		slog.Error("error opening log ", "err", err)
+		slog.Error("failed marshaling log config into json", "error", err)
+		return nil
 	}
-	l := slog.New(slog.NewTextHandler(f, &slog.HandlerOptions{Level: level}))
-	slog.SetDefault(l)
+	return jbytes
+}
+
+func DefaultLogConfig() *LogConfig {
+	return &LogConfig{
+		Level:    "info",
+		Output:   LogOutputStdout,
+		Format:   LogFormatText,
+		FilePath: "/var/log/otto.log",
+	}
 }
 
 // InitLoggerWithConfig initializes the logger with a LogConfig
-func InitLoggerWithConfig(config LogConfig) (*bytes.Buffer, error) {
+func InitLogger(config LogConfig) (*bytes.Buffer, error) {
 	level := SetLogLevel(config.Level)
 
 	var writer io.Writer
@@ -146,4 +152,17 @@ func SetLogLevel(loglevel string) slog.Level {
 	}
 	slog.SetLogLoggerLevel(level)
 	return level
+}
+
+func (lc *LogConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(lc); err != nil {
+			slog.Error("Failed to encode stats", "error", err)
+			http.Error(w, "Failed to encode stats", http.StatusInternalServerError)
+			return
+		}
+
+	}
 }

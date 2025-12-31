@@ -32,7 +32,6 @@ func GetStats() *Stats {
 // It always calls GetStats() to get fresh runtime statistics.
 func (h *Stats) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stats := GetStats()
-
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
 		slog.Error("Failed to encode stats", "error", err)

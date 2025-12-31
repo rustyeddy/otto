@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	versionCmd = &cobra.Command{
+	shutdownCmd = &cobra.Command{
 		Use:   "shutdown",
 		Short: "Shutdown the otto server",
 		Long:  `Shutdown the otto server nicely allowing it to cleanup after itself`,
