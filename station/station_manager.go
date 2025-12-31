@@ -181,9 +181,9 @@ type StationSummary struct {
 
 func getSummary(st *Station) *StationSummary {
 	stsum := &StationSummary{
-		ID:       st.ID,
-		Hostname: st.Hostname,
-		//LastHeard: time.Since(st.LastHeard),
+		ID:        st.ID,
+		Hostname:  st.Hostname,
+		LastHeard: time.Since(st.LastHeard),
 	}
 	return stsum
 }
