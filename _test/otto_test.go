@@ -2,6 +2,7 @@ package system
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"net/netip"
@@ -14,12 +15,14 @@ import (
 	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/station"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type Config struct {
 	URL          string
 	Broker       string
 	StationCount int
+	AutoStart    bool
 }
 
 var (
@@ -35,6 +38,7 @@ func init() {
 	os.Setenv("MQTT_USER", "otto")
 	os.Setenv("MQTT_PASS", "otto123")
 
+	flag.BoolVar(&config.AutoStart, "autostart", false, "Have the test start auto otherwise it looks for an existing otto")
 	flag.StringVar(&config.URL, "url", "http://localhost:8011", "URL for OttO")
 	flag.StringVar(&config.Broker, "broker", "localhost", "Host name for MQTT broker")
 	flag.IntVar(&config.StationCount, "station-count", 10, "Station Count")
@@ -57,26 +61,27 @@ func TestRunTests(t *testing.T) {
 }
 
 func (ts *systemTest) startOttO(t *testing.T) {
-	// path, err := exec.LookPath("../otto")
-	// require.NoError(t, err, "expect to find the executable otto but did not: %s", path)
+	if config.AutoStart {
+		path, err := exec.LookPath("../otto")
+		require.NoError(t, err, "expect to find the executable otto but did not: %s", path)
 
-	// ctx, _ := context.WithCancel(context.Background())
-	// ocmd = exec.CommandContext(ctx, "../otto", "serve")
+		ctx, _ := context.WithCancel(context.Background())
+		ocmd = exec.CommandContext(ctx, "../otto", "serve")
 
-	// var stdout, stderr bytes.Buffer
-	// ocmd.Stdout = &stdout
-	// ocmd.Stderr = &stderr
+		var stdout, stderr bytes.Buffer
+		ocmd.Stdout = &stdout
+		ocmd.Stderr = &stderr
 
-	// err = ocmd.Start()
-	// require.NoError(t, err, "expected to run otto but got an error")
+		err = ocmd.Start()
+		require.NoError(t, err, "expected to run otto but got an error")
 
-	// time.Sleep(500 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
+	}
 
 	// verify otto is running
 	cli := client.NewClient(config.URL)
 	err := cli.Ping()
 	assert.NoError(t, err, "expected no error but got one")
-
 }
 
 func (ts *systemTest) stopOttO(t *testing.T) {

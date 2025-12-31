@@ -10,6 +10,7 @@ import (
 	"os"
 
 	gomqtt "github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type BrokerType int
@@ -107,14 +108,6 @@ func GetMessenger() *Messenger {
 
 func (m *Messenger) Connect() error {
 	err := m.Conn.Connect(m.Broker, m.Username, m.Password)
-	if err == nil {
-		for topic, handler := range m.subscriptions {
-			err = m.Conn.Sub(topic, handler)
-			if err != nil {
-				slog.Error("MQTT failed to subscribe", "topic", topic, "error", err)
-			}
-		}
-	}
 	return err
 }
 
@@ -129,12 +122,30 @@ func (m *Messenger) Close() {
 	}
 }
 
-func (m *Messenger) Sub(topic string, handler MsgHandler) error {
+func (m *Messenger) SubscribeAll(c mqtt.Client) {
+	slog.Info("MQTT client connection successful")
+	for topic, handler := range m.subscriptions {
+		err := m.Conn.Sub(topic, handler)
+		if err != nil {
+			slog.Error("MQTT failed to subscribe", "topic", topic, "error", err)
+		}
+		slog.Info("MQTT subscribed to ", "topic", topic)
+	}
+}
+
+// Sub will add the topic and handler to the client subscription list. If
+// the client is connected the subscriptions will be sent to the client.
+// If the client is not connected the subscriptions will be sent once the
+// client has made a connection to the broker.
+func (m *Messenger) Sub(topic string, handler MsgHandler) (err error) {
 	if m.subscriptions == nil {
 		m.subscriptions = make(map[string]MsgHandler)
 	}
 	m.subscriptions[topic] = handler
-	return m.Conn.Sub(topic, handler)
+	if m.Conn != nil {
+		err = m.Conn.Sub(topic, handler)
+	}
+	return nil
 }
 
 func (m *Messenger) Unsub(topic string) {
@@ -200,6 +211,8 @@ type connMQTT struct {
 	gomqtt.Client // Embedded Paho MQTT client
 }
 
+// Connect initiates a connection to the connection broker using a
+// username and password if not empty
 func (m *connMQTT) Connect(b string, u string, p string) error {
 	if m.Debug {
 		gomqtt.DEBUG = log.Default()
@@ -213,6 +226,7 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 	opts.SetUsername(u)
 	opts.SetPassword(p)
 	opts.SetCleanSession(true)
+	opts.OnConnect = msgr.SubscribeAll
 
 	// If we are testing m.Client will point to the mock client otherwise
 	// in real life a new real client will be created
@@ -225,6 +239,7 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 	if token.Error() != nil {
 		return fmt.Errorf("Failed to connect to MQTT broker %s", token.Error())
 	}
+	slog.Info("client has connected to ", "broker", b)
 	return nil
 }
 
