@@ -1,0 +1,14 @@
+[
+    {
+	"ID": "station-01",
+	"Hostname": "station-01-hostname",
+	"LastHeard": 1
+    },
+    {
+	"ID": "station-02",
+	"Hostname": "station-02-hostname",
+	"LastHeard": 2
+    }
+    
+]
+

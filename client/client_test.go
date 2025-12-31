@@ -158,8 +158,8 @@ func TestGetLogConfig(t *testing.T) {
 	lc, err := client.GetLogConfig()
 	assert.NoError(t, err)
 	deflc := utils.DefaultLogConfig()
-	assert.NotNil(t, deflc.FilePath, lc["FilePath"])
-	assert.NotNil(t, deflc.Format, "text")
-	assert.NotNil(t, deflc.Level, "info")
-	assert.NotNil(t, deflc.Output, "stdout")
+	assert.NotNil(t, deflc.FilePath, lc.FilePath)
+	assert.NotNil(t, deflc.Format, lc.Format)
+	assert.NotNil(t, deflc.Level, lc.Level)
+	assert.NotNil(t, deflc.Output, lc.Output)
 }

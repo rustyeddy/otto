@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/rustyeddy/otto/station"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Client represents a connection to a remote Otto server.
@@ -49,7 +50,7 @@ func (c *Client) get(path string, result interface{}) error {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("server returned error: %d - %s", resp.StatusCode, string(body))
+		return fmt.Errorf("%d - %s", resp.StatusCode, string(body))
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
@@ -108,10 +109,9 @@ func (c *Client) Shutdown() (map[string]any, error) {
 }
 
 // GetLogConfig retrieves the log configuration
-func (c *Client) GetLogConfig() (map[string]any, error) {
-	var result map[string]any
+func (c *Client) GetLogConfig() (result utils.LogConfig, err error) {
 
-	if err := c.get("/api/log", &result); err != nil {
+	if err = c.get("/api/log", &result); err != nil {
 		return result, err
 	}
 	return result, nil

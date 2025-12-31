@@ -25,6 +25,7 @@ func stationsRun(cmd *cobra.Command, args []string) error {
 	slog.Debug("Fetching stations from remote server", "url", client.BaseURL)
 	stationsData, err := client.GetStations()
 	if err != nil {
+		fmt.Fprintln(errOutput, err)
 		return errors.New(fmt.Sprintf("Error fetching remote stations: %v\n", err))
 	}
 

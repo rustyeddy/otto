@@ -12,12 +12,12 @@ import (
 )
 
 type tstInput struct {
-	response string
-	buffer   *bytes.Buffer
-	errbuf   *bytes.Buffer
-	cmd      *cobra.Command
-	args     []string
-	clifunc  func(cmd *cobra.Command, args []string) error
+	response   string
+	buffer     *bytes.Buffer
+	errbuf     *bytes.Buffer
+	cmd        *cobra.Command
+	args       []string
+	clifunc    func(cmd *cobra.Command, args []string) error
 	statusCode int
 }
 
@@ -39,6 +39,10 @@ func httpQuery(t *testing.T, tst *tstInput) (err error) {
 	// create the test server that our cli command is going to
 	// unwittingly connect to
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if tst.statusCode >= 300 {
+			http.Error(w, http.StatusText(tst.statusCode), tst.statusCode)
+			return
+		}
 		fmt.Fprint(w, tst.response)
 	}))
 	defer ts.Close()
@@ -52,6 +56,6 @@ func httpQuery(t *testing.T, tst *tstInput) (err error) {
 	cmdOutput = tst.buffer
 	errOutput = tst.errbuf
 
-	tst.clifunc(tst.cmd, tst.args)
+	err = tst.clifunc(tst.cmd, tst.args)
 	return err
 }

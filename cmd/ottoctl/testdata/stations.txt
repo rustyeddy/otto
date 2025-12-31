@@ -1,3 +1,0 @@
-ID Hostname		LastHeard
--------------------------
-o++o: torri 0

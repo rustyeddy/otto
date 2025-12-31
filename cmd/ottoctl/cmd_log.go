@@ -17,13 +17,11 @@ var (
 
 func runLog(cmd *cobra.Command, args []string) error {
 	cli := getClient()
-	lcmap, err := cli.GetLogConfig()
+	lc, err := cli.GetLogConfig()
 	if err != nil {
 		fmt.Fprintln(cmdOutput, "otto client failed to retrieve log config", err)
 		return err
 	}
-	for k, v := range lcmap {
-		fmt.Fprintf(cmdOutput, "%s: %v\n", k, v)
-	}
+	fmt.Printf("Log config: %+v\n", lc)
 	return nil
 }
