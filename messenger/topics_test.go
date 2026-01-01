@@ -46,6 +46,42 @@ func TestData(t *testing.T) {
 	}
 }
 
+func TestValidateTopic(t *testing.T) {
+	tt := []struct {
+		topic  string
+		expect bool
+	}{
+		{"too/short", false},
+		{"x/d/foo/bar", false},
+		{"o/x/foo/bar", false},
+		{"o/d//bar", false},
+		{"o/d/station//", false},
+		{"o/c/station/control", true},
+		{"o/d/station/sensor", true},
+	}
+
+	for _, tst := range tt {
+		ok := ValidateTopic(tst.topic)
+		assert.Equal(t, tst.expect, ok)
+	}
+}
+
+func TestControlTopic(t *testing.T) {
+	oldname := utils.StationName()
+	utils.SetStationName("teststation")
+	ct := ControlTopic("super-bad")
+	assert.Equal(t, ct, "o/c/teststation/super-bad")
+	utils.SetStationName(oldname)
+}
+
+func TestDataTopic(t *testing.T) {
+	oldname := utils.StationName()
+	utils.SetStationName("teststation")
+	ct := DataTopic("super-bad")
+	assert.Equal(t, ct, "o/c/teststation/super-bad")
+	utils.SetStationName(oldname)
+}
+
 func TestServeHTTP(t *testing.T) {
 	topics := GetTopics()
 

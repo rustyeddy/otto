@@ -123,6 +123,10 @@ func (t *Topics) Control(topic string) string {
 	return top
 }
 
+func ControlTopic(topic string) string {
+	return topics.Control(topic)
+}
+
 // Data generates a data topic for the current station.
 // Data topics are used to publish sensor readings and telemetry.
 // The format is: "ss/d/{station}/{topic}"
@@ -146,6 +150,10 @@ func (t *Topics) Data(topic string) string {
 	return top
 }
 
+func DataTopic(topic string) string {
+	return topics.Control(topic)
+}
+
 // ServeHTTP implements http.Handler to provide a REST API endpoint for
 // inspecting topic usage. Returns JSON containing the topic format and
 // a map of all topics used by this station with their usage counts.
@@ -163,6 +171,8 @@ func (t *Topics) Data(topic string) string {
 // This is useful for monitoring which topics are being used and how frequently.
 func (t *Topics) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	err := json.NewEncoder(w).Encode(t)
 	if err != nil {
 		slog.Error("Error wrote data", "error", err)
