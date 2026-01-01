@@ -144,6 +144,8 @@ func (st *Station) StartTicker(duration time.Duration) error {
 		}
 	}
 
+	slog.Info("starting station ticker", "station", st.ID, "duration", st.Duration)
+
 	// Add context support for clean cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	st.cancel = cancel
@@ -169,6 +171,7 @@ func (st *Station) StartTicker(duration time.Duration) error {
 }
 
 func (st *Station) SayHello() {
+	slog.Info("sending hello message", "station", st.ID)
 
 	// XXX: Record metrics - this needs to only be run if
 	// there is a broker listening. That is moved under the
@@ -195,7 +198,7 @@ func (st *Station) SayHello() {
 
 	pbytes, err := json.Marshal(payload)
 	if err != nil {
-		slog.Error("station.SayHello failed to map payload into json", "error", err)
+		slog.Error("hello failed to map payload into json", "station", st.ID, "error", err)
 		return
 	}
 

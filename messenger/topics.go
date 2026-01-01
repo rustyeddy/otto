@@ -31,7 +31,7 @@ type Topics struct {
 	Format string         // Format string for topic generation (e.g., "ss/%s/%s/%s")
 	Map    map[string]int // Map of topic to usage count
 
-	mu sync.RWMutex `json:"-"`
+	mu *sync.RWMutex `json:"-"`
 }
 
 var (
@@ -39,9 +39,11 @@ var (
 )
 
 func init() {
+	var mu sync.RWMutex
 	topics = &Topics{
 		Format: "o/%s/%s/%s",
 		Map:    make(map[string]int),
+		mu:     &mu,
 	}
 }
 
@@ -159,7 +161,7 @@ func (t *Topics) Data(topic string) string {
 //	}
 //
 // This is useful for monitoring which topics are being used and how frequently.
-func (t Topics) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (t *Topics) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(t)
 	if err != nil {

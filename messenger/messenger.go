@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	gomqtt "github.com/eclipse/paho.mqtt.golang"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -129,7 +130,7 @@ func (m *Messenger) SubscribeAll(c mqtt.Client) {
 		if err != nil {
 			slog.Error("MQTT failed to subscribe", "topic", topic, "error", err)
 		}
-		slog.Info("MQTT subscribed to ", "topic", topic)
+		slog.Info("MQTT subscribed to", "topic", topic)
 	}
 }
 
@@ -214,6 +215,7 @@ type connMQTT struct {
 // Connect initiates a connection to the connection broker using a
 // username and password if not empty
 func (m *connMQTT) Connect(b string, u string, p string) error {
+	m.Debug = false
 	if m.Debug {
 		gomqtt.DEBUG = log.Default()
 		gomqtt.ERROR = log.Default()
@@ -221,11 +223,14 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 	url := "tcp://" + b + ":1883"
 	opts := gomqtt.NewClientOptions()
 	opts.AddBroker(url)
-	opts.SetClientID("o++o")
+	opts.SetClientID("o++o" + time.Now().Format(time.RFC3339))
 	opts.SetCleanSession(true)
 	opts.SetUsername(u)
 	opts.SetPassword(p)
 	opts.SetCleanSession(true)
+	opts.SetConnectionLostHandler(func(m mqtt.Client, err error) {
+		slog.Info("MQTT disconnected from serrver", "error", err)
+	})
 	opts.OnConnect = msgr.SubscribeAll
 
 	// If we are testing m.Client will point to the mock client otherwise
@@ -239,7 +244,7 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 	if token.Error() != nil {
 		return fmt.Errorf("Failed to connect to MQTT broker %s", token.Error())
 	}
-	slog.Info("client has connected to ", "broker", b)
+	slog.Info("MQTT client has connected to", "broker", b)
 	return nil
 }
 
@@ -261,7 +266,7 @@ func (m *connMQTT) Sub(topic string, f MsgHandler) error {
 
 	var err error
 	token := m.Client.Subscribe(topic, byte(0), func(c gomqtt.Client, m gomqtt.Message) {
-		slog.Debug("MQTT incoming: ", "topic", m.Topic(), "payload", string(m.Payload()))
+		slog.Debug("MQTT incoming:", "topic", m.Topic(), "payload", string(m.Payload()))
 		msg := NewMsg(m.Topic(), m.Payload(), "mqtt-sub")
 		f(msg)
 	})

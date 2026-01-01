@@ -177,15 +177,17 @@ func (o *OttO) Done() chan any {
 // OttO is a convinience function starting the MQTT and HTTP servers,
 // the station manager and other stuff.
 func (o *OttO) Init() {
+	o.LogConfig = utils.DefaultLogConfig()
+	utils.InitLogger(*o.LogConfig)
+
+	slog.Info("OttO is starting")
+
 	if o.done != nil {
 		// server has already been started
-		fmt.Println("Server has already been started")
+		slog.Error("OttO has already been started")
 		return
 	}
 	o.done = make(chan any)
-
-	o.LogConfig = utils.DefaultLogConfig()
-	utils.InitLogger(*o.LogConfig)
 
 	if o.Messenger == nil {
 		broker := o.MQTTBroker
@@ -219,6 +221,7 @@ func (o *OttO) Init() {
 		}
 		// Initialzie the local station
 		o.Station.Init()
+		o.Station.StartTicker(o.Station.Duration)
 	}
 
 	o.Server.Register("/version", o)

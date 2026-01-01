@@ -57,6 +57,7 @@ func NewStationManager() (sm *StationManager) {
 }
 
 func (sm *StationManager) HandleMsg(msg *messenger.Msg) error {
+	slog.Info("station manager recieved message from", "topic", msg.Topic)
 	sm.Update(msg)
 	return nil
 }
@@ -142,7 +143,6 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 }
 
 func (sm *StationManager) Update(msg *messenger.Msg) (st *Station) {
-
 	var err error
 
 	if !msg.Valid {
