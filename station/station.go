@@ -267,6 +267,7 @@ func (st *Station) GetNetwork() error {
 // Update() will append a new data value to the series
 // of data points.
 func (s *Station) Update(msg *messenger.Msg) {
+	slog.Info("updating station", "id", s.ID)
 	// Record metrics
 	if s.Metrics != nil && msg != nil {
 		var size uint64

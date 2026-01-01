@@ -136,6 +136,8 @@ func (sm *StationManager) Add(st string) (station *Station, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	slog.Info("station manager adding new station", "ID", st)
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	sm.Stations[st] = station
@@ -152,14 +154,14 @@ func (sm *StationManager) Update(msg *messenger.Msg) (st *Station) {
 
 	stid := msg.Station()
 	if stid == "" {
-		fmt.Printf("Msg path does not include staionId: %q\n", msg.Path)
+		slog.Error("Msg path does not include staionId", "path", msg.Path)
 		return nil
 	}
 
 	st = sm.Get(stid)
 	if st == nil {
 		if st, err = sm.Add(stid); err != nil {
-			fmt.Println("Station Manager failed to create new station: ", stid, err)
+			slog.Error("Station Manager failed to create new station", "stationid", stid)
 			return nil
 		}
 	}
