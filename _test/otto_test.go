@@ -136,6 +136,6 @@ func (ts *systemTest) testStations(t *testing.T) {
 	stations, err := cli.GetStations()
 	assert.NoError(t, err)
 
-	assert.Equal(t, 2, len(stations))
+	assert.Equal(t, 10, len(stations))
 
 }
