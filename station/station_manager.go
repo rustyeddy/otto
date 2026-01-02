@@ -57,7 +57,7 @@ func NewStationManager() (sm *StationManager) {
 }
 
 func (sm *StationManager) HandleMsg(msg *messenger.Msg) error {
-	slog.Info("station manager recieved message from", "topic", msg.Topic)
+	slog.Info("station manager recieved message on", "topic", msg.Topic)
 	sm.Update(msg)
 	return nil
 }
@@ -121,6 +121,12 @@ func (sm *StationManager) Start() {
 	}()
 }
 
+func (sm *StationManager) Stop() {
+	for _, st := range sm.Stations {
+		st.cancel()
+	}
+}
+
 func (sm *StationManager) Get(stid string) *Station {
 	sm.mu.Lock()
 	st, _ := sm.Stations[stid]
@@ -182,13 +188,11 @@ func (sm StationManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case "GET":
-
-		var stresp []*StationSummary
-
+		var stations []*Station
 		for _, st := range sm.Stations {
-			stresp = append(stresp, getSummary(st))
+			stations = append(stations, st)
 		}
-		json.NewEncoder(w).Encode(stresp)
+		json.NewEncoder(w).Encode(stations)
 
 	case "POST", "PUT":
 		http.Error(w, "Not Yet Supported", 401)

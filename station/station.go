@@ -26,7 +26,7 @@ type Station struct {
 	Local      bool          `json:"local"`
 	Ifaces     []*Iface      `json:"iface"`
 
-	Devices *DeviceManager
+	Devices *DeviceManager  `json:"device-manager"`
 	Metrics *StationMetrics `json:"metrics"`
 
 	errq   chan error
@@ -73,23 +73,6 @@ func NewStation(id string) (*Station, error) {
 
 	go st.errorHandler()
 	return st, nil
-}
-
-// StationSummary is a summarization of a give station used by
-// the REST server
-type StationSummary struct {
-	ID        string
-	Hostname  string
-	LastHeard time.Duration
-}
-
-func getSummary(st *Station) *StationSummary {
-	stsum := &StationSummary{
-		ID:        st.ID,
-		Hostname:  st.Hostname,
-		LastHeard: time.Since(st.LastHeard),
-	}
-	return stsum
 }
 
 // Initialize the local station
@@ -190,20 +173,14 @@ func (st *Station) SayHello() {
 		return
 	}
 
-	payload := map[string]any{
-		"type": "hello",
-		"id":   st.ID,
-		"ts":   time.Now().UTC(),
-	}
-
-	pbytes, err := json.Marshal(payload)
+	pbytes, err := json.Marshal(st)
 	if err != nil {
 		slog.Error("hello failed to map payload into json", "station", st.ID, "error", err)
 		return
 	}
 
 	// Use explicit topic for hello messages
-	topic := messenger.GetTopics().Data("hello")
+	topic := messenger.DataTopic("hello")
 	if err := msgr.Pub(topic, pbytes); err != nil {
 		// record the error for metrics / diagnostics
 		st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))
@@ -302,12 +279,6 @@ func (st *Station) Stop() {
 	}
 }
 
-// Create an endpoint for this device to be queried.
-func (s *Station) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(s)
-}
-
 func (st *Station) IsHealthy() bool {
 	st.mu.RLock()
 	last := st.LastHeard
@@ -350,4 +321,10 @@ func (st *Station) errorHandler() {
 			st.Metrics.RecordError()
 		}
 	}
+}
+
+// Create an endpoint for this device to be queried.
+func (s *Station) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(s)
 }

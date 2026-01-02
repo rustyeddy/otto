@@ -275,7 +275,7 @@ func TestStationManagerServeHTTP(t *testing.T) {
 		assert.Equal(t, "application/json", rr.Header().Get("Content-Type"), "Should set JSON content type")
 
 		// Parse response
-		var response []*StationSummary
+		var response []*Station
 		err = json.Unmarshal(rr.Body.Bytes(), &response)
 		assert.NoError(t, err, "Response should be valid JSON")
 		assert.Equal(t, 2, len(response), "Response should contain 2 stations")

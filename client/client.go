@@ -77,8 +77,8 @@ func (c *Client) GetStats() (map[string]interface{}, error) {
 // and any associated staleness or status information as defined by StationSummary.
 //
 // This calls the /api/stations endpoint on the server.
-func (c *Client) GetStations() ([]*station.StationSummary, error) {
-	var stations []*station.StationSummary
+func (c *Client) GetStations() ([]*station.Station, error) {
+	var stations []*station.Station
 	if err := c.get("/api/stations", &stations); err != nil {
 		return nil, err
 	}
