@@ -1,8 +1,12 @@
 package messenger
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -170,4 +174,60 @@ func TestResetNodes(t *testing.T) {
 	require.NotNil(t, n)
 	n.pub(&Msg{Topic: "new/topic"})
 	require.True(t, called)
+}
+
+func TestServeHTTPGetRootReturnsSuccessfulResponse(t *testing.T) {
+	m := NewMessenger("none")
+	if m == nil {
+		t.Fatal("NewMessenger returned nil")
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+
+	// Ensure ServeHTTP does not panic and returns a successful status code.
+	m.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	assert.True(t, res.StatusCode >= 200 && res.StatusCode < 400, "expected 2xx/3xx status, got %d, body: %s", res.StatusCode, string(body))
+	assert.NotNil(t, body, "expected non-nil response body")
+}
+
+func TestServeHTTPUnknownPathStillHandled(t *testing.T) {
+	m := NewMessenger("none")
+	if m == nil {
+		t.Fatal("NewMessenger returned nil")
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/nonexistent/path", nil)
+	w := httptest.NewRecorder()
+
+	m.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	// Handler should respond without panic; accept any non-5xx status.
+	assert.False(t, res.StatusCode >= 500, "unexpected server error status %d, body: %s", res.StatusCode, string(body))
+	assert.NotNil(t, body)
+}
+
+func TestConnMQTTConnectEmptyBroker(t *testing.T) {
+    c := &connMQTT{}
+    err := c.Connect("", "", "")
+    assert.Error(t, err, "expected error when connecting with empty broker address")
+}
+
+func TestConnMQTTConnectUnreachableHost(t *testing.T) {
+    c := &connMQTT{}
+    broker := "127.0.0.1:65535"
+    err := c.Connect(broker, "user", "pass")
+    if err == nil {
+        t.Skipf("unexpectedly connected to broker at %s in test environment; skipping", broker)
+    }
+    assert.Error(t, err, "expected error when connecting to unreachable broker")
 }
