@@ -133,6 +133,39 @@ func (mc *mockConn) Unsub(topics ...string) {}
 func (mc *mockConn) PubMsg(m *Msg) error    { return nil }
 func (mc *mockConn) IsConnected() bool      { return true }
 
+// mockUnsubConn is a top-level mock used by tests that need to observe Unsub calls.
+type mockUnsubConn struct {
+	unsubbed []string
+}
+
+func (mc *mockUnsubConn) Connect(b, u, p string) error { return nil }
+func (mc *mockUnsubConn) Close()                      {}
+func (mc *mockUnsubConn) Sub(topic string, handler MsgHandler) error {
+	return nil
+}
+func (mc *mockUnsubConn) Unsub(topics ...string) {
+	mc.unsubbed = append(mc.unsubbed, topics...)
+}
+func (mc *mockUnsubConn) PubMsg(m *Msg) error { return nil }
+func (mc *mockUnsubConn) IsConnected() bool   { return true }
+
+// mockPubConn is a top-level mock used by tests that need to observe PubMsg calls.
+type mockPubConn struct {
+	last *Msg
+}
+
+func (mc *mockPubConn) Connect(b, u, p string) error { return nil }
+func (mc *mockPubConn) Close()                      {}
+func (mc *mockPubConn) Sub(topic string, handler MsgHandler) error {
+	return nil
+}
+func (mc *mockPubConn) Unsub(topics ...string) {}
+func (mc *mockPubConn) PubMsg(msg *Msg) error {
+	mc.last = msg
+	return nil
+}
+func (mc *mockPubConn) IsConnected() bool { return true }
+
 func TestSubscribeAllNoSubscriptions(t *testing.T) {
 	m := NewMessenger("none")
 	assert.NotNil(t, m)
@@ -166,4 +199,98 @@ func TestSubscribeAllWithSubscriptionsAndErrors(t *testing.T) {
 
 	assert.Len(t, mock.subs, 2)
 	assert.ElementsMatch(t, []string{"good/topic", "bad/topic"}, mock.subs)
+}
+
+func TestMessengerUnsubCallsConnUnsub(t *testing.T) {
+	orig := GetMessenger()
+	defer SetMessenger(orig)
+
+	m := NewMessenger("none")
+
+	if m == nil {
+		t.Fatal("NewMessenger returned nil")
+	}
+
+	mock := &mockUnsubConn{}
+	m.Conn = mock
+
+	m.Unsub("a/b")
+	assert.ElementsMatch(t, []string{"a/b"}, mock.unsubbed)
+}
+
+func TestNobrokerUnsubRemovesFromRoot(t *testing.T) {
+    resetNodes()
+
+    called := false
+    root.insert("x/y", func(m *Msg) error {
+        called = true
+        return nil
+    })
+    if root.lookup("x/y") == nil {
+        t.Fatal("expected node before unsub")
+    }
+
+    c := &nobrokerConn{}
+    c.Unsub("x/y")
+    if root.lookup("x/y") != nil {
+        t.Fatal("expected node to be removed after Unsub")
+    }
+    // ensure handler was not invoked by Unsub itself
+    if called {
+        t.Fatal("handler should not be called by Unsub")
+    }
+}
+
+func TestMessengerPubUsesConnPubMsg(t *testing.T) {
+	orig := GetMessenger()
+	defer SetMessenger(orig)
+
+	m := NewMessenger("none")
+	if m == nil {
+		t.Fatal("NewMessenger returned nil")
+	}
+
+	mock := &mockPubConn{}
+	m.Conn = mock
+
+	payload := []byte("payload")
+	if err := m.Pub("t/p", payload); err != nil {
+		t.Fatalf("unexpected error from Pub: %v", err)
+	}
+	if mock.last == nil {
+		t.Fatal("expected PubMsg to be called on conn")
+	}
+	assert.Equal(t, "t/p", mock.last.Topic)
+	b, err := Bytes(mock.last.Data)
+	assert.NoError(t, err)
+	assert.Equal(t, payload, b)
+}
+
+func TestNobrokerPubMsgErrorsAndDelivery(t *testing.T) {
+    resetNodes()
+    c := &nobrokerConn{}
+
+    // nil message
+    if err := c.PubMsg(nil); assert.Error(t, err) {
+        assert.Contains(t, err.Error(), "nil")
+    }
+
+    // no subscribers
+    err := c.PubMsg(&Msg{Topic: "no/one", Data: []byte("d")})
+    if assert.Error(t, err) {
+        assert.Contains(t, err.Error(), "No subscribers")
+    }
+
+    // delivery to subscriber
+    delivered := false
+    root.insert("deliver/one", func(m *Msg) error {
+        delivered = true
+        return nil
+    })
+    if err := c.PubMsg(&Msg{Topic: "deliver/one", Data: []byte("ok")}); err != nil {
+        t.Fatalf("unexpected error publishing to existing subscriber: %v", err)
+    }
+    if !delivered {
+        t.Fatal("expected handler to be invoked for delivered message")
+    }
 }

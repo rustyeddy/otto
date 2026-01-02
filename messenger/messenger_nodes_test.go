@@ -23,15 +23,18 @@ func TestRemoveNoopLeavesHandler(t *testing.T) {
 	}
 
 	root.insert("test/remove", handler)
-	// current remove is a noop; ensure it doesn't remove the handler
+	// remove the handler and ensure the node is cleaned up
 	root.remove("test/remove", handler)
 
 	n := root.lookup("test/remove")
-	require.NotNil(t, n)
-	require.Len(t, n.handlers, 1)
+	require.Nil(t, n)
 
-	n.pub(&Msg{Topic: "test/remove"})
-	require.True(t, handlerCalled)
+	// publishing should not find a node to deliver to
+	// (handler should not be called)
+	if root.lookup("test/remove") != nil {
+		root.lookup("test/remove").pub(&Msg{Topic: "test/remove"})
+	}
+	require.False(t, handlerCalled)
 }
 
 func TestRemoveNoPanicWhenMissing(t *testing.T) {
