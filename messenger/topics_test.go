@@ -12,16 +12,12 @@ import (
 
 func TestGetTopics(t *testing.T) {
 	topicInstance := GetTopics()
-	if topicInstance == nil {
-		t.Fatal("Expected Topics instance, got nil")
-	}
+	assert.NotNil(t, topicInstance)
 }
 
 func TestSetStationName(t *testing.T) {
 	utils.SetStationName("TestStation")
-	if utils.StationName() != "TestStation" {
-		t.Errorf("Expected StationName to be 'TestStation', got '%s'", utils.StationName())
-	}
+	assert.Equal(t, "TestStation", utils.StationName())
 }
 
 func TestControl(t *testing.T) {
@@ -38,12 +34,8 @@ func TestData(t *testing.T) {
 	utils.SetStationName("TestStation")
 	dataTopic := topics.Data("bar")
 	expected := "o/d/TestStation/bar"
-	if dataTopic != expected {
-		t.Errorf("Expected data topic '%s', got '%s'", expected, dataTopic)
-	}
-	if topics.Map[dataTopic] != 1 {
-		t.Errorf("Expected topic count for '%s' to be 1, got %d", dataTopic, topics.Map[dataTopic])
-	}
+	assert.Equal(t, expected, dataTopic)
+	assert.Equal(t, 1, topics.Map[dataTopic])
 }
 
 func TestValidateTopic(t *testing.T) {
@@ -103,14 +95,12 @@ func TestServeHTTP(t *testing.T) {
 	resp := w.Result()
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Expected status code 200, got %d", resp.StatusCode)
-	}
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var decodedTopics Topics
 	err := json.NewDecoder(resp.Body).Decode(&decodedTopics)
-	if err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
+	if !assert.NoError(t, err) {
+		return
 	}
 
 	assert.Equal(t, 0, decodedTopics.Map["o/c/TesstStation/foo"])

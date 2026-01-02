@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func isAddrInUse(err error) bool {
@@ -20,9 +22,8 @@ func isAddrInUse(err error) bool {
 
 func TestStopMQTTBrokerNoop(t *testing.T) {
 	// Ensure calling StopMQTTBroker before starting broker is a no-op and doesn't panic.
-	if err := StopMQTTBroker(context.Background()); err != nil {
-		t.Fatalf("expected nil error from StopMQTTBroker when no broker, got: %v", err)
-	}
+	err := StopMQTTBroker(context.Background())
+	assert.NoError(t, err)
 }
 
 func TestStartMQTTBrokerStartAndStop(t *testing.T) {
@@ -34,22 +35,24 @@ func TestStartMQTTBrokerStartAndStop(t *testing.T) {
 		if isAddrInUse(err) {
 			t.Skipf("mqtt broker port in use, skipping test: %v", err)
 		}
-		t.Fatalf("unexpected error starting mqtt broker: %v", err)
+		if !assert.NoError(t, err) {
+			return
+		}
 	}
-	if shutdownFn == nil {
-		t.Fatalf("expected non-nil shutdown function")
+	if !assert.NotNil(t, shutdownFn) {
+		return
 	}
 
 	// Give broker a moment to start
 	time.Sleep(150 * time.Millisecond)
 
 	// Call package-level stop helper and the returned shutdown to ensure graceful shutdown.
-	if err := StopMQTTBroker(context.Background()); err != nil {
-		t.Fatalf("StopMQTTBroker returned error: %v", err)
+	if !assert.NoError(t, StopMQTTBroker(context.Background())) {
+		return
 	}
 	// Also explicitly call returned shutdown function to ensure it's callable.
-	if err := shutdownFn(context.Background()); err != nil {
-		t.Fatalf("shutdown function returned error: %v", err)
+	if !assert.NoError(t, shutdownFn(context.Background())) {
+		return
 	}
 
 	// Allow shutdown to complete
@@ -65,11 +68,13 @@ func TestStartMQTTBrokerContextCancellation(t *testing.T) {
 		if isAddrInUse(err) {
 			t.Skipf("mqtt broker port in use, skipping test: %v", err)
 		}
-		t.Fatalf("unexpected error starting mqtt broker: %v", err)
+		if !assert.NoError(t, err) {
+			return
+		}
 	}
-	if shutdownFn == nil {
+	if !assert.NotNil(t, shutdownFn) {
 		cancel()
-		t.Fatalf("expected non-nil shutdown function")
+		return
 	}
 
 	// Cancel the context and allow the broker's goroutine to trigger shutdown.
@@ -77,8 +82,8 @@ func TestStartMQTTBrokerContextCancellation(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	// Ensure calling StopMQTTBroker after context cancellation is safe.
-	if err := StopMQTTBroker(context.Background()); err != nil {
-		t.Fatalf("StopMQTTBroker returned error after context cancel: %v", err)
+	if !assert.NoError(t, StopMQTTBroker(context.Background())) {
+		return
 	}
 
 	// Defensive call to returned shutdown function (should be safe even if already closed).

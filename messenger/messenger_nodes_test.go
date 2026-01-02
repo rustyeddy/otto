@@ -2,19 +2,15 @@ package messenger
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewNode(t *testing.T) {
 	n := newNode("test")
-	if n.index != "test" {
-		t.Errorf("Expected index 'test', got '%s'", n.index)
-	}
-	if len(n.nodes) != 0 {
-		t.Errorf("Expected nodes map to be empty, got %d elements", len(n.nodes))
-	}
-	if len(n.handlers) != 0 {
-		t.Errorf("Expected handlers to be empty, got %d elements", len(n.handlers))
-	}
+	require.Equal(t, "test", n.index)
+	require.Len(t, n.nodes, 0)
+	require.Len(t, n.handlers, 0)
 }
 
 func TestRemoveNoopLeavesHandler(t *testing.T) {
@@ -31,17 +27,11 @@ func TestRemoveNoopLeavesHandler(t *testing.T) {
 	root.remove("test/remove", handler)
 
 	n := root.lookup("test/remove")
-	if n == nil {
-		t.Fatal("expected node for 'test/remove', got nil")
-	}
-	if len(n.handlers) != 1 {
-		t.Fatalf("expected 1 handler after remove noop, got %d", len(n.handlers))
-	}
+	require.NotNil(t, n)
+	require.Len(t, n.handlers, 1)
 
 	n.pub(&Msg{Topic: "test/remove"})
-	if !handlerCalled {
-		t.Error("expected handler to be called after remove noop, but it was not")
-	}
+	require.True(t, handlerCalled)
 }
 
 func TestRemoveNoPanicWhenMissing(t *testing.T) {
@@ -50,24 +40,16 @@ func TestRemoveNoPanicWhenMissing(t *testing.T) {
 	// Removing a non-existent topic/handler should not panic or break state.
 	root.remove("non/existent/topic", nil)
 
-	if root == nil {
-		t.Fatal("expected root to remain initialized after remove on missing topic")
-	}
+	require.NotNil(t, root)
 }
 
 func TestInitNodes(t *testing.T) {
 	clearNodes()
-	if root != nil {
-		t.Fatal("expected root to be nil after clearNodes")
-	}
+	require.Nil(t, root)
 
 	initNodes()
-	if root == nil {
-		t.Fatal("expected root to be initialized after initNodes")
-	}
-	if len(root.nodes) != 0 {
-		t.Fatalf("expected root.nodes to be empty after initNodes, got %d", len(root.nodes))
-	}
+	require.NotNil(t, root)
+	require.Len(t, root.nodes, 0)
 
 	// Verify the new root is usable
 	called := false
@@ -78,13 +60,9 @@ func TestInitNodes(t *testing.T) {
 	root.insert("a/b", h)
 
 	n := root.lookup("a/b")
-	if n == nil {
-		t.Fatal("expected node for 'a/b' after insert, got nil")
-	}
+	require.NotNil(t, n)
 	n.pub(&Msg{Topic: "a/b"})
-	if !called {
-		t.Error("expected handler to be called after insert on initNodes root")
-	}
+	require.True(t, called)
 }
 
 func TestInsertAndLookup(t *testing.T) {
@@ -100,22 +78,16 @@ func TestInsertAndLookup(t *testing.T) {
 
 	// Lookup the topic
 	node := root.lookup("test/topic")
-	if node == nil {
-		t.Fatal("Expected to find node for 'test/topic', got nil")
-	}
+	require.NotNil(t, node)
 
 	// Verify the handler is present
-	if len(node.handlers) != 1 {
-		t.Fatalf("Expected 1 handler, got %d", len(node.handlers))
-	}
+	require.Len(t, node.handlers, 1)
 
 	// Trigger the handler
 	msg := &Msg{Topic: "test/topic"}
 	node.pub(msg)
 
-	if !handlerCalled {
-		t.Error("Expected handler to be called, but it was not")
-	}
+	require.True(t, handlerCalled)
 }
 
 func TestWildcardLookup(t *testing.T) {
@@ -131,22 +103,13 @@ func TestWildcardLookup(t *testing.T) {
 
 	// Lookup a matching topic
 	node := root.lookup("test/something/wildcard")
-	if node == nil {
-		t.Fatal("Expected to find node for 'test/something/wildcard', got nil")
-	}
-
-	// Verify the handler is present
-	if len(node.handlers) != 1 {
-		t.Fatalf("Expected 1 handler, got %d", len(node.handlers))
-	}
+	require.NotNil(t, node)
+	require.Len(t, node.handlers, 1)
 
 	// Trigger the handler
 	msg := &Msg{Topic: "test/something/wildcard"}
 	node.pub(msg)
-
-	if !handlerCalled {
-		t.Error("Expected handler to be called, but it was not")
-	}
+	require.True(t, handlerCalled)
 }
 
 func TestMultiLevelWildcardLookup(t *testing.T) {
@@ -162,32 +125,46 @@ func TestMultiLevelWildcardLookup(t *testing.T) {
 
 	// Lookup a matching topic
 	node := root.lookup("test/any/number/of/levels")
-	if node == nil {
-		t.Fatal("Expected to find node for 'test/any/number/of/levels', got nil")
-	}
-
-	// Verify the handler is present
-	if len(node.handlers) != 1 {
-		t.Fatalf("Expected 1 handler, got %d", len(node.handlers))
-	}
+	require.NotNil(t, node)
+	require.Len(t, node.handlers, 1)
 
 	// Trigger the handler
 	msg := &Msg{Topic: "test/any/number/of/levels"}
 	node.pub(msg)
-
-	if !handlerCalled {
-		t.Error("Expected handler to be called, but it was not")
-	}
+	require.True(t, handlerCalled)
 }
 
 func TestClearNodes(t *testing.T) {
 	root = newNode("/")
-	if root == nil {
-		t.Fatal("Expected root to be initialized, got nil")
-	}
+	require.NotNil(t, root)
 
 	clearNodes()
-	if root != nil {
-		t.Fatal("Expected root to be cleared, but it was not")
+	require.Nil(t, root)
+}
+
+func TestResetNodes(t *testing.T) {
+	// prepare a populated root
+	root = newNode("/")
+	root.insert("foo/bar", func(m *Msg) error { return nil })
+
+	require.NotNil(t, root.lookup("foo/bar"))
+
+	// reset and validate
+	resetNodes()
+	require.NotNil(t, root)
+	require.Len(t, root.nodes, 0)
+	// previous entries should be gone
+	require.Nil(t, root.lookup("foo/bar"))
+
+	// ensure new root is usable
+	called := false
+	h := func(m *Msg) error {
+		called = true
+		return nil
 	}
+	root.insert("new/topic", h)
+	n := root.lookup("new/topic")
+	require.NotNil(t, n)
+	n.pub(&Msg{Topic: "new/topic"})
+	require.True(t, called)
 }

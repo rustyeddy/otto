@@ -29,46 +29,22 @@ func TestStationMsg(t *testing.T) {
 	topic := "ss/d/be:ef:ca:fe:01/station"
 	omsg, _ := getMsg()
 	omsg.Source = "be:ef:ca:fe:01"
-	if omsg.Last() != "test" {
-		t.Errorf("Failed to get station")
-	}
+	assert.Equal(t, "test", omsg.Last())
 
 	j, err := json.Marshal(omsg)
-	if err != nil {
-		t.Errorf("json marshal failed %+v", err)
+	if !assert.NoError(t, err) {
 		return
 	}
 
 	msg := NewMsg(topic, j, "test")
-	if msg == nil {
-		t.Fatal("msg topic expected but is nil")
-		return // This is redundant after t.Fatal but makes static analyzer happy
+	if !assert.NotNil(t, msg) {
+		return
 	}
-
-	if msg.Topic != topic {
-		t.Errorf("msg topic expected (%s) got (%s)", topic, msg.Topic)
-	}
-
+	assert.Equal(t, topic, msg.Topic)
 	path := strings.Split(topic, "/")
-	if len(path) != len(msg.Path) {
-		t.Errorf("msg path len expected (%d) got (%d)", len(path), len(msg.Path))
-	}
-
-	for i := 0; i < len(path); i++ {
-		if path[i] != msg.Path[i] {
-			t.Errorf("msg path[%d] expected (%s) got (%s)", i, path[i], msg.Path[i])
-		}
-	}
-
-	if msg.Source != "test" {
-		t.Errorf("msg source expected (test) got (%s)", msg.Source)
-	}
-
-	for i := 0; i < len(j); i++ {
-		if msg.Data[i] != j[i] {
-			t.Errorf("msg data[%d] expected (% x) got (% x)", i, j[i], msg.Data[i])
-		}
-	}
+	assert.Equal(t, path, msg.Path)
+	assert.Equal(t, "test", msg.Source)
+	assert.Equal(t, j, msg.Data)
 }
 
 func TestJSON(t *testing.T) {
@@ -78,169 +54,106 @@ func TestJSON(t *testing.T) {
 	m.Data = []byte(jstr)
 
 	jbyte, err := json.Marshal(m)
-	if err != nil {
-		t.Errorf("Failed to marshal message %+v", m)
+	if !assert.NoError(t, err) {
+		return
 	}
 
 	var m2 Msg
-	err = json.Unmarshal(jbyte, &m2)
-	if err != nil {
-		t.Error("Failed to unmarshal message", err)
+	if !assert.NoError(t, json.Unmarshal(jbyte, &m2)) {
+		return
 	}
 
-	if m2.ID != m.ID || m2.Topic != m.Topic ||
-		m.Timestamp != m2.Timestamp ||
-		m.Source != m2.Source {
-		t.Errorf("Failed to unmarshal message expected (%+v) got (%+v)", m, m2)
-	}
+	assert.Equal(t, m.ID, m2.ID)
+	assert.Equal(t, m.Topic, m2.Topic)
+	assert.Equal(t, m.Timestamp, m2.Timestamp)
+	assert.Equal(t, m.Source, m2.Source)
 
-	if len(m.Data) != len(m2.Data) {
-		t.Errorf("Msg Data Len expected(%d) got (%d)", len(m.Data), len(m2.Data))
-	} else {
-		for i := 0; i < len(m.Data); i++ {
-			if m.Data[i] != m2.Data[i] {
-				t.Errorf("Messages data[%d] expected (%d) got (%d)", i, m.Data[i], m2.Data[i])
-			}
-		}
-	}
+	assert.Equal(t, m.Data, m2.Data)
+	assert.Equal(t, m.Path, m2.Path)
 
-	if len(m.Path) != len(m2.Path) {
-		t.Errorf("Msg Path Len expected(%d) got (%d)", len(m.Path), len(m2.Path))
-	} else {
-		for i := 0; i < len(m.Path); i++ {
-			if m.Path[i] != m2.Path[i] {
-				t.Errorf("Messages path[%d] expected (%s) got (%s)", i, m.Path[i], m2.Path[i])
-			}
-		}
-	}
-
-	if !m2.IsJSON() {
-		t.Error("Msg expected to be JSON but is not ")
-	}
+	assert.True(t, m2.IsJSON())
 
 	mpp, err := m2.Map()
-	if err != nil {
-		t.Errorf("Msg expected map but got an error (%s)", err)
+	if !assert.NoError(t, err) {
+		return
 	}
 
-	for k, v := range mpp {
-		switch k {
-		case "int":
-			if v != 10.0 {
-				t.Errorf("Expected int (%d) got (%f)", 10, v)
-			}
-		case "float":
-			if v != 12.3 {
-				t.Errorf("Expected float (%f) got (%f)", 12.3, v)
-			}
-		case "string":
-			if v != "45.6" {
-				t.Errorf("Expected string (%s) got (%s)", "45.6", k)
-			}
-
-		}
+	if v, ok := mpp["int"]; ok {
+		assert.Equal(t, 10.0, v)
+	}
+	if v, ok := mpp["float"]; ok {
+		assert.Equal(t, 12.3, v)
+	}
+	if v, ok := mpp["string"]; ok {
+		assert.Equal(t, "45.6", v)
 	}
 
 	m.Data = []byte("this is not json")
-	if m.IsJSON() {
-		t.Errorf("JSON expected (false) got (true) ")
-	}
+	assert.False(t, m.IsJSON())
 }
 
 func TestMsg_Station(t *testing.T) {
 	msg := &Msg{Path: []string{"ss", "d", "be:ef:ca:fe:01", "station"}}
-	if msg.Station() != "be:ef:ca:fe:01" {
-		t.Errorf("expected station 'station', got '%s'", msg.Station())
-	}
+	assert.Equal(t, "be:ef:ca:fe:01", msg.Station())
 
 	msg = &Msg{Path: []string{"ss", "d"}}
-	if msg.Station() != "" {
-		t.Errorf("expected station '', got '%s'", msg.Station())
-	}
+	assert.Equal(t, "", msg.Station())
 }
 
 func TestMsg_Last(t *testing.T) {
 	msg := &Msg{Path: []string{"ss", "d", "test"}}
-	if msg.Last() != "test" {
-		t.Errorf("expected last 'test', got '%s'", msg.Last())
-	}
+	assert.Equal(t, "test", msg.Last())
 
 	msg = &Msg{Path: []string{}}
-	if msg.Last() != "" {
-		t.Errorf("expected last '', got '%s'", msg.Last())
-	}
+	assert.Equal(t, "", msg.Last())
 }
 
 func TestMsg_Byte(t *testing.T) {
 	data := []byte("test data")
 	msg := &Msg{Data: data}
-	if string(msg.Byte()) != string(data) {
-		t.Errorf("expected byte data '%s', got '%s'", string(data), string(msg.Byte()))
-	}
+	assert.Equal(t, string(data), string(msg.Byte()))
 }
 
 func TestMsg_String(t *testing.T) {
 	data := []byte("test data")
 	msg := &Msg{Data: data}
-	if msg.String() != string(data) {
-		t.Errorf("expected string data '%s', got '%s'", string(data), msg.String())
-	}
+	assert.Equal(t, string(data), msg.String())
 }
 
 func TestMsg_Float64(t *testing.T) {
 	data := []byte("123.45")
 	msg := &Msg{Data: data}
-	if msg.Float64() != 123.45 {
-		t.Errorf("expected float64 data '123.45', got '%f'", msg.Float64())
-	}
+	assert.Equal(t, 123.45, msg.Float64())
 }
 
 func TestMsg_IsJSON(t *testing.T) {
 	msg := &Msg{Data: []byte(`{"key": "value"}`)}
-	if !msg.IsJSON() {
-		t.Errorf("expected IsJSON to return true, got false")
-	}
+	assert.True(t, msg.IsJSON())
 
 	msg = &Msg{Data: []byte("not json")}
-	if msg.IsJSON() {
-		t.Errorf("expected IsJSON to return false, got true")
-	}
+	assert.False(t, msg.IsJSON())
 }
 
 func TestMsg_JSON(t *testing.T) {
 	msg := &Msg{ID: 1, Topic: "test", Data: []byte("test data")}
 	jsonData, err := msg.JSON()
-	if err != nil {
-		t.Errorf("expected no error, got '%v'", err)
-	}
+	assert.NoError(t, err)
 
 	var unmarshalledMsg Msg
-	err = json.Unmarshal(jsonData, &unmarshalledMsg)
-	if err != nil {
-		t.Errorf("expected no error during unmarshal, got '%v'", err)
-	}
-
-	if unmarshalledMsg.ID != msg.ID || unmarshalledMsg.Topic != msg.Topic {
-		t.Errorf("expected unmarshalled message to match original, got '%v'", unmarshalledMsg)
-	}
+	assert.NoError(t, json.Unmarshal(jsonData, &unmarshalledMsg))
+	assert.Equal(t, msg.ID, unmarshalledMsg.ID)
+	assert.Equal(t, msg.Topic, unmarshalledMsg.Topic)
 }
 
 func TestMsg_Map(t *testing.T) {
 	msg := &Msg{Data: []byte(`{"key": "value"}`)}
 	m, err := msg.Map()
-	if err != nil {
-		t.Errorf("expected no error, got '%v'", err)
-	}
-
-	if m["key"] != "value" {
-		t.Errorf("expected map value 'value', got '%v'", m["key"])
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "value", m["key"])
 
 	msg = &Msg{Data: []byte("not json")}
 	_, err = msg.Map()
-	if err == nil {
-		t.Errorf("expected error for invalid JSON, got nil")
-	}
+	assert.Error(t, err)
 }
 
 func TestNewMsg(t *testing.T) {
@@ -250,24 +163,14 @@ func TestNewMsg(t *testing.T) {
 
 	msg := NewMsg(topic, data, source)
 
-	if msg.ID <= 0 {
-		t.Error("Expected positive message ID")
-	}
-	if msg.Topic != topic {
-		t.Errorf("Expected topic %s, got %s", topic, msg.Topic)
-	}
-	if string(msg.Data) != string(data) {
-		t.Errorf("Expected data %s, got %s", string(data), string(msg.Data))
-	}
-	if msg.Source != source {
-		t.Errorf("Expected source %s, got %s", source, msg.Source)
-	}
-	if msg.Timestamp <= 0 {
-		t.Error("Expected positive timestamp")
-	}
-	if len(msg.Path) != 2 || msg.Path[0] != "test" || msg.Path[1] != "topic" {
-		t.Errorf("expected path ['test', 'topic'], got '%v'", msg.Path)
-	}
+	assert.True(t, msg.ID > 0)
+	assert.Equal(t, topic, msg.Topic)
+	assert.Equal(t, string(data), string(msg.Data))
+	assert.Equal(t, source, msg.Source)
+	assert.True(t, msg.Timestamp > 0)
+	assert.Len(t, msg.Path, 2)
+	assert.Equal(t, "test", msg.Path[0])
+	assert.Equal(t, "topic", msg.Path[1])
 
 }
 
@@ -290,13 +193,12 @@ func TestBytes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Bytes(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Bytes() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				assert.Error(t, err)
 				return
 			}
-			if !tt.wantErr && string(got) != tt.want {
-				t.Errorf("Bytes() = %v, want %v", string(got), tt.want)
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, string(got))
 		})
 	}
 }
@@ -312,27 +214,19 @@ func TestMsgMethods(t *testing.T) {
 	}
 
 	t.Run("Station", func(t *testing.T) {
-		if got := msg.Station(); got != "station1" {
-			t.Errorf("Station() = %v, want %v", got, "station1")
-		}
+		assert.Equal(t, "station1", msg.Station())
 	})
 
 	t.Run("Last", func(t *testing.T) {
-		if got := msg.Last(); got != "sensor" {
-			t.Errorf("Last() = %v, want %v", got, "sensor")
-		}
+		assert.Equal(t, "sensor", msg.Last())
 	})
 
 	t.Run("String", func(t *testing.T) {
-		if got := msg.String(); got != "42.5" {
-			t.Errorf("String() = %v, want %v", got, "42.5")
-		}
+		assert.Equal(t, "42.5", msg.String())
 	})
 
 	t.Run("Float64", func(t *testing.T) {
-		if got := msg.Float64(); got != 42.5 {
-			t.Errorf("Float64() = %v, want %v", got, 42.5)
-		}
+		assert.Equal(t, 42.5, msg.Float64())
 	})
 }
 
@@ -340,28 +234,24 @@ func TestMsgJSON(t *testing.T) {
 	msg := NewMsg("test/topic", []byte(`{"key":"value"}`), "test")
 
 	t.Run("IsJSON", func(t *testing.T) {
-		if !msg.IsJSON() {
-			t.Error("IsJSON() should return true for valid JSON")
-		}
+		assert.True(t, msg.IsJSON())
 	})
 
 	t.Run("JSON", func(t *testing.T) {
 		jsonBytes, err := msg.JSON()
-		if err != nil {
-			t.Errorf("JSON() error = %v", err)
+		if !assert.NoError(t, err) {
+			return
 		}
-		if !json.Valid(jsonBytes) {
-			t.Error("JSON() should return valid JSON")
-		}
+		assert.True(t, json.Valid(jsonBytes))
 	})
 
 	t.Run("Map", func(t *testing.T) {
 		m, err := msg.Map()
-		if err != nil {
-			t.Errorf("Map() error = %v", err)
+		if !assert.NoError(t, err) {
+			return
 		}
-		if v, ok := m["key"]; !ok || v != "value" {
-			t.Errorf("Map() = %v, want map[key:value]", m)
+		if v, ok := m["key"]; assert.True(t, ok) {
+			assert.Equal(t, "value", v)
 		}
 	})
 }
@@ -398,12 +288,8 @@ func TestMsgSaver(t *testing.T) {
 		saver.ServeHTTP(w, req)
 
 		resp := w.Result()
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("ServeHTTP() status = %v, want %v", resp.StatusCode, http.StatusOK)
-		}
-		if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
-			t.Errorf("ServeHTTP() content-type = %v, want application/json", ct)
-		}
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 	})
 }
 
@@ -440,22 +326,10 @@ func TestMsgDump(t *testing.T) {
 
 	dump := msg.Dump()
 
-	if !strings.Contains(dump, "ID: 123") {
-		t.Errorf("Dump() missing ID, got: %s", dump)
-	}
-	if !strings.Contains(dump, `Path: ["test" "topic"]`) {
-		t.Errorf("Dump() missing Path, got: %s", dump)
-	}
-	if !strings.Contains(dump, `Args: ["arg1" "arg2"]`) {
-		t.Errorf("Dump() missing Args, got: %s", dump)
-	}
-	if !strings.Contains(dump, "Src: test source") {
-		t.Errorf("Dump() missing Source, got: %s", dump)
-	}
-	if !strings.Contains(dump, "Time: ") {
-		t.Errorf("Dump() missing Timestamp, got: %s", dump)
-	}
-	if !strings.Contains(dump, "Data: test data") {
-		t.Errorf("Dump() missing Data, got: %s", dump)
-	}
+	assert.Contains(t, dump, "ID: 123")
+	assert.Contains(t, dump, `Path: ["test" "topic"]`)
+	assert.Contains(t, dump, `Args: ["arg1" "arg2"]`)
+	assert.Contains(t, dump, "Src: test source")
+	assert.Contains(t, dump, "Time: ")
+	assert.Contains(t, dump, "Data: test data")
 }
