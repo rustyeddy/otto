@@ -17,6 +17,76 @@ func TestNewNode(t *testing.T) {
 	}
 }
 
+func TestRemoveNoopLeavesHandler(t *testing.T) {
+	resetNodes()
+
+	handlerCalled := false
+	handler := func(m *Msg) error {
+		handlerCalled = true
+		return nil
+	}
+
+	root.insert("test/remove", handler)
+	// current remove is a noop; ensure it doesn't remove the handler
+	root.remove("test/remove", handler)
+
+	n := root.lookup("test/remove")
+	if n == nil {
+		t.Fatal("expected node for 'test/remove', got nil")
+	}
+	if len(n.handlers) != 1 {
+		t.Fatalf("expected 1 handler after remove noop, got %d", len(n.handlers))
+	}
+
+	n.pub(&Msg{Topic: "test/remove"})
+	if !handlerCalled {
+		t.Error("expected handler to be called after remove noop, but it was not")
+	}
+}
+
+func TestRemoveNoPanicWhenMissing(t *testing.T) {
+	resetNodes()
+
+	// Removing a non-existent topic/handler should not panic or break state.
+	root.remove("non/existent/topic", nil)
+
+	if root == nil {
+		t.Fatal("expected root to remain initialized after remove on missing topic")
+	}
+}
+
+func TestInitNodes(t *testing.T) {
+	clearNodes()
+	if root != nil {
+		t.Fatal("expected root to be nil after clearNodes")
+	}
+
+	initNodes()
+	if root == nil {
+		t.Fatal("expected root to be initialized after initNodes")
+	}
+	if len(root.nodes) != 0 {
+		t.Fatalf("expected root.nodes to be empty after initNodes, got %d", len(root.nodes))
+	}
+
+	// Verify the new root is usable
+	called := false
+	h := func(m *Msg) error {
+		called = true
+		return nil
+	}
+	root.insert("a/b", h)
+
+	n := root.lookup("a/b")
+	if n == nil {
+		t.Fatal("expected node for 'a/b' after insert, got nil")
+	}
+	n.pub(&Msg{Topic: "a/b"})
+	if !called {
+		t.Error("expected handler to be called after insert on initNodes root")
+	}
+}
+
 func TestInsertAndLookup(t *testing.T) {
 	root := newNode("/")
 	handlerCalled := false
