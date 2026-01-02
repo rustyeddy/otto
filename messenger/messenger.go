@@ -249,6 +249,9 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 }
 
 func (m *connMQTT) IsConnected() bool {
+	if m.Client == nil {
+		return false
+	}
 	return m.Client.IsConnected()
 }
 
@@ -256,7 +259,6 @@ func (m *connMQTT) Close() {
 	if m.Client != nil {
 		m.Client.Disconnect(1000)
 	}
-	return
 }
 
 func (m *connMQTT) Sub(topic string, f MsgHandler) error {

@@ -1,6 +1,7 @@
 package messenger
 
 import (
+	"reflect"
 	"strings"
 )
 
@@ -111,26 +112,51 @@ func (n *node) insert(topic string, mh MsgHandler) {
 //   - topic: The topic pattern from which to remove the handler
 //   - handler: The specific handler function to remove
 func (n *node) remove(topic string, handler MsgHandler) {
-	println("TODO add node remove command")
-	return
+	// traverse the tree and collect nodes along the path
+	indexes := strings.Split(topic, "/")
+	var nodes []*node
+	pn := n
+	nodes = append(nodes, pn)
+	for _, idx := range indexes {
+		nn, ex := pn.nodes[idx]
+		if !ex {
+			// topic path doesn't exist; nothing to remove
+			return
+		}
+		nodes = append(nodes, nn)
+		pn = nn
+	}
 
-	// // Need to remove the child node and all parent nodes provided
-	// // they have no other subscribers
-	// nodes = []*node
-	// pn := root
-	// indexes := strings.Split(topic, "/")
-	// for _, idx := range indexes {
-	// 	if n, ex := pn.nodes[idx]; ex {
-	// 		nodes = append(nodes, n)
-	// 	}
-	// }
+	// target node is the last in nodes
+	target := nodes[len(nodes)-1]
 
-	// nodes = slices.Reverse(nodes)
-	// for i, h := range node[0].handlers {
-	// 	if h == handler {
-	// 		node[0].handlers = append(nodes[:i], nodes[i:])
-	// 	}
-	// }
+	if handler == nil {
+		// remove all handlers for this topic
+		target.handlers = nil
+	} else {
+		// remove only matching handler(s)
+		var keep []MsgHandler
+		targetPtr := reflect.ValueOf(handler).Pointer()
+		for _, h := range target.handlers {
+			if reflect.ValueOf(h).Pointer() != targetPtr {
+				keep = append(keep, h)
+			}
+		}
+		target.handlers = keep
+	}
+
+	// cleanup: remove empty nodes from the bottom up
+	// skip root (nodes[0])
+	for i := len(nodes) - 1; i > 0; i-- {
+		cur := nodes[i]
+		parent := nodes[i-1]
+		if len(cur.handlers) == 0 && len(cur.nodes) == 0 {
+			// delete from parent
+			delete(parent.nodes, cur.index)
+			continue
+		}
+		break
+	}
 }
 
 // lookup finds the node in the routing tree that matches the given topic,
