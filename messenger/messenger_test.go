@@ -2,10 +2,14 @@ package messenger
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"testing"
+
+	gomqtt "github.com/eclipse/paho.mqtt.golang"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -139,7 +143,7 @@ type mockUnsubConn struct {
 }
 
 func (mc *mockUnsubConn) Connect(b, u, p string) error { return nil }
-func (mc *mockUnsubConn) Close()                      {}
+func (mc *mockUnsubConn) Close()                       {}
 func (mc *mockUnsubConn) Sub(topic string, handler MsgHandler) error {
 	return nil
 }
@@ -155,7 +159,7 @@ type mockPubConn struct {
 }
 
 func (mc *mockPubConn) Connect(b, u, p string) error { return nil }
-func (mc *mockPubConn) Close()                      {}
+func (mc *mockPubConn) Close()                       {}
 func (mc *mockPubConn) Sub(topic string, handler MsgHandler) error {
 	return nil
 }
@@ -219,26 +223,26 @@ func TestMessengerUnsubCallsConnUnsub(t *testing.T) {
 }
 
 func TestNobrokerUnsubRemovesFromRoot(t *testing.T) {
-    resetNodes()
+	resetNodes()
 
-    called := false
-    root.insert("x/y", func(m *Msg) error {
-        called = true
-        return nil
-    })
-    if root.lookup("x/y") == nil {
-        t.Fatal("expected node before unsub")
-    }
+	called := false
+	root.insert("x/y", func(m *Msg) error {
+		called = true
+		return nil
+	})
+	if root.lookup("x/y") == nil {
+		t.Fatal("expected node before unsub")
+	}
 
-    c := &nobrokerConn{}
-    c.Unsub("x/y")
-    if root.lookup("x/y") != nil {
-        t.Fatal("expected node to be removed after Unsub")
-    }
-    // ensure handler was not invoked by Unsub itself
-    if called {
-        t.Fatal("handler should not be called by Unsub")
-    }
+	c := &nobrokerConn{}
+	c.Unsub("x/y")
+	if root.lookup("x/y") != nil {
+		t.Fatal("expected node to be removed after Unsub")
+	}
+	// ensure handler was not invoked by Unsub itself
+	if called {
+		t.Fatal("handler should not be called by Unsub")
+	}
 }
 
 func TestMessengerPubUsesConnPubMsg(t *testing.T) {
@@ -267,30 +271,226 @@ func TestMessengerPubUsesConnPubMsg(t *testing.T) {
 }
 
 func TestNobrokerPubMsgErrorsAndDelivery(t *testing.T) {
-    resetNodes()
-    c := &nobrokerConn{}
+	resetNodes()
+	c := &nobrokerConn{}
 
-    // nil message
-    if err := c.PubMsg(nil); assert.Error(t, err) {
-        assert.Contains(t, err.Error(), "nil")
-    }
+	// nil message
+	if err := c.PubMsg(nil); assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "nil")
+	}
 
-    // no subscribers
-    err := c.PubMsg(&Msg{Topic: "no/one", Data: []byte("d")})
-    if assert.Error(t, err) {
-        assert.Contains(t, err.Error(), "No subscribers")
-    }
+	// no subscribers
+	err := c.PubMsg(&Msg{Topic: "no/one", Data: []byte("d")})
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "No subscribers")
+	}
 
-    // delivery to subscriber
-    delivered := false
-    root.insert("deliver/one", func(m *Msg) error {
-        delivered = true
-        return nil
-    })
-    if err := c.PubMsg(&Msg{Topic: "deliver/one", Data: []byte("ok")}); err != nil {
-        t.Fatalf("unexpected error publishing to existing subscriber: %v", err)
-    }
-    if !delivered {
-        t.Fatal("expected handler to be invoked for delivered message")
-    }
+	// delivery to subscriber
+	delivered := false
+	root.insert("deliver/one", func(m *Msg) error {
+		delivered = true
+		return nil
+	})
+	if err := c.PubMsg(&Msg{Topic: "deliver/one", Data: []byte("ok")}); err != nil {
+		t.Fatalf("unexpected error publishing to existing subscriber: %v", err)
+	}
+	if !delivered {
+		t.Fatal("expected handler to be invoked for delivered message")
+	}
+}
+
+func TestMessengerCloseUnsubCalled(t *testing.T) {
+	orig := GetMessenger()
+	defer SetMessenger(orig)
+
+	m := NewMessenger("none")
+	assert.NotNil(t, m)
+	if m == nil {
+		return
+	}
+
+	m.subscriptions = map[string]MsgHandler{
+		"a/b": func(*Msg) error { return nil },
+		"c/d": func(*Msg) error { return nil },
+	}
+
+	mock := &mockUnsubConn{}
+	m.Conn = mock
+
+	m.Close()
+
+	assert.ElementsMatch(t, []string{"a/b", "c/d"}, mock.unsubbed)
+}
+
+func TestMessengerCloseNilConnNoPanic(t *testing.T) {
+	orig := GetMessenger()
+	defer SetMessenger(orig)
+
+	m := NewMessenger("none")
+	assert.NotNil(t, m)
+	if m == nil {
+		return
+	}
+
+	// simulate missing connection
+	m.Conn = nil
+	m.subscriptions = map[string]MsgHandler{
+		"topic/1": func(*Msg) error { return nil },
+	}
+
+	assert.NotPanics(t, func() { m.Close() })
+}
+
+func TestConnMQTTIsConnectedFalseByDefault(t *testing.T) {
+	c := &connMQTT{}
+	assert.False(t, c.IsConnected())
+}
+
+func TestConnMQTTCloseNilClientNoPanic(t *testing.T) {
+	c := &connMQTT{Client: nil}
+	// should not panic
+	assert.NotPanics(t, func() { c.Close() })
+}
+
+type mockToken struct{ err error }
+
+func (t *mockToken) Wait() bool                       { return true }
+func (t *mockToken) WaitTimeout(d time.Duration) bool { return true }
+func (t *mockToken) Error() error                     { return t.err }
+func (t *mockToken) Done() <-chan struct{}            { return nil }
+
+type mockClientSub struct {
+	subscribeHandler gomqtt.MessageHandler
+	tokenErr         error
+}
+
+func (m *mockClientSub) IsConnected() bool       { return true }
+func (m *mockClientSub) IsConnectionOpen() bool  { return true }
+func (m *mockClientSub) Connect() gomqtt.Token   { return &mockToken{} }
+func (m *mockClientSub) Disconnect(quiesce uint) {}
+func (m *mockClientSub) Publish(topic string, qos byte, retained bool, payload interface{}) gomqtt.Token {
+	return &mockToken{}
+}
+func (m *mockClientSub) Subscribe(topic string, qos byte, cb gomqtt.MessageHandler) gomqtt.Token {
+	m.subscribeHandler = cb
+	return &mockToken{err: m.tokenErr}
+}
+func (m *mockClientSub) SubscribeMultiple(filters map[string]byte, callback gomqtt.MessageHandler) gomqtt.Token {
+	return &mockToken{err: m.tokenErr}
+}
+func (m *mockClientSub) Unsubscribe(topics ...string) gomqtt.Token       { return &mockToken{} }
+func (m *mockClientSub) AddRoute(topic string, cb gomqtt.MessageHandler) {}
+func (mockClientSub) OptionsReader() gomqtt.ClientOptionsReader          { return gomqtt.ClientOptionsReader{} }
+
+type mockMessage struct {
+	topic   string
+	payload []byte
+}
+
+func (m *mockMessage) Duplicate() bool   { return false }
+func (m *mockMessage) Qos() byte         { return 0 }
+func (m *mockMessage) Retained() bool    { return false }
+func (m *mockMessage) Topic() string     { return m.topic }
+func (m *mockMessage) MessageID() uint16 { return 0 }
+func (m *mockMessage) Payload() []byte   { return m.payload }
+func (m *mockMessage) Ack()              {}
+
+func TestConnMQTTSubClientNilReturnsError(t *testing.T) {
+	c := &connMQTT{Client: nil}
+	err := c.Sub("topic/x", func(*Msg) error { return nil })
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not connected")
+}
+
+func TestConnMQTTSubSuccessRegistersHandlerAndInvokes(t *testing.T) {
+	c := &connMQTT{}
+	mc := &mockClientSub{}
+	c.Client = mc
+
+	called := false
+	err := c.Sub("test/topic", func(m *Msg) error {
+		called = true
+		assert.Equal(t, "test/topic", m.Topic)
+		assert.Equal(t, []byte("payload"), m.Data)
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, mc.subscribeHandler)
+
+	// simulate incoming mqtt message
+	mc.subscribeHandler(mc, &mockMessage{topic: "test/topic", payload: []byte("payload")})
+	assert.True(t, called)
+}
+
+func TestConnMQTTSubTokenErrorReturnsError(t *testing.T) {
+	c := &connMQTT{}
+	mc := &mockClientSub{tokenErr: errors.New("subscribe failed")}
+	c.Client = mc
+
+	err := c.Sub("bad/topic", func(*Msg) error { return nil })
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "subscribe failed")
+}
+
+func TestConnMQTTUnsub_NilClient_NoPanic(t *testing.T) {
+	c := &connMQTT{Client: nil}
+	assert.NotPanics(t, func() { c.Unsub("a/b", "c/d") })
+}
+
+func TestConnMQTTPubMsg_ClientNilReturnsError(t *testing.T) {
+	c := &connMQTT{Client: nil}
+	err := c.PubMsg(&Msg{Topic: "t/1", Data: []byte("d")})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not connected")
+}
+
+type pubMockClient struct {
+	publishToken gomqtt.Token
+	publishTopic string
+	payload      interface{}
+}
+
+func (p *pubMockClient) IsConnected() bool       { return true }
+func (p *pubMockClient) IsConnectionOpen() bool  { return true }
+func (p *pubMockClient) Connect() gomqtt.Token   { return &mockToken{} }
+func (p *pubMockClient) Disconnect(quiesce uint) {}
+func (p *pubMockClient) Publish(topic string, qos byte, retained bool, payload interface{}) gomqtt.Token {
+	p.publishTopic = topic
+	p.payload = payload
+	if p.publishToken != nil {
+		return p.publishToken
+	}
+	return &mockToken{}
+}
+func (p *pubMockClient) Subscribe(topic string, qos byte, cb gomqtt.MessageHandler) gomqtt.Token {
+	return &mockToken{}
+}
+func (p *pubMockClient) SubscribeMultiple(filters map[string]byte, callback gomqtt.MessageHandler) gomqtt.Token {
+	return &mockToken{}
+}
+func (p *pubMockClient) Unsubscribe(topics ...string) gomqtt.Token       { return &mockToken{} }
+func (p *pubMockClient) AddRoute(topic string, cb gomqtt.MessageHandler) {}
+func (p *pubMockClient) OptionsReader() gomqtt.ClientOptionsReader {
+	return gomqtt.ClientOptionsReader{}
+}
+
+func TestConnMQTTPubMsgPublishTokenError(t *testing.T) {
+	c := &connMQTT{}
+	mock := &pubMockClient{publishToken: &mockToken{err: errors.New("publish failed")}}
+	c.Client = mock
+
+	err := c.PubMsg(&Msg{Topic: "t/err", Data: []byte("payload")})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "publish failed")
+}
+
+func TestConnMQTTPubMsgSuccess(t *testing.T) {
+	c := &connMQTT{}
+	mock := &pubMockClient{publishToken: &mockToken{err: nil}}
+	c.Client = mock
+
+	err := c.PubMsg(&Msg{Topic: "t/success", Data: []byte("ok")})
+	assert.NoError(t, err)
+	assert.Equal(t, "t/success", mock.publishTopic)
+	assert.Equal(t, []byte("ok"), mock.payload)
 }

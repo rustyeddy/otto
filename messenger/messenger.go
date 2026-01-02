@@ -249,6 +249,9 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 }
 
 func (m *connMQTT) IsConnected() bool {
+	if m.Client == nil {
+		return false
+	}
 	return m.Client.IsConnected()
 }
 
