@@ -41,10 +41,12 @@ var (
 func init() {
 	var mu sync.RWMutex
 	topics = &Topics{
-		Format: "o/%s/%s/%s",
+		Prefix: "o/",
+		Format: "%s/%s/%s",
 		Map:    make(map[string]int),
 		mu:     &mu,
 	}
+	topics.Format = topics.Prefix + topics.Format
 }
 
 // ValidateTopic checks if a topic string follows Otto's topic format conventions.
@@ -151,7 +153,15 @@ func (t *Topics) Data(topic string) string {
 }
 
 func DataTopic(topic string) string {
-	return topics.Control(topic)
+	return topics.Data(topic)
+}
+
+func Topic(topic string) string {
+	top := topics.Prefix + topic
+	topics.mu.Lock()
+	defer topics.mu.Unlock()
+	topics.Map[top]++
+	return top
 }
 
 // ServeHTTP implements http.Handler to provide a REST API endpoint for

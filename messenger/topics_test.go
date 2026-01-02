@@ -78,8 +78,13 @@ func TestDataTopic(t *testing.T) {
 	oldname := utils.StationName()
 	utils.SetStationName("teststation")
 	ct := DataTopic("super-bad")
-	assert.Equal(t, ct, "o/c/teststation/super-bad")
+	assert.Equal(t, ct, "o/d/teststation/super-bad")
 	utils.SetStationName(oldname)
+}
+
+func TestTopic(t *testing.T) {
+	top := Topic("f/y/z")
+	assert.Equal(t, top, "o/f/y/z")
 }
 
 func TestServeHTTP(t *testing.T) {

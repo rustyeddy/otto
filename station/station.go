@@ -180,8 +180,7 @@ func (st *Station) SayHello() {
 	}
 
 	// Use explicit topic for hello messages
-	// topic := messenger.DataTopic("hello")
-	topic := "o/d/" + st.Hostname + "/hello"
+	topic := messenger.Topic("d/" + st.Hostname + "/hello")
 	if err := msgr.Pub(topic, pbytes); err != nil {
 		// record the error for metrics / diagnostics
 		st.SaveError(fmt.Errorf("SayHello publish failed: %w", err))

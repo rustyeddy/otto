@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/rustyeddy/otto/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func getMsg() (*Msg, time.Time) {
@@ -370,8 +371,16 @@ func TestMsgSaver(t *testing.T) {
 
 	t.Run("StartSaving", func(t *testing.T) {
 		saver.StartSaving()
-		if len(saver.Messages) != 0 {
-			t.Error("Message should be saved when saving is enabled")
+		assert.Equal(t, 0, len(saver.Messages))
+
+		iid := msgid
+		for i := 0; i < 10; i++ {
+			_ = NewMsg("o/d/test-station/message", []byte("hello, world!"), "testing")
+		}
+		assert.Equal(t, 10, len(saver.Messages))
+		for _, smsg := range saver.Messages {
+			iid++
+			assert.Equal(t, iid, smsg.ID)
 		}
 	})
 
@@ -379,9 +388,7 @@ func TestMsgSaver(t *testing.T) {
 		saver.StopSaving()
 		initialLen := len(saver.Messages)
 		NewMsg("test/topic", []byte("test"), "test")
-		if len(saver.Messages) != initialLen {
-			t.Error("Message should not be saved when saving is disabled")
-		}
+		assert.Equal(t, initialLen, len(saver.Messages))
 	})
 
 	t.Run("ServeHTTP", func(t *testing.T) {
@@ -399,7 +406,28 @@ func TestMsgSaver(t *testing.T) {
 		}
 	})
 }
-func TestMsg_Dump(t *testing.T) {
+
+func TestMsgBool(t *testing.T) {
+	tsts := []struct {
+		val    string
+		expect bool
+	}{
+		{"true", true},
+		{"false", false},
+		{"ok", true},
+		{"on", true},
+		{"1", true},
+		{"0", false},
+	}
+
+	for _, tst := range tsts {
+		msg := NewMsg("o/d/station/booltest", []byte(tst.val), "booltest")
+		assert.Equal(t, tst.expect, msg.Bool())
+	}
+
+}
+
+func TestMsgDump(t *testing.T) {
 	msg := &Msg{
 		ID:        123,
 		Topic:     "test/topic",

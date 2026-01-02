@@ -29,7 +29,7 @@ run: build
 
 test:
 	rm -f cover.out
-	go test -coverprofile=cover.out -cover ./...
+	go test -benchmem -coverprofile=cover.out -cover ./...
 
 verbose:
 	rm -f cover.out

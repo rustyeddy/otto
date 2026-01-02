@@ -185,7 +185,7 @@ func (msg *Msg) Byte() []byte {
 
 // Bool interprets the message payload as a boolean value.
 // It recognizes common boolean string representations:
-//   - true: "true", "1", "on", "yes"
+//   - true: "true", "1", "on", "yes", "ok"
 //   - false: everything else
 //
 // Returns true if the payload matches a truthy value, false otherwise.
@@ -199,7 +199,7 @@ func (msg *Msg) Byte() []byte {
 func (msg *Msg) Bool() bool {
 	str := string(msg.Data)
 	switch str {
-	case "true", "1", "on", "yes":
+	case "true", "1", "on", "yes", "ok":
 		return true
 	default:
 		return false
