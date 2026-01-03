@@ -218,16 +218,20 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 	m.Debug = false
 	if m.Debug {
 		gomqtt.DEBUG = log.Default()
-		gomqtt.ERROR = log.Default()
 	}
+	gomqtt.ERROR = log.Default()
+	gomqtt.CRITICAL = log.Default()
+	gomqtt.WARN = log.Default()
+
 	url := "tcp://" + b + ":1883"
 	opts := gomqtt.NewClientOptions()
 	opts.AddBroker(url)
 	opts.SetClientID("o++o" + time.Now().Format(time.RFC3339))
+	opts.SetAutoReconnect(true)
+	// opts.SetConnectRetry(true)
 	opts.SetCleanSession(true)
 	opts.SetUsername(u)
 	opts.SetPassword(p)
-	opts.SetCleanSession(true)
 	opts.SetConnectionLostHandler(func(m mqtt.Client, err error) {
 		slog.Info("MQTT disconnected from serrver", "error", err)
 	})
@@ -242,7 +246,7 @@ func (m *connMQTT) Connect(b string, u string, p string) error {
 	token := m.Client.Connect()
 	token.Wait()
 	if token.Error() != nil {
-		return fmt.Errorf("Failed to connect to MQTT broker %s", token.Error())
+		return token.Error()
 	}
 	slog.Info("MQTT client has connected to", "broker", b)
 	return nil

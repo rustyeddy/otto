@@ -34,6 +34,14 @@ func (l *LogOutput) Set(value string) error {
 	return nil
 }
 
+// LogFormat defines the format of log output
+type LogFormat string
+
+const (
+	LogFormatText LogFormat = "text"
+	LogFormatJSON LogFormat = "json"
+)
+
 func (l *LogFormat) String() string {
 	return string(*l)
 }
@@ -42,14 +50,6 @@ func (l *LogFormat) Set(value string) error {
 	*l = LogFormat(value)
 	return nil
 }
-
-// LogFormat defines the format of log output
-type LogFormat string
-
-const (
-	LogFormatText LogFormat = "text"
-	LogFormatJSON LogFormat = "json"
-)
 
 // LogConfig holds the configuration for logging
 type LogConfig struct {

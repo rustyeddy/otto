@@ -234,7 +234,13 @@ func (o *OttO) Init() {
 // Start the OttO process, TODO return a stop channel or context?
 func (o *OttO) Start() {
 	if o.Messenger != nil {
-		go o.Messenger.Connect()
+		go func() {
+			err := o.Messenger.Connect()
+			if err != nil {
+				slog.Error("failed to connect to broker", "broker", o.Messenger.Broker, "error", err)
+				return
+			}
+		}()
 	}
 
 	if o.Server != nil {
