@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Ticker is a wrapper around time.Ticker it is given a name, it hold
+// Ticker is a wrapper around time.Ticker it is given a name, it holds
 // the duration and kept in a map indexed by name such that it is easy
 // to lookup to shutdown or reset
 type Ticker struct {
@@ -42,7 +42,7 @@ func Timestamp() time.Duration {
 
 // NewTicker creates a time.Ticker with the name n that will fire
 // every d time.Duration. The function f will be called every time
-// ticker goes off.  The ticker can be stoped, restarted and reset
+// ticker goes off.  The ticker can be stopped, restarted and reset
 // with a different duration
 func NewTicker(n string, d time.Duration, f func(t time.Time)) *Ticker {
 	t := &Ticker{
@@ -105,9 +105,9 @@ func (t *Ticker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.mu.RUnlock()
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		slog.Error("Failed to encode ticker info", "error", err, "ticker", t.Name)
-		http.Error(w, "Failed to encode ticker info", http.StatusInternalServerError)
 		return
 	}
 }
