@@ -2,6 +2,7 @@ package ottoctl
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -12,30 +13,31 @@ var statsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "Display runtime stats",
 	Long:  `Display runtime stats from local or remote Otto instance`,
-	Run:   statsRun,
+	RunE:  statsRun,
 }
 
-func statsRun(cmd *cobra.Command, args []string) {
+func statsRun(cmd *cobra.Command, args []string) error {
 	// Check if we should connect to a remote server
 	client := getClient()
 	if client == nil {
-		fmt.Fprintf(cmdOutput, "Failed to get an otto client")
-		return
+		return errors.New("statusRun failed to get a client")
 	}
 
 	// Remote mode: fetch stats from server
 	slog.Debug("Fetching stats from remote server", "url", client.BaseURL)
 	stats, err := client.GetStats()
 	if err != nil {
-		fmt.Fprintf(cmdOutput, "Error fetching remote stats: %v\n", err)
-		return
+		fmt.Fprintf(errOutput, "Error fetching remote stats: %v\n", err)
+		return err
 	}
 
 	// Pretty print the JSON response
 	jsonBytes, err := json.MarshalIndent(stats, "", "  ")
 	if err != nil {
-		fmt.Fprintf(cmdOutput, "Stats: %+v\n", stats)
+		fmt.Fprintf(errOutput, "%s", err)
+		return err
 	} else {
 		fmt.Fprintf(cmdOutput, "%s\n", string(jsonBytes))
 	}
+	return nil
 }
