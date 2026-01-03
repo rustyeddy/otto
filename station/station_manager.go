@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/rustyeddy/otto/messenger"
-	"github.com/rustyeddy/otto/server"
 	"github.com/rustyeddy/otto/utils"
 )
 
@@ -69,10 +68,6 @@ func (sm *StationManager) HandleMsg(msg *messenger.Msg) error {
 }
 
 func (sm *StationManager) Start() {
-
-	srv := server.GetServer()
-	srv.Register("/api/stations", sm)
-
 	msgr := messenger.GetMessenger()
 	msgr.Sub("o/d/+/hello", sm.HandleMsg)
 
