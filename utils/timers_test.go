@@ -655,3 +655,288 @@ func TestTickerServeHTTPInactiveAfterStop(t *testing.T) {
 		t.Log("Ticker still showing as active after Stop() - this may be a timing issue")
 	}
 }
+
+func TestTickersServeHTTP(t *testing.T) {
+	setupTest()
+	defer teardownTest()
+
+	tests := []struct {
+		name           string
+		method         string
+		expectedStatus int
+		checkResponse  bool
+	}{
+		{
+			name:           "GET request returns 200",
+			method:         "GET",
+			expectedStatus: http.StatusOK,
+			checkResponse:  true,
+		},
+		{
+			name:           "POST request returns 405",
+			method:         "POST",
+			expectedStatus: http.StatusMethodNotAllowed,
+			checkResponse:  false,
+		},
+		{
+			name:           "PUT request returns 405",
+			method:         "PUT",
+			expectedStatus: http.StatusMethodNotAllowed,
+			checkResponse:  false,
+		},
+	}
+
+	// Create multiple tickers
+	ticker1Done := make(chan bool)
+	ticker2Done := make(chan bool)
+	count1 := 0
+	count2 := 0
+	var mu1, mu2 sync.Mutex
+
+	f1 := func(ti time.Time) {
+		mu1.Lock()
+		count1++
+		if count1 >= 2 {
+			ticker1Done <- true
+		}
+		mu1.Unlock()
+	}
+
+	f2 := func(ti time.Time) {
+		mu2.Lock()
+		count2++
+		if count2 >= 2 {
+			ticker2Done <- true
+		}
+		mu2.Unlock()
+	}
+
+	NewTicker("ticker-1", 2*time.Millisecond, f1)
+	NewTicker("ticker-2", 2*time.Millisecond, f2)
+
+	// Wait for both tickers to fire at least twice
+	select {
+	case <-ticker1Done:
+	case <-time.After(50 * time.Millisecond):
+		t.Fatal("ticker-1 did not fire expected number of times")
+	}
+
+	select {
+	case <-ticker2Done:
+	case <-time.After(50 * time.Millisecond):
+		t.Fatal("ticker-2 did not fire expected number of times")
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, "/tickers", nil)
+			w := httptest.NewRecorder()
+
+			tickers := GetTickers()
+			tickers.ServeHTTP(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+
+			if tt.checkResponse {
+				// Check Content-Type header
+				contentType := w.Header().Get("Content-Type")
+				if contentType != "application/json" {
+					t.Errorf("Expected Content-Type application/json, got %s", contentType)
+				}
+
+				// Decode and validate JSON response
+				var tickerList []TickerInfo
+				if err := json.NewDecoder(w.Body).Decode(&tickerList); err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+
+				// Should have 2 tickers
+				if len(tickerList) != 2 {
+					t.Errorf("Expected 2 tickers, got %d", len(tickerList))
+				}
+
+				// Verify ticker names are present
+				foundTicker1 := false
+				foundTicker2 := false
+				for _, info := range tickerList {
+					if info.Name == "ticker-1" {
+						foundTicker1 = true
+						if info.Ticks < 2 {
+							t.Errorf("ticker-1 expected at least 2 ticks, got %d", info.Ticks)
+						}
+						if !info.Active {
+							t.Error("ticker-1 expected to be active")
+						}
+					} else if info.Name == "ticker-2" {
+						foundTicker2 = true
+						if info.Ticks < 2 {
+							t.Errorf("ticker-2 expected at least 2 ticks, got %d", info.Ticks)
+						}
+						if !info.Active {
+							t.Error("ticker-2 expected to be active")
+						}
+					}
+				}
+
+				if !foundTicker1 {
+					t.Error("ticker-1 not found in response")
+				}
+				if !foundTicker2 {
+					t.Error("ticker-2 not found in response")
+				}
+			}
+		})
+	}
+}
+
+func TestTickersServeHTTPEmpty(t *testing.T) {
+	setupTest()
+	defer teardownTest()
+
+	// No tickers created, should return empty array
+	req := httptest.NewRequest("GET", "/tickers", nil)
+	w := httptest.NewRecorder()
+
+	tickers := GetTickers()
+	tickers.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	var tickerList []TickerInfo
+	if err := json.NewDecoder(w.Body).Decode(&tickerList); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	if len(tickerList) != 0 {
+		t.Errorf("Expected 0 tickers, got %d", len(tickerList))
+	}
+}
+
+func TestTickersServeHTTPSingleTicker(t *testing.T) {
+	setupTest()
+	defer teardownTest()
+
+	// Create a single ticker
+	done := make(chan bool)
+	count := 0
+	var mu sync.Mutex
+
+	f := func(ti time.Time) {
+		mu.Lock()
+		count++
+		if count >= 3 {
+			done <- true
+		}
+		mu.Unlock()
+	}
+
+	NewTicker("single-ticker", 2*time.Millisecond, f)
+
+	// Wait for ticks
+	select {
+	case <-done:
+	case <-time.After(50 * time.Millisecond):
+		t.Fatal("ticker did not fire expected number of times")
+	}
+
+	req := httptest.NewRequest("GET", "/tickers", nil)
+	w := httptest.NewRecorder()
+
+	tickers := GetTickers()
+	tickers.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	var tickerList []TickerInfo
+	if err := json.NewDecoder(w.Body).Decode(&tickerList); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	if len(tickerList) != 1 {
+		t.Errorf("Expected 1 ticker, got %d", len(tickerList))
+	}
+
+	if len(tickerList) > 0 {
+		info := tickerList[0]
+		if info.Name != "single-ticker" {
+			t.Errorf("Expected name 'single-ticker', got '%s'", info.Name)
+		}
+		if info.Ticks < 3 {
+			t.Errorf("Expected at least 3 ticks, got %d", info.Ticks)
+		}
+		if !info.Active {
+			t.Error("Expected ticker to be active")
+		}
+	}
+}
+
+func TestTickersServeHTTPConcurrent(t *testing.T) {
+	setupTest()
+	defer teardownTest()
+
+	// Create multiple tickers
+	for i := 0; i < 5; i++ {
+		name := fmt.Sprintf("concurrent-ticker-%d", i)
+		f := func(ti time.Time) {}
+		NewTicker(name, 10*time.Millisecond, f)
+	}
+
+	// Wait for tickers to be created
+	time.Sleep(5 * time.Millisecond)
+
+	// Make multiple concurrent requests
+	var wg sync.WaitGroup
+	const numRequests = 10
+	errors := make(chan error, numRequests)
+
+	for i := 0; i < numRequests; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+
+			req := httptest.NewRequest("GET", "/tickers", nil)
+			w := httptest.NewRecorder()
+
+			tickers := GetTickers()
+			tickers.ServeHTTP(w, req)
+
+			if w.Code != http.StatusOK {
+				errors <- fmt.Errorf("Request %d: expected status 200, got %d", id, w.Code)
+				return
+			}
+
+			var tickerList []TickerInfo
+			if err := json.NewDecoder(w.Body).Decode(&tickerList); err != nil {
+				errors <- fmt.Errorf("Request %d: failed to decode response: %v", id, err)
+				return
+			}
+
+			if len(tickerList) != 5 {
+				errors <- fmt.Errorf("Request %d: expected 5 tickers, got %d", id, len(tickerList))
+				return
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	// Check for any errors
+	errorCount := 0
+	for err := range errors {
+		if err != nil {
+			t.Error(err)
+			errorCount++
+		}
+	}
+
+	if errorCount > 0 {
+		t.Errorf("Found %d errors during concurrent HTTP requests", errorCount)
+	}
+}

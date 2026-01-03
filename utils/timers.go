@@ -22,12 +22,15 @@ type Ticker struct {
 	active   bool
 }
 
+// Tickers is a map of all active tickers indexed by name
+type Tickers map[string]*Ticker
+
 var (
 	// Start time is the time otto started
 	StartTime time.Time
 
 	// the map with all our tickers
-	tickers = make(map[string]*Ticker)
+	tickers = make(Tickers)
 )
 
 func init() {
@@ -69,7 +72,7 @@ func NewTicker(n string, d time.Duration, f func(t time.Time)) *Ticker {
 }
 
 // GetTickers will return the map of all ticker values.
-func GetTickers() map[string]*Ticker {
+func GetTickers() Tickers {
 	return tickers
 }
 
@@ -108,6 +111,36 @@ func (t *Ticker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		slog.Error("Failed to encode ticker info", "error", err, "ticker", t.Name)
+		return
+	}
+}
+
+// ServeHTTP implements http.Handler to return a list of all tickers as JSON.
+// It returns an array of ticker information for all registered tickers.
+func (ts Tickers) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Collect all ticker information
+	tickerList := make([]TickerInfo, 0, len(ts))
+	for _, t := range ts {
+		t.mu.RLock()
+		info := TickerInfo{
+			Name:     t.Name,
+			LastTick: t.lastTick,
+			Ticks:    t.ticks,
+			Active:   t.active,
+		}
+		t.mu.RUnlock()
+		tickerList = append(tickerList, info)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tickerList); err != nil {
+		slog.Error("Failed to encode tickers list", "error", err)
 		return
 	}
 }
