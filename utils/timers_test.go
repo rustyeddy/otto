@@ -12,7 +12,7 @@ import (
 
 // setupTest clears the tickers map before each test to ensure clean state
 func setupTest() {
-	tickers = make(map[string]*Ticker)
+	tickers = make(Tickers)
 }
 
 // teardownTest stops all tickers and clears the map after each test
@@ -22,7 +22,7 @@ func teardownTest() {
 			ticker.Ticker.Stop()
 		}
 	}
-	tickers = make(map[string]*Ticker)
+	tickers = make(Tickers)
 }
 
 func TestTimestamp(t *testing.T) {
