@@ -30,11 +30,18 @@ func stationsRun(cmd *cobra.Command, args []string) error {
 		return errors.New(fmt.Sprintf("Error fetching remote stations: %v\n", err))
 	}
 
-	fmt.Fprintf(cmdOutput, "ID Hostname		LastHeard\n")
-	fmt.Fprintf(cmdOutput, "-------------------------\n")
+	fmt.Fprintf(cmdOutput, "%20s: %-20s %8s %9s %16s\n", "id", "hostname", "expires", "version", "ipaddrs")
+	fmt.Fprintf(cmdOutput, "-----------------------------------------------------------------------------------\n")
 	for _, st := range stationsData {
-		rounded := st.LastHeard.Round(time.Second)
-		fmt.Fprintf(cmdOutput, "%s: %s %s\n", st.ID, st.Hostname, rounded)
+		//rounded := st.LastHeard.Round(time.Second)
+		exp := st.LastHeard.Add(st.Expiration)
+		expires := time.Until(exp)
+		expires = expires.Round(time.Second)
+		ipaddr := ""
+		if len(st.Ifaces) > 0 && len(st.Ifaces[0].IPAddrs) > 0 {
+			ipaddr = st.Ifaces[0].IPAddrs[0].String()
+		}
+		fmt.Fprintf(cmdOutput, "%20s: %-20s %8v %9s %16s\n", st.ID, st.Hostname, expires, st.Version, ipaddr)
 	}
 	return nil
 }

@@ -17,8 +17,9 @@ func TestStations(t *testing.T) {
 	assert.NoError(t, err)
 
 	output := tst.buffer.String()
-	assert.Contains(t, output, "ID Hostname")
-	assert.Contains(t, output, "LastHeard")
+	assert.Contains(t, output, "id")
+	assert.Contains(t, output, "hostname")
+	assert.Contains(t, output, "last")
 	assert.Contains(t, output, "-------------------------")
 }
 

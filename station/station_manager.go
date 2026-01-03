@@ -32,6 +32,7 @@ type StationEvent struct {
 
 var (
 	stations *StationManager
+	version  string
 )
 
 func GetStationManager() *StationManager {
@@ -54,6 +55,10 @@ func NewStationManager() (sm *StationManager) {
 	// Buffer the event channel to avoid blocking producers and to satisfy tests
 	sm.EventQ = make(chan *StationEvent, 100)
 	return sm
+}
+
+func SetVersion(v string) {
+	version = v
 }
 
 func (sm *StationManager) HandleMsg(msg *messenger.Msg) error {

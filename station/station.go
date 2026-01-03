@@ -19,21 +19,22 @@ import (
 // Station is the primary structure that holds an array of
 // Sensors which in turn hold a timeseries of datapoints.
 type Station struct {
-	ID         string        `json:"id"`
-	LastHeard  time.Time     `json:"last-heard"`
-	Expiration time.Duration `json:"expiration"` // how long to timeout a station
-	Hostname   string        `json:"hostname"`
-	Local      bool          `json:"local"`
-	Ifaces     []*Iface      `json:"iface"`
+	ID       string   `json:"id"`
+	Hostname string   `json:"hostname"`
+	Local    bool     `json:"local"`
+	Ifaces   []*Iface `json:"iface"`
+	Version  string   `json:"version"`
 
 	Devices *DeviceManager  `json:"device-manager"`
 	Metrics *StationMetrics `json:"-"` // `json:"metrics"`
 
-	errq   chan error
-	errors []error `json:"-"`
-
+	LastHeard     time.Time     `json:"last-heard"`
+	Expiration    time.Duration `json:"expiration"` // how long to timeout a station
 	time.Duration `json:"duration"`
 	ticker        *time.Ticker `json:"-"`
+
+	errq   chan error
+	errors []error `json:"-"`
 
 	done   chan bool          `json:"-"`
 	cancel context.CancelFunc `json:"-"`
@@ -69,6 +70,7 @@ func NewStation(id string) (*Station, error) {
 		done:       make(chan bool, 1),
 		Metrics:    NewStationMetrics(),
 		Devices:    NewDeviceManager(),
+		Version:    version,
 	}
 
 	go st.errorHandler()

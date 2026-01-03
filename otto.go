@@ -202,6 +202,7 @@ func (o *OttO) Init() {
 
 	if o.StationManager == nil {
 		o.StationManager = station.GetStationManager()
+		station.SetVersion(Version)
 	}
 
 	if o.Server == nil {
