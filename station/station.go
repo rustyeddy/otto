@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rustyeddy/otto/messenger"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // Station is the primary structure that holds an array of
@@ -31,7 +32,7 @@ type Station struct {
 	LastHeard     time.Time     `json:"last-heard"`
 	Expiration    time.Duration `json:"expiration"` // how long to timeout a station
 	time.Duration `json:"duration"`
-	ticker        *time.Ticker `json:"-"`
+	ticker        *utils.Ticker `json:"-"`
 
 	errq   chan error
 	errors []error `json:"-"`
@@ -136,9 +137,11 @@ func (st *Station) StartTicker(duration time.Duration) error {
 	st.cancel = cancel
 
 	// create ticker
-	st.ticker = time.NewTicker(duration)
+	// st.ticker = time.NewTicker(duration)
+	st.ticker = utils.NewTicker(st.ID, duration, func(t time.Time) {
+		st.SayHello()
+	})
 
-	// just to get started
 	go func() {
 		for {
 			select {
@@ -146,12 +149,9 @@ func (st *Station) StartTicker(duration time.Duration) error {
 				return
 			case <-st.done:
 				return
-			case <-st.ticker.C:
-				st.SayHello()
 			}
 		}
 	}()
-
 	return nil
 }
 

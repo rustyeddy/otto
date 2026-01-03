@@ -19,7 +19,8 @@ func TestStations(t *testing.T) {
 	output := tst.buffer.String()
 	assert.Contains(t, output, "id")
 	assert.Contains(t, output, "hostname")
-	assert.Contains(t, output, "last")
+	assert.Contains(t, output, "expires")
+	assert.Contains(t, output, "version")
 	assert.Contains(t, output, "-------------------------")
 }
 

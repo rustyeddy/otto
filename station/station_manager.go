@@ -10,6 +10,7 @@ import (
 
 	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/server"
+	"github.com/rustyeddy/otto/utils"
 )
 
 // StationManager keeps track of all the stations we have seen
@@ -18,8 +19,8 @@ type StationManager struct {
 	Stale    map[string]*Station `json:"stale"`
 	EventQ   chan *StationEvent  `json:"-"`
 
-	ticker *time.Ticker `json:"-"`
-	mu     *sync.Mutex  `json:"-"`
+	ticker *utils.Ticker `json:"-"`
+	mu     *sync.Mutex   `json:"-"`
 }
 
 type StationEvent struct {
@@ -77,39 +78,39 @@ func (sm *StationManager) Start() {
 
 	// Start a ticker to clean up stale entries
 	quit := make(chan struct{})
-	sm.ticker = time.NewTicker(10 * time.Second)
+	sm.ticker = utils.NewTicker("station-manager", 10*time.Second, func(t time.Time) {
+		for id, st := range sm.Stations {
+
+			// Don't try to timeout the local station
+			if st.Local {
+				continue
+			}
+
+			// Do not timeout stations with a duration of 0
+			if st.Expiration == 0 {
+				slog.Info("Station %s expiration == 0 do not timeout", "id", id)
+				continue
+			}
+
+			// Timeout a station if we have not heard from it in 3
+			// timeframes.
+			st.mu.Lock()
+
+			expires := st.LastHeard.Add(st.Expiration)
+			if time.Until(expires) < 0 {
+				sm.mu.Lock()
+				slog.Info("Station has timed out", "station", id)
+				sm.Stale[id] = st
+				delete(sm.Stations, id)
+				sm.mu.Unlock()
+			}
+			st.mu.Unlock()
+		}
+	})
+
 	go func() {
 		for {
 			select {
-			case <-sm.ticker.C:
-				for id, st := range sm.Stations {
-
-					// Don't try to timeout the local station
-					if st.Local {
-						continue
-					}
-
-					// Do not timeout stations with a duration of 0
-					if st.Expiration == 0 {
-						slog.Info("Station %s expiration == 0 do not timeout", "id", id)
-						continue
-					}
-
-					// Timeout a station if we have not heard from it in 3
-					// timeframes.
-					st.mu.Lock()
-
-					expires := st.LastHeard.Add(st.Expiration)
-					if time.Until(expires) < 0 {
-						sm.mu.Lock()
-						slog.Info("Station has timed out", "station", id)
-						sm.Stale[id] = st
-						delete(sm.Stations, id)
-						sm.mu.Unlock()
-					}
-					st.mu.Unlock()
-				}
-
 			case ev := <-sm.EventQ:
 				slog.Info("Station Event", "event", ev)
 				st := sm.Get(ev.StationID)

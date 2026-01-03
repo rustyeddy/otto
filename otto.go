@@ -221,6 +221,7 @@ func (o *OttO) Init() {
 			return
 		}
 		// Initialzie the local station
+		o.Station.Local = true
 		o.Station.Init()
 		o.Station.StartTicker(o.Station.Duration)
 	}
