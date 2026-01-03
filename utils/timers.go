@@ -1,6 +1,12 @@
 package utils
 
-import "time"
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	"sync"
+	"time"
+)
 
 // Ticker is a wrapper around time.Ticker it is given a name, it hold
 // the duration and kept in a map indexed by name such that it is easy
@@ -10,8 +16,10 @@ type Ticker struct {
 	*time.Ticker
 	Func func(t time.Time)
 
+	mu       sync.RWMutex
 	lastTick time.Time
 	ticks    int
+	active   bool
 }
 
 var (
@@ -41,15 +49,21 @@ func NewTicker(n string, d time.Duration, f func(t time.Time)) *Ticker {
 		Name:   n,
 		Ticker: time.NewTicker(d),
 		Func:   f,
+		active: true,
 	}
 
 	tickers[n] = t
 	go func() {
 		for tick := range t.Ticker.C {
+			t.mu.Lock()
 			t.lastTick = time.Now()
 			t.ticks++
+			t.mu.Unlock()
 			f(tick)
 		}
+		t.mu.Lock()
+		t.active = false
+		t.mu.Unlock()
 	}()
 	return t
 }
@@ -63,4 +77,37 @@ func GetTickers() map[string]*Ticker {
 func GetTicker(n string) *Ticker {
 	t, _ := tickers[n]
 	return t
+}
+
+// TickerInfo holds the JSON-serializable ticker information
+type TickerInfo struct {
+	Name     string    `json:"name"`
+	LastTick time.Time `json:"last_tick"`
+	Ticks    int       `json:"ticks"`
+	Active   bool      `json:"active"`
+}
+
+// ServeHTTP implements http.Handler to return ticker information as JSON.
+// It returns the ticker's name, last tick time, total tick count, and active status.
+func (t *Ticker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	t.mu.RLock()
+	info := TickerInfo{
+		Name:     t.Name,
+		LastTick: t.lastTick,
+		Ticks:    t.ticks,
+		Active:   t.active,
+	}
+	t.mu.RUnlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(info); err != nil {
+		slog.Error("Failed to encode ticker info", "error", err, "ticker", t.Name)
+		http.Error(w, "Failed to encode ticker info", http.StatusInternalServerError)
+		return
+	}
 }
