@@ -227,10 +227,12 @@ func (o *OttO) Init() {
 	}
 
 	o.Server.Register("/version", o)
-	o.Server.Register("/api/shutdown", o)
-	o.Server.Register("/api/topics", messenger.GetTopics())
-	o.Server.Register("/api/stats", &utils.Stats{})
 	o.Server.Register("/api/log", o.LogConfig)
+	o.Server.Register("/api/shutdown", o)
+	o.Server.Register("/api/stations", o.StationManager)
+	o.Server.Register("/api/stats", &utils.Stats{})
+	o.Server.Register("/api/timers", utils.GetTickers())
+	o.Server.Register("/api/topics", messenger.GetTopics())
 }
 
 // Start the OttO process, TODO return a stop channel or context?

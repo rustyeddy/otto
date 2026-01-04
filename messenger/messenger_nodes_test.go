@@ -217,17 +217,17 @@ func TestServeHTTPUnknownPathStillHandled(t *testing.T) {
 }
 
 func TestConnMQTTConnectEmptyBroker(t *testing.T) {
-    c := &connMQTT{}
-    err := c.Connect("", "", "")
-    assert.Error(t, err, "expected error when connecting with empty broker address")
+	c := &connMQTT{}
+	err := c.Connect("", "", "")
+	assert.Error(t, err, "expected error when connecting with empty broker address")
 }
 
 func TestConnMQTTConnectUnreachableHost(t *testing.T) {
-    c := &connMQTT{}
-    broker := "127.0.0.1:65535"
-    err := c.Connect(broker, "user", "pass")
-    if err == nil {
-        t.Skipf("unexpectedly connected to broker at %s in test environment; skipping", broker)
-    }
-    assert.Error(t, err, "expected error when connecting to unreachable broker")
+	c := &connMQTT{}
+	broker := "127.0.0.1:65535"
+	err := c.Connect(broker, "user", "pass")
+	if err == nil {
+		t.Skipf("unexpectedly connected to broker at %s in test environment; skipping", broker)
+	}
+	assert.Error(t, err, "expected error when connecting to unreachable broker")
 }

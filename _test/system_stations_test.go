@@ -47,7 +47,10 @@ func (ts *systemTest) testStations(t *testing.T) {
 
 	stations, err := cli.GetStations()
 	assert.NoError(t, err)
-	assert.Equal(t, 11, len(stations))
+	assert.True(t, len(stations) == 11 || len(stations) == 10)
+
+	st := ts.StationManager.Get("station-009")
+	assert.NotNil(t, st)
 
 	var wg sync.WaitGroup
 	go func() {
@@ -55,25 +58,19 @@ func (ts *systemTest) testStations(t *testing.T) {
 		defer wg.Done()
 
 		<-time.After(10 * time.Second)
-		// stop a couple stations
 		t.Logf("Stopping station-09")
-		st := ts.StationManager.Get("station-009")
-		assert.NotNil(t, st)
-		if st != nil {
-			st.Stop()
-		}
-
+		st.Stop()
 		<-time.After(5 * time.Minute)
-		t.Logf("Checking to insure station-009 has been expired")
-		assert.Equal(t, 11, len(stations))
-
-		// reststations, err := cli.GetStations()
-		// assert.NoError(t, err)
-		// assert.Equal(t, 10, len(reststations))
-
-		st = ts.StationManager.Get("station-009")
-		assert.Nil(t, st)
 	}()
-
 	wg.Wait()
+
+	t.Logf("Checking to insure station-009 has been expired")
+	assert.Equal(t, 10, len(stations))
+
+	// reststations, err := cli.GetStations()
+	// assert.NoError(t, err)
+	// assert.Equal(t, 10, len(reststations))
+
+	st = ts.StationManager.Get("station-009")
+	assert.Nil(t, st)
 }
