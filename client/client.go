@@ -118,6 +118,18 @@ func (c *Client) GetLogConfig() (result utils.LogConfig, err error) {
 	return result, nil
 }
 
+// GetTimers retrieves timer information from the Otto server.
+// Returns a slice of TickerInfo containing details about active timers.
+//
+// This calls the /api/timers endpoint on the server.
+func (c *Client) GetTimers() ([]utils.TickerInfo, error) {
+	var timers []utils.TickerInfo
+	if err := c.get("/api/timers", &timers); err != nil {
+		return nil, err
+	}
+	return timers, nil
+}
+
 // Ping checks if the Otto server is reachable and responding.
 // Returns nil if the server is healthy, error otherwise.
 func (c *Client) Ping() error {

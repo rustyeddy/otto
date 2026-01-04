@@ -1,0 +1,20 @@
+[
+  {
+    "name": "heartbeat",
+    "last_tick": "2026-01-04T16:40:00Z",
+    "ticks": 120,
+    "active": true
+  },
+  {
+    "name": "sensor_poll",
+    "last_tick": "2026-01-04T16:39:55Z",
+    "ticks": 240,
+    "active": true
+  },
+  {
+    "name": "cleanup",
+    "last_tick": "2026-01-04T16:35:00Z",
+    "ticks": 6,
+    "active": false
+  }
+]
