@@ -38,6 +38,7 @@ func init() {
 	rootCmd.AddCommand(shutdownCmd)
 	rootCmd.AddCommand(stationsCmd)
 	rootCmd.AddCommand(statsCmd)
+	rootCmd.AddCommand(timersCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 

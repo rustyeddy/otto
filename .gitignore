@@ -21,6 +21,7 @@ examples/mock/mock
 examples/logging_demo
 otto/otto
 ottoctl/ottoctl
+cmd/ottoctl/ottoctl/ottoctl
 mock/mock
 gpio/gpio
 station/station

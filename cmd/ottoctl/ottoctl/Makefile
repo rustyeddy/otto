@@ -1,2 +1,2 @@
 ottoctl: main.go
-	go build -v . -o ottoctl
+	go build -v -o ottoctl .
