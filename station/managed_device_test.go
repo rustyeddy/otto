@@ -18,10 +18,10 @@ func TestManagedDevice(t *testing.T) {
 	}
 
 	messenger.SetMessenger(nil)
-	md.Subscribe(topic, func(b bool) {
-		called = b
+	md.Subscribe(topic, func(msg *messenger.Msg) error {
+		called = true
+		return nil
 	})
-	println(called)
 	assert.False(t, called)
 
 	// this will print a warning
@@ -29,8 +29,9 @@ func TestManagedDevice(t *testing.T) {
 
 	msgr := messenger.NewMessenger("none")
 	assert.NotNil(t, msgr)
-	md.Subscribe(topic, func(b bool) {
-		called = b
+	md.Subscribe(topic, func(msg *messenger.Msg) error {
+		called = true
+		return nil
 	})
 
 	var data any
@@ -40,7 +41,8 @@ func TestManagedDevice(t *testing.T) {
 
 	data = "false"
 	md.PubData(data)
-	assert.False(t, called)
+	assert.True(t, called)
+	assert.Equal(t, "false", data.(string))
 }
 
 func TestPubData(t *testing.T) {

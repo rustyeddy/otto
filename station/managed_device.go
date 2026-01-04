@@ -41,31 +41,17 @@ func (md *ManagedDevice) ID() string {
 }
 
 // Subscribe sets up a subscription for this device
-func (md *ManagedDevice) Subscribe(topic string, callback func(bool)) {
+func (md *ManagedDevice) Subscribe(topic string, callback func(msg *messenger.Msg) error) {
 	msgr := messenger.GetMessenger()
 	if msgr == nil {
 		slog.Warn("No messenger available for device", "device", md.Name)
 		return
 	}
-
-	handler := messenger.MsgHandler(func(msg *messenger.Msg) error {
-		// Parse the message and call the callback
-		var val bool
-		dataStr := string(msg.Data)
-		if dataStr == "on" || dataStr == "true" || dataStr == "1" {
-			val = true
-		} else {
-			val = false
-		}
-		callback(val)
-		return nil
-	})
-
-	msgr.Sub(topic, handler)
+	msgr.Sub(topic, callback)
 }
 
 // PubData publishes data for this device
-func (md *ManagedDevice) PubData(data interface{}) {
+func (md *ManagedDevice) PubData(data any) {
 	msgr := messenger.GetMessenger()
 	if msgr == nil {
 		slog.Warn("No messenger available for device", "device", md.Name)
