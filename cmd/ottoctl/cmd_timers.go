@@ -1,10 +1,10 @@
 package ottoctl
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -31,13 +31,12 @@ func timersRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Pretty print the JSON response
-	jsonBytes, err := json.MarshalIndent(timers, "", "  ")
-	if err != nil {
-		fmt.Fprintf(errOutput, "%s", err)
-		return err
-	} else {
-		fmt.Fprintf(cmdOutput, "%s\n", string(jsonBytes))
+	fmt.Fprintf(cmdOutput, "%20s %7s %6s %s\n", "ticker", "active", "ticks", "last")
+	fmt.Fprintln(cmdOutput, "--------------------------------------------------------------")
+	for _, t := range timers {
+		last := time.Since(t.LastTick)
+		last = last.Round(time.Second)
+		fmt.Fprintf(cmdOutput, "%20s %7t %6d %s\n", t.Name, t.Active, t.Ticks, last)
 	}
 	return nil
 }
