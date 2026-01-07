@@ -1,37 +1,51 @@
 package main
 
 import (
-	"log/slog"
-	"os"
+	"context"
 	"os/signal"
 	"syscall"
 
-	"github.com/rustyeddy/otto"
-	"github.com/rustyeddy/otto/utils"
+	"github.com/rustyeddy/devices/gpio" // your devices
+	"github.com/rustyeddy/otto/messenger"
+	"github.com/rustyeddy/otto/messenger/codec"
+	mqttpaho "github.com/rustyeddy/otto/messenger/mqtt"
 )
 
 func main() {
-	// Set up signal handling for graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
-	// TODO: add command line flags
-	// configure logging.
-	o := otto.OttO{
-		LogConfig: utils.DefaultLogConfig(),
+	// MQTT
+	m := mqttpaho.New(mqttpaho.Config{
+		Broker:       "tcp://10.11.1.11:1883",
+		ClientID:     "", // auto
+		Username:     "",
+		Password:     "",
+		CleanSession: true,
+	})
+
+	reg := messenger.NewRegistry(m, messenger.TopicScheme{Prefix: "otto"})
+
+	// IMPORTANT: resubscribe on reconnect
+	m.SetOnConnect(func() { reg.ResubscribeAll(ctx) })
+
+	if err := m.Connect(ctx); err != nil {
+		panic(err)
 	}
-	o.Init()
-	o.Start()
+	// First connect: apply subscriptions now too
+	reg.ResubscribeAll(ctx)
 
-	// Block until we receive a signal or done channel closes
-	select {
-	case sig := <-sigChan:
-		slog.Info("Received shutdown signal", "signal", sig)
-		o.Stop()
-	case <-o.Done():
-		slog.Info("Server done channel closed")
-		o.Shutdown()
-	}
+	// Devices (examples)
+	btn := gpio.NewButton("button") // devices.Source[bool]
+	rel := gpio.NewRelay("light")   // devices.Duplex[bool]
 
-	slog.Info("OttO server stopped")
+	reg.Add(btn)
+	reg.Add(rel)
+
+	// Typed wiring
+	messenger.WireSource(ctx, reg, btn, codec.JSON[bool]{})
+	messenger.WireDuplex(ctx, reg, rel, codec.JSON[bool]{})
+
+	// Run
+	_ = reg.Run(ctx)
 }
