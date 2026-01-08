@@ -125,6 +125,8 @@ func (r *Registry) publishMeta(ctx context.Context, dev devices.Device) {
 		ValueType: desc.ValueType,
 		Access:    string(desc.Access),
 		Unit:      desc.Unit,
+		Min:       desc.Min,
+		Max:       desc.Max,
 		Tags:      desc.Tags,
 		Attrs:     desc.Attributes,
 	}
