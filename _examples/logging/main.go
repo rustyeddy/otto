@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/rustyeddy/otto/utils"
+	"github.com/rustyeddy/otto/_utils"
 )
 
 func main() {

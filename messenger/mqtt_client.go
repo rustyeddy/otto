@@ -2,6 +2,7 @@ package messenger
 
 import "context"
 
+// Message is a decoded MQTT message delivered to a handler.
 type Message struct {
 	Topic   string
 	Payload []byte
@@ -9,6 +10,7 @@ type Message struct {
 	QoS     byte
 }
 
+// MQTT abstracts the MQTT client operations used by the messenger.
 type MQTT interface {
 	// Publish should be safe to call from multiple goroutines.
 	Publish(ctx context.Context, topic string, payload []byte, retain bool, qos byte) error
