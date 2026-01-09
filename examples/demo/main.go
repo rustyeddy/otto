@@ -14,6 +14,7 @@ import (
 	"github.com/rustyeddy/otto/messenger"
 	"github.com/rustyeddy/otto/messenger/codec"
 	mqttpaho "github.com/rustyeddy/otto/messenger/mqtt"
+	"github.com/rustyeddy/otto/rules"
 )
 
 func main() {
@@ -79,23 +80,31 @@ func main() {
 	messenger.WireSource(ctx, reg, btn, codec.JSON[bool]{})
 	messenger.WireDuplex(ctx, reg, rel, codec.JSON[bool]{})
 
-	// ---- Demo behavior: press button toggles relay (in OttO, not in devices) ----
+	runner := rules.NewRunner()
+	runner.Add(rules.NewToggleOnRisingEdge("btn->toggle-relay", reg, btn, rel))
+
 	go func() {
-		for {
-			select {
-			case v := <-btn.Out():
-				// interpret "true" as press (depends on pull-up/down wiring)
-				if v {
-					// toggle the relay by sending into its command channel
-					rel.In() <- !current(rel)
-					slog.Info("button pressed: toggling relay")
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
+		_ = runner.Run(ctx)
 	}()
 
+	/*
+			// ---- Demo behavior: press button toggles relay (in OttO, not in devices) ----
+			go func() {
+				for {
+					select {
+		        case v := <-btn.Out():
+						// interpret "true" as press (depends on pull-up/down wiring)
+						if v {
+							// toggle the relay by sending into its command channel
+							rel.In() <- !current(rel)
+							slog.Info("button pressed: toggling relay")
+						}
+		        case <-ctx.Done():
+						return
+					}
+				}
+			}()
+	*/
 	// ---- Demo: simulate button presses in VPIO every 3 seconds ----
 	go func() {
 		t := time.NewTicker(3 * time.Second)

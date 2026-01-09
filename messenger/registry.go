@@ -42,6 +42,15 @@ type Registry struct {
 
 	// Active unsubscribers (topic -> unsub)
 	unsubs map[string]func() error
+
+	// ---- State cache ----
+	stateMu sync.RWMutex
+
+	// raw retained payloads (JSON bytes as published)
+	stateRaw map[string][]byte
+
+	// decoded state cache (optional, populated by WireSource)
+	stateAny map[string]any
 }
 
 func NewRegistry(m MQTT, topics TopicScheme) *Registry {
@@ -56,8 +65,11 @@ func NewRegistry(m MQTT, topics TopicScheme) *Registry {
 		RetainState:    true,
 		RetainMeta:     true,
 		CommandTimeout: 2 * time.Second,
-		subs:           map[string]subSpec{},
-		unsubs:         map[string]func() error{},
+
+		subs:     map[string]subSpec{},
+		unsubs:   map[string]func() error{},
+		stateRaw: make(map[string][]byte),
+		stateAny: make(map[string]any),
 	}
 }
 
@@ -238,4 +250,34 @@ func (r *Registry) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// StateRaw returns the last published state payload for a device.
+func (r *Registry) StateRaw(name string) ([]byte, bool) {
+	r.stateMu.RLock()
+	defer r.stateMu.RUnlock()
+	b, ok := r.stateRaw[name]
+	return b, ok
+}
+
+// StateAny returns the last decoded state value (if known).
+func (r *Registry) StateAny(name string) (any, bool) {
+	r.stateMu.RLock()
+	defer r.stateMu.RUnlock()
+	v, ok := r.stateAny[name]
+	return v, ok
+}
+
+// StateAs returns the last decoded state as a concrete type.
+func StateAs[T any](r *Registry, name string) (T, bool) {
+	var zero T
+	v, ok := r.StateAny(name)
+	if !ok {
+		return zero, false
+	}
+	tv, ok := v.(T)
+	if !ok {
+		return zero, false
+	}
+	return tv, true
 }

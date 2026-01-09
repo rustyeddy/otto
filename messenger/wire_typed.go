@@ -19,11 +19,21 @@ func WireSource[T any](ctx context.Context, r *Registry, dev devices.Source[T], 
 				if !ok {
 					return
 				}
+
+				// encode
 				b, err := c.Marshal(v)
 				if err != nil {
 					r.Log.Warn("state marshal failed", "device", name, "error", err)
 					continue
 				}
+
+				// cache
+				r.stateMu.Lock()
+				r.stateRaw[name] = b
+				r.stateAny[name] = v
+				r.stateMu.Unlock()
+
+				// publish
 				_ = r.MQTT.Publish(ctx, r.Topics.State(name), b, r.RetainState, r.QoSState)
 
 			case <-ctx.Done():
