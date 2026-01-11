@@ -8,6 +8,7 @@ Add tests and docs with minimal disruption to public APIs.
 - Do NOT add/require external services (no real MQTT broker, DB, HTTP server) for unit tests.
 - Do NOT access hardware, GPIO, serial, or OS-specific devices in tests.
 - Avoid broad refactors. Prefer small, additive changes that enable testing.
+- Always ignore files and directories that begin with an underscore '_'.
 
 ## Go conventions
 - Run `gofmt` on all changed files.
