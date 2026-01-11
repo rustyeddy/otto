@@ -12,6 +12,7 @@ type subSpec struct {
 	handler func(Message)
 }
 
+// Messenger manages desired MQTT subscriptions.
 type Messenger struct {
 	MQTT MQTT
 
@@ -20,6 +21,7 @@ type Messenger struct {
 	unsubs        map[string]func() error
 }
 
+// New returns a Messenger for the provided MQTT client.
 func New(mqtt MQTT) *Messenger {
 	return &Messenger{
 		MQTT:          mqtt,
@@ -28,14 +30,14 @@ func New(mqtt MQTT) *Messenger {
 	}
 }
 
-// Register a subscription you want to always be active.
+// WantSub registers a subscription that should always be active.
 func (m *Messenger) WantSub(topic string, qos byte, handler func(Message)) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.subscriptions[topic] = subSpec{topic: topic, qos: qos, handler: handler}
 }
 
-// Apply all desired subscriptions (call on first connect and on every reconnect).
+// ResubscribeAll applies desired subscriptions on connect and reconnect.
 func (m *Messenger) ResubscribeAll(ctx context.Context) {
 	slog.Info("MQTT connected; (re)subscribing", "count", len(m.subscriptions))
 

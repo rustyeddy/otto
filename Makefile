@@ -15,18 +15,6 @@ fmt:
 vet:
 	go vet ./...
 
-# ottoctl:
-# 	go build -o ${OTTOCTL_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/ottoctl/ottoctl
-
-# otto:
-# 	go build -o ${OTTO_BINARY} -ldflags "-X github.com/rustyeddy/otto/cmd.version=${VERSION}" ./cmd/otto
-
-build:
-	$(MAKE) -C cmd
-
-run: build
-	./otto
-
 test:
 	rm -f cover.out
 	go test -benchmem -coverprofile=cover.out -cover ./...
@@ -104,4 +92,4 @@ service-status:
 service-logs:
 	sudo journalctl -u $(SERVICE_FILE) -f
 
-.PHONY: all build cmd otto ottoctl clean ci fmt run test vet install install-service enable-service uninstall-service uninstall service-status service-logs $(SUBDIRS)
+.PHONY: all build otto ottoctl clean ci fmt run test vet install install-service enable-service uninstall-service uninstall service-status service-logs $(SUBDIRS)

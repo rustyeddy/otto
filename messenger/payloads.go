@@ -2,11 +2,13 @@ package messenger
 
 import "time"
 
+// StatusPayload is the JSON body for status topics.
 type StatusPayload struct {
 	Status string    `json:"status"` // "online"|"offline"
 	Time   time.Time `json:"time"`
 }
 
+// MetaPayload is the JSON body for device metadata topics.
 type MetaPayload struct {
 	Name      string            `json:"name"`
 	Kind      string            `json:"kind"`

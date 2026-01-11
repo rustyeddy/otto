@@ -23,6 +23,7 @@ type ToggleOnRisingEdge struct {
 	MinInterval time.Duration
 }
 
+// NewToggleOnRisingEdge returns a rule that toggles a relay on rising edge presses.
 func NewToggleOnRisingEdge(name string, reg *messenger.Registry, btn devices.Source[bool], relay devices.Duplex[bool]) *ToggleOnRisingEdge {
 	return &ToggleOnRisingEdge{
 		name:        name,
@@ -34,8 +35,10 @@ func NewToggleOnRisingEdge(name string, reg *messenger.Registry, btn devices.Sou
 	}
 }
 
+// Name returns the rule name.
 func (t *ToggleOnRisingEdge) Name() string { return t.name }
 
+// Run listens for button presses and toggles the relay.
 func (t *ToggleOnRisingEdge) Run(ctx context.Context) error {
 
 	var last time.Time

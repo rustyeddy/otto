@@ -10,12 +10,14 @@ import (
 	"github.com/rustyeddy/devices"
 )
 
+// Logger is the minimal logging interface used by Registry.
 type Logger interface {
 	Info(msg string, args ...any)
 	Warn(msg string, args ...any)
 	Error(msg string, args ...any)
 }
 
+// Registry wires devices to MQTT topics and keeps a small state cache.
 type Registry struct {
 	MQTT   MQTT
 	Topics TopicScheme
@@ -53,6 +55,7 @@ type Registry struct {
 	stateAny map[string]any
 }
 
+// NewRegistry builds a Registry with defaults set for QoS and retention.
 func NewRegistry(m MQTT, topics TopicScheme) *Registry {
 	return &Registry{
 		MQTT:           m,
@@ -73,6 +76,7 @@ func NewRegistry(m MQTT, topics TopicScheme) *Registry {
 	}
 }
 
+// Add appends a device to the registry.
 func (r *Registry) Add(dev devices.Device) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -187,7 +191,7 @@ func (r *Registry) wireEvents(ctx context.Context, dev devices.Device) {
 }
 
 // Run starts device goroutines, wires events, and publishes status/meta.
-// IMPORTANT: For reconnect-resubscribe to work, your MQTT adapter must call r.ResubscribeAll(ctx) on connect.
+// For reconnect-resubscribe to work, your MQTT adapter must call ResubscribeAll on connect.
 func (r *Registry) Run(ctx context.Context) error {
 	// Snapshot devices
 	r.mu.RLock()
@@ -260,7 +264,7 @@ func (r *Registry) StateRaw(name string) ([]byte, bool) {
 	return b, ok
 }
 
-// StateAny returns the last decoded state value (if known).
+// StateAny returns the last decoded state value, if known.
 func (r *Registry) StateAny(name string) (any, bool) {
 	r.stateMu.RLock()
 	defer r.stateMu.RUnlock()
