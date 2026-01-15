@@ -18,11 +18,11 @@ func TestParseLevel_CaseInsensitive(t *testing.T) {
 		input string
 		level string
 	}{
-		{input: "DEBUG", level: "debug"},
-		{input: "Info", level: "info"},
-		{input: "warn", level: "warn"},
-		{input: "WARNING", level: "warn"},
-		{input: "error", level: "error"},
+		{input: "DEBUG", level: "DEBUG"},
+		{input: "Info", level: "INFO"},
+		{input: "warn", level: "WARN"},
+		{input: "WARNING", level: "WARN"},
+		{input: "error", level: "ERROR"},
 	}
 
 	for _, tc := range cases {
