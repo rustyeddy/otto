@@ -34,7 +34,11 @@ func WireSource[T any](ctx context.Context, r *Registry, dev devices.Source[T], 
 				r.stateMu.Unlock()
 
 				// publish
-				_ = r.MQTT.Publish(ctx, r.Topics.State(name), b, r.RetainState, r.QoSState)
+				t := r.Topics.State(name)
+				err = r.MQTT.Publish(ctx, t, b, r.RetainState, r.QoSState)
+				if err != nil {
+					r.Log.Error("failed to publish", "topic", t, "error", err)
+				}
 
 			case <-ctx.Done():
 				return
