@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rustyeddy/devices"
+	"github.com/rustyeddy/otto/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,34 +20,6 @@ func (r testRule) Name() string { return r.name }
 func (r testRule) Run(ctx context.Context) error {
 	return r.run(ctx)
 }
-
-type fakeSource[T any] struct {
-	name   string
-	out    chan T
-	events chan devices.Event
-}
-
-func (f *fakeSource[T]) Name() string { return f.name }
-func (f *fakeSource[T]) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-func (f *fakeSource[T]) Events() <-chan devices.Event { return f.events }
-func (f *fakeSource[T]) Out() <-chan T                { return f.out }
-
-type fakeSink[T any] struct {
-	name   string
-	in     chan T
-	events chan devices.Event
-}
-
-func (f *fakeSink[T]) Name() string { return f.name }
-func (f *fakeSink[T]) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-func (f *fakeSink[T]) Events() <-chan devices.Event { return f.events }
-func (f *fakeSink[T]) In() chan<- T                 { return f.in }
 
 func TestRunnerReturnsFirstError(t *testing.T) {
 	t.Parallel()
@@ -105,24 +77,26 @@ func TestFollowForwards(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	t.Cleanup(cancel)
 
-	src := &fakeSource[bool]{name: "button", out: make(chan bool, 1), events: make(chan devices.Event)}
-	dst := &fakeSink[bool]{name: "relay", in: make(chan bool, 1), events: make(chan devices.Event)}
+	src := testutils.NewSource[bool]("src", 8)
+	dst := testutils.NewSink[bool]("sink", 8)
+	//src := &testutils.Source[bool]{name: "button", out: make(chan bool, 1), events: make(chan devices.Event)}
+	//dst := &testutils.Sink[bool]{name: "relay", in: make(chan bool, 1), events: make(chan devices.Event)}
 
 	rule := NewFollow("follow", src, dst)
 
 	done := make(chan error, 1)
 	go func() { done <- rule.Run(ctx) }()
 
-	src.out <- true
+	src.Set() <- true
 
 	select {
-	case got := <-dst.in:
+	case got := <-dst.Get():
 		require.True(t, got)
 	case <-ctx.Done():
 		require.Fail(t, "did not receive forwarded value")
 	}
 
-	close(src.out)
+	src.Close()
 
 	select {
 	case err := <-done:

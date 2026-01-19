@@ -104,6 +104,7 @@ func (d *fakeDevice) Descriptor() devices.Descriptor {
 	}
 	return devices.Descriptor{}
 }
+func (d *fakeDevice) Close() error { return nil }
 
 func TestRegistryResubscribeAll(t *testing.T) {
 	t.Parallel()
